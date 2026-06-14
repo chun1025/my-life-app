@@ -685,7 +685,7 @@ function renderHome(){
       +'<div class="home-stat-row"><span class="home-stat-label">閱讀'+readStreakHtml+'</span><span class="home-stat-val val-read">'+(rSec>0?Math.round(rSec/60)+' 分鐘':'尚未開始')+'</span></div>'
       +'<div class="home-stat-row"><span class="home-stat-label">運動'+exStreakHtml+'</span><span class="home-stat-val '+(hasEx?'val-done':'val-pending')+'">'+(hasEx?'已完成':'尚未進行')+'</span></div>'
       +'<div class="home-stat-row"><span class="home-stat-label">冥想'+medStreakHtml+'</span><span class="home-stat-val val-med">'+(mSec>0?Math.round(mSec/60)+' 分鐘':'尚未開始')+'</span></div>'
-      +(allDone?'<div style="text-align:center;font-size:13px;color:var(--purple);margin-top:10px;padding-top:10px;border-top:0.5px solid var(--border)">🎉 今天三項都完成了，太棒了！</div>':'')
+      +(allDone?'<div style="text-align:center;font-size:13px;color:var(--purple);margin-top:10px;padding-top:10px;border-top:0.5px solid var(--border)">三項皆已完成</div>':'')
       +'</div>';
   } else if(homePeriod==='week'){
     // 閱讀長條圖
