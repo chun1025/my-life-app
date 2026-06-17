@@ -1,10 +1,20 @@
 #!/usr/bin/expect -f
-set timeout 900
-spawn bubblewrap build
+# 印出所有輸出，方便除錯
+log_user 1
+set timeout 1200
+
+spawn bubblewrap build --skipPwaValidation
+
 expect {
-  -re {install.*JDK.*\(Y/n\)}          { send "y\r"; exp_continue }
-  -re {install.*Android SDK.*\(Y/n\)}  { send "y\r"; exp_continue }
-  -re {regenerate}                      { send "y\r"; exp_continue }
-  -re {(?i)password}                    { send "beingapp2024\r"; exp_continue }
+  -re {(?i)would you like to (install|download)} { send "y\r"; exp_continue }
+  -re {\(Y/n\)}            { send "y\r"; exp_continue }
+  -re {\(y/N\)}            { send "y\r"; exp_continue }
+  -re {(?i)password}       { send "beingapp2024\r"; exp_continue }
+  timeout                  { puts "\n=== EXPECT TIMEOUT ==="; exit 2 }
   eof
 }
+
+catch wait result
+set code [lindex $result 3]
+puts "\n=== bubblewrap exit code: $code ==="
+exit $code
