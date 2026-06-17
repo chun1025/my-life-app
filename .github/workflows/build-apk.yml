@@ -31,7 +31,7 @@ jobs:
           ln -sf "$JAVA_HOME" ~/.bubblewrap/jdk
           ASDK="${ANDROID_SDK_ROOT:-$ANDROID_HOME}"
           [ -n "$ASDK" ] && ln -sf "$ASDK" ~/.bubblewrap/android_sdk || true
-          keytool -genkeypair \
+          [ -f android.keystore ] || keytool -genkeypair \
             -keystore android.keystore -alias android \
             -keyalg RSA -keysize 2048 -validity 10000 \
             -storepass beingapp2024 -keypass beingapp2024 \
