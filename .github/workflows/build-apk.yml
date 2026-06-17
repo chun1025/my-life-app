@@ -29,14 +29,10 @@ jobs:
         run: |
           mkdir -p ~/.bubblewrap
           ASDK="${ANDROID_SDK_ROOT:-$ANDROID_HOME}"
-          cat > ~/.bubblewrap/config.json << EOF
-          {
-            "jdkPath": "$JAVA_HOME",
-            "androidSdkPath": "$ASDK"
-          }
-          EOF
+          echo "{\"jdkPath\": \"$JAVA_HOME\", \"androidSdkPath\": \"$ASDK\"}" > ~/.bubblewrap/config.json
           echo "JDK: $JAVA_HOME"
           echo "Android SDK: $ASDK"
+          cat ~/.bubblewrap/config.json
           if [ ! -f android.keystore ]; then
             keytool -genkeypair \
               -keystore android.keystore -alias android \
@@ -44,27 +40,12 @@ jobs:
               -storepass beingapp2024 -keypass beingapp2024 \
               -dname "CN=Being,O=Being,C=TW" -noprompt
           else
-            echo "Keystore already exists, skipping generation."
+            echo "Keystore already exists, skipping."
           fi
 
       - name: Build APK
         timeout-minutes: 30
-        run: |
-          cat > /tmp/bw.exp << 'EXPEOF'
-#!/usr/bin/expect -f
-set timeout 900
-spawn bubblewrap build
-expect {
-  -re {install.*JDK.*\(Y/n\)}          { send "y\r"; exp_continue }
-  -re {install.*Android SDK.*\(Y/n\)}  { send "y\r"; exp_continue }
-  -re {regenerate.*\(Y/n\)}            { send "n\r"; exp_continue }
-  -re {regenerate.*project}            { send "n\r"; exp_continue }
-  -re {up-to-date.*\(Y/n\)}            { send "n\r"; exp_continue }
-  -re {(?i)password}                   { send "beingapp2024\r"; exp_continue }
-  eof
-}
-EXPEOF
-          expect /tmp/bw.exp
+        run: expect build.exp
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
