@@ -28,29 +28,42 @@ jobs:
       - name: Pre-configure Bubblewrap
         run: |
           mkdir -p ~/.bubblewrap
-          ln -sf "$JAVA_HOME" ~/.bubblewrap/jdk
           ASDK="${ANDROID_SDK_ROOT:-$ANDROID_HOME}"
-          [ -n "$ASDK" ] && ln -sf "$ASDK" ~/.bubblewrap/android_sdk || true
-          [ -f android.keystore ] || keytool -genkeypair \
-            -keystore android.keystore -alias android \
-            -keyalg RSA -keysize 2048 -validity 10000 \
-            -storepass beingapp2024 -keypass beingapp2024 \
-            -dname "CN=Being,O=Being,C=TW" -noprompt
+          cat > ~/.bubblewrap/config.json << EOF
+          {
+            "jdkPath": "$JAVA_HOME",
+            "androidSdkPath": "$ASDK"
+          }
+          EOF
+          echo "JDK: $JAVA_HOME"
+          echo "Android SDK: $ASDK"
+          if [ ! -f android.keystore ]; then
+            keytool -genkeypair \
+              -keystore android.keystore -alias android \
+              -keyalg RSA -keysize 2048 -validity 10000 \
+              -storepass beingapp2024 -keypass beingapp2024 \
+              -dname "CN=Being,O=Being,C=TW" -noprompt
+          else
+            echo "Keystore already exists, skipping generation."
+          fi
 
       - name: Build APK
-        timeout-minutes: 15
+        timeout-minutes: 30
         run: |
           cat > /tmp/bw.exp << 'EXPEOF'
-          #!/usr/bin/expect -f
-          set timeout 600
-          spawn bubblewrap build
-          expect {
-            -re {install.*JDK.*\(Y/n\)}            { send "y\r"; exp_continue }
-            -re {install.*Android SDK.*\(Y/n\)}    { send "y\r"; exp_continue }
-            -re {(?i)password}                      { send "beingapp2024\r"; exp_continue }
-            eof
-          }
-          EXPEOF
+#!/usr/bin/expect -f
+set timeout 900
+spawn bubblewrap build
+expect {
+  -re {install.*JDK.*\(Y/n\)}          { send "y\r"; exp_continue }
+  -re {install.*Android SDK.*\(Y/n\)}  { send "y\r"; exp_continue }
+  -re {regenerate.*\(Y/n\)}            { send "n\r"; exp_continue }
+  -re {regenerate.*project}            { send "n\r"; exp_continue }
+  -re {up-to-date.*\(Y/n\)}            { send "n\r"; exp_continue }
+  -re {(?i)password}                   { send "beingapp2024\r"; exp_continue }
+  eof
+}
+EXPEOF
           expect /tmp/bw.exp
 
       - name: Upload APK
