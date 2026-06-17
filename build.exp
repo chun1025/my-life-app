@@ -1,19 +1,28 @@
 #!/usr/bin/expect -f
-# 印出所有輸出，方便除錯
 log_user 1
 set timeout 1200
 
-spawn bubblewrap build --skipPwaValidation
-
+# 第一步：用 update 產生完整的 Android 專案（gradlew、app/ 等）
+spawn bubblewrap update
 expect {
   -re {(?i)would you like to (install|download)} { send "y\r"; exp_continue }
-  -re {\(Y/n\)}            { send "y\r"; exp_continue }
-  -re {\(y/N\)}            { send "y\r"; exp_continue }
-  -re {(?i)password}       { send "beingapp2024\r"; exp_continue }
-  timeout                  { puts "\n=== EXPECT TIMEOUT ==="; exit 2 }
+  -re {\(Y/n\)}  { send "y\r"; exp_continue }
+  -re {\(y/N\)}  { send "y\r"; exp_continue }
+  -re {(?i)password} { send "beingapp2024\r"; exp_continue }
   eof
 }
+catch wait ures
+puts "\n=== update exit code: [lindex $ures 3] ==="
 
+# 第二步：編譯出 APK
+spawn bubblewrap build --skipPwaValidation
+expect {
+  -re {(?i)would you like to (install|download)} { send "y\r"; exp_continue }
+  -re {\(Y/n\)}  { send "y\r"; exp_continue }
+  -re {\(y/N\)}  { send "y\r"; exp_continue }
+  -re {(?i)password} { send "beingapp2024\r"; exp_continue }
+  eof
+}
 catch wait result
 set code [lindex $result 3]
 puts "\n=== bubblewrap exit code: $code ==="
