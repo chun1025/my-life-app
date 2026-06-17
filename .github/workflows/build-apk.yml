@@ -46,6 +46,8 @@ jobs:
         env:
           BUBBLEWRAP_KEYSTORE_PASSWORD: beingapp2024
           BUBBLEWRAP_KEY_PASSWORD: beingapp2024
+          ANDROID_HOME: /home/runner/.bubblewrap/android_sdk
+          ANDROID_SDK_ROOT: /home/runner/.bubblewrap/android_sdk
         run: expect build.exp
 
       - name: List APK files
