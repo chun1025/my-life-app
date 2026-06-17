@@ -4,7 +4,7 @@ spawn bubblewrap build
 expect {
   -re {install.*JDK.*\(Y/n\)}          { send "y\r"; exp_continue }
   -re {install.*Android SDK.*\(Y/n\)}  { send "y\r"; exp_continue }
-  -re {regenerate}                      { send "n\r"; exp_continue }
+  -re {regenerate}                      { send "y\r"; exp_continue }
   -re {(?i)password}                    { send "beingapp2024\r"; exp_continue }
   eof
 }
