@@ -27,7 +27,7 @@
   "isChromeOSOnly": false,
   "isMetaQuest": false,
   "fullScopeUrl": "https://chun1025.github.io/my-life-app/",
-  "minSdkVersion": 19,
+  "minSdkVersion": 21,
   "webManifestUrl": "https://chun1025.github.io/my-life-app/manifest.json",
   "generatorApp": "bubblewrap-cli",
   "shortcuts": []
