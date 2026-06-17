@@ -2,7 +2,7 @@
 log_user 1
 set timeout 1200
 
-# 第一步：用 update 產生完整的 Android 專案（gradlew、app/ 等）
+# 第一步：用 update 產生完整的 Android 專案，並下載 Android SDK
 spawn bubblewrap update
 expect {
   -re {(?i)would you like to (install|download)} { send "y\r"; exp_continue }
@@ -14,7 +14,18 @@ expect {
 catch wait ures
 puts "\n=== update exit code: [lindex $ures 3] ==="
 
-# 第二步：編譯出 APK
+# 第二步：寫入 Android SDK 授權同意檔案（讓 Gradle 能自動安裝 build-tools 與 platform）
+exec sh -c {
+  D="$HOME/.bubblewrap/android_sdk/licenses"
+  mkdir -p "$D"
+  printf '\n8933bad161af4178b1185d1a37fbf41ea5269c55\nd56f5187479451eabf01fb78af6dfcb131a6481e\n24333f8a63b6825ea9c5514f83c2829b004d1fee\n' > "$D/android-sdk-license"
+  printf '\n84831b9409646a918e30573bab4c9c91346d8abd\nd975f751698a77b662f1254ddbeed3901e976f5a\n' > "$D/android-sdk-preview-license"
+  echo "Licenses written to $D"
+  ls -la "$D"
+}
+puts "\n=== licenses accepted ==="
+
+# 第三步：編譯出 APK
 spawn bubblewrap build --skipPwaValidation
 expect {
   -re {(?i)would you like to (install|download)} { send "y\r"; exp_continue }
