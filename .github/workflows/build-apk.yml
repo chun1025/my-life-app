@@ -28,10 +28,8 @@ jobs:
       - name: Pre-configure Bubblewrap
         run: |
           mkdir -p ~/.bubblewrap
-          ASDK="${ANDROID_SDK_ROOT:-$ANDROID_HOME}"
-          echo "{\"jdkPath\": \"$JAVA_HOME\", \"androidSdkPath\": \"$ASDK\"}" > ~/.bubblewrap/config.json
+          echo "{\"jdkPath\": \"$JAVA_HOME\"}" > ~/.bubblewrap/config.json
           echo "JDK: $JAVA_HOME"
-          echo "Android SDK: $ASDK"
           cat ~/.bubblewrap/config.json
           if [ ! -f android.keystore ]; then
             keytool -genkeypair \
