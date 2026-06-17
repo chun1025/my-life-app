@@ -44,12 +44,25 @@ jobs:
           fi
 
       - name: Build APK
-       timeout-minutes: 45
+        timeout-minutes: 45
+        env:
+          BUBBLEWRAP_KEYSTORE_PASSWORD: beingapp2024
+          BUBBLEWRAP_KEY_PASSWORD: beingapp2024
         run: expect build.exp
 
+      - name: List APK files
+        if: always()
+        run: |
+          echo "=== Searching for APK files ==="
+          find . -name "*.apk" -type f || echo "No APK found"
+          echo "=== Project structure ==="
+          ls -la
+
       - name: Upload APK
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: being-apk
           path: '**/*.apk'
           retention-days: 90
+          if-no-files-found: warn
