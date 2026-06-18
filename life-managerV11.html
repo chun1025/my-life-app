@@ -510,6 +510,9 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
     <button class="add-row" style="color:var(--red)" onclick="openJournalQuickModal(null)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>臨時紀錄
     </button>
+    <button class="add-row" style="color:var(--teal)" onclick="openDraftQuick()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>臨時草稿
+    </button>
   </div>
 </div>
 
@@ -586,7 +589,9 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
     <div class="field"><label>總頁數</label><input type="number" id="be-pages" min="1"></div>
     <div class="field"><label>目前頁數</label><input type="number" id="be-currentpage" min="0"></div>
     <div class="field"><label>狀態</label><select id="be-status"><option value="want">待看</option><option value="reading">閱讀中</option><option value="done">已完成</option></select></div>
-    <div style="display:flex;gap:8px;margin-top:4px">
+    <div class="sec" style="margin:14px 0 4px">閱讀紀錄</div>
+    <div id="be-sessions"></div>
+    <div style="display:flex;gap:8px;margin-top:14px">
       <button class="btn btn-danger" style="flex:1;justify-content:center" onclick="deleteBook()">刪除</button>
       <button class="btn btn-primary" style="flex:2;justify-content:center" onclick="saveBookEdit()">儲存</button>
     </div>
@@ -792,6 +797,15 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
   </div>
 </div>
 
+<!-- 晨間 Routine 全螢幕 -->
+<div class="fullscreen-overlay" id="fullscreen-morning">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;padding-top:4px">
+    <div style="font-size:11px;font-weight:600;color:var(--text-3);letter-spacing:.6px;text-transform:uppercase">晨間 Routine</div>
+    <button onclick="closeMorningFs()" style="background:none;border:none;color:var(--text-2);font-size:28px;cursor:pointer;line-height:1;padding:0 2px">×</button>
+  </div>
+  <div id="morning-fs-body" style="flex:1;display:flex;flex-direction:column"></div>
+</div>
+
 <!-- 萬用計時器 全螢幕 -->
 <div class="fullscreen-overlay" id="fullscreen-timer" style="z-index:250">
   <div style="display:flex;align-items:center;justify-content:space-between;padding-top:4px;margin-bottom:4px">
@@ -826,6 +840,10 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
 <div class="modal-overlay" id="modal-morning-edit">
   <div class="modal">
     <div class="modal-title">晨間項目設定 <button class="modal-close" onclick="closeModal('morning-edit')">×</button></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0 12px;border-bottom:0.5px solid var(--border);margin-bottom:10px">
+      <div style="flex:1;padding-right:12px"><div style="font-size:14px;color:var(--text)">全螢幕專注模式</div><div style="font-size:12px;color:var(--text-3);margin-top:2px">早晨 5–10 點自動全螢幕顯示晨間 Routine</div></div>
+      <label class="ios-toggle"><input type="checkbox" id="morning-fs-toggle" onchange="toggleMorningFs(this.checked)"><span class="ios-track"></span></label>
+    </div>
     <div id="morning-base-list"></div>
     <div style="display:flex;gap:8px;margin-top:12px">
       <input type="text" id="morning-new-item" placeholder="新增項目…" style="flex:1">
@@ -906,6 +924,37 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
     <input type="hidden" id="se-sidx">
     <div class="field"><label>事件描述</label><textarea id="se-event" rows="3"></textarea></div>
     <button class="btn btn-primary btn-full" onclick="saveSessEvent()">儲存</button>
+  </div>
+</div>
+
+<!-- D：諮商歷程草稿 -->
+<div class="modal-overlay" id="modal-draft">
+  <div class="modal">
+    <div class="modal-title"><span id="draft-title">諮商草稿</span> <button class="modal-close" onclick="closeModal('draft')">×</button></div>
+    <div class="field" id="draft-target-field" style="display:none">
+      <label>對象 / 代號（可留空）</label>
+      <input type="text" id="draft-target" placeholder="例如：601-小明">
+    </div>
+    <div class="field">
+      <label>遊戲治療主題（可複選）</label>
+      <div class="chip-row" id="draft-themes"></div>
+    </div>
+    <div class="field">
+      <label>諮商歷程與主題</label>
+      <textarea id="draft-text" rows="5" placeholder="自由書寫諮商歷程、觀察與主題…"></textarea>
+    </div>
+    <div class="field">
+      <label>地點</label>
+      <div class="chip-row" id="draft-places"></div>
+      <input type="text" id="draft-place-other" placeholder="其他地點…" style="display:none;margin-top:6px">
+    </div>
+    <div class="field">
+      <label>使用媒材（可複選）</label>
+      <div class="chip-row" id="draft-materials"></div>
+      <input type="text" id="draft-material-other" placeholder="其他媒材…" style="display:none;margin-top:6px">
+    </div>
+    <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text);margin-bottom:12px"><input type="checkbox" id="draft-mark-written" style="width:auto"> 同時標記為已完成紀錄</label>
+    <button class="btn btn-primary btn-full" onclick="saveDraft()">儲存草稿</button>
   </div>
 </div>
 
@@ -1085,6 +1134,7 @@ var quotes=load('lm-quotes',[]);
 var checkins=load('lm-checkins',[]);
 var morningBase=load('lm-morning-base',['喝水','刷牙','冥想']);
 var morningLogs=load('lm-morning-logs',{});
+var morningFsEnabled=load('lm-morning-fs',true);
 var nightPlans=load('lm-night-plans',{});
 var notes=load('lm-notes',[]);
 var noteTags=load('lm-note-tags',['點子','隨筆','待辦']);
@@ -1447,6 +1497,7 @@ function weekDotsHTML(dates,hasFn,colorClass){
 function renderHome(){
   _routineViewDate=today();
   renderMorningCard();renderNightCard();
+  maybeShowMorningFs();
   var qel=document.getElementById('home-checkin-quote');
   if(qel)qel.textContent=quotes.length?quotes[Math.floor(Math.random()*quotes.length)].text:'轉換打卡';
   var t=today(),wd=weekDates(),md=monthDates(),dash=document.getElementById('home-dashboard');
@@ -1586,7 +1637,7 @@ function renderHome(){
           return '<div class="row-item"><div class="case-check" data-action="toggle-case" data-id="'+c.id+'"></div>'
             +'<div class="row-main"><div class="row-title">'+esc(caseDisplayName(c))+'</div>'
             +'<div class="row-sub">'+esc(c.sessionTime||'時間未設定')+(c.isQuick?' · '+esc(c.quickType||'臨時'):'')+'</div></div>'
-            +'<span style="font-size:12px;color:var(--red);font-weight:500">待寫</span></div>';
+            +'<button class="btn btn-ghost btn-sm" data-action="open-draft-today" data-id="'+esc(c.id)+'">草稿</button></div>';
         }).join('')+'</div>';
       }
     }
@@ -1725,6 +1776,14 @@ function exportData(){
     cases.forEach(function(c){
       (c.sessions||[]).filter(function(s){return s.date>=from&&s.date<=to;}).forEach(function(s){
         cLines.push('  '+s.date+' '+(s.writtenAt||'')+' '+caseDisplayName(c)+(c.isQuick?' ['+(c.quickType||'臨時')+']':'')+' '+(s.written?'已完成':'未完成')+(s.count?'（第'+s.count+'次）':''));
+        if(s.event&&s.event.trim())cLines.push('      事件：'+s.event.trim());
+        var d=s.draft;
+        if(draftHasContent(d)){
+          if(d.place)cLines.push('      地點：'+(d.place==='其他'?(d.placeOther||'其他'):d.place));
+          if(d.materials&&d.materials.length)cLines.push('      媒材：'+d.materials.map(function(m){return m==='其他'?(d.materialsOther||'其他'):m;}).join('、'));
+          if(d.themes&&d.themes.length)cLines.push('      主題：'+d.themes.join('、'));
+          if(d.text)cLines.push('      歷程：'+d.text);
+        }
       });
     });
     if(cLines.length)cLines.forEach(function(l){lines.push(l);});
@@ -1927,7 +1986,47 @@ function openBookEdit(idx){
   document.getElementById('be-pages').value=b.pages||'';
   document.getElementById('be-currentpage').value=b.currentPage||0;
   document.getElementById('be-status').value=b.status;
+  renderBookSessions(idx);
   openModal('book-edit');
+}
+function renderBookSessions(bookIdx){
+  var el=document.getElementById('be-sessions');if(!el)return;
+  var b=books[bookIdx];if(!b){el.innerHTML='';return;}
+  var rows=[];
+  readSessions.forEach(function(s,gi){if(s.bookId===b.id)rows.push({s:s,gi:gi});});
+  rows.sort(function(a,c){if(a.s.date!==c.s.date)return a.s.date<c.s.date?1:-1;return (c.s.time||'')<(a.s.time||'')?-1:1;});
+  if(!rows.length){el.innerHTML='<div style="font-size:13px;color:var(--text-3);padding:6px 0">尚無閱讀紀錄</div>';return;}
+  el.innerHTML=rows.map(function(r){
+    var s=r.s,mins=Math.round((s.sec||0)/60);
+    return '<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:0.5px solid var(--border)">'
+      +'<div style="flex:1;min-width:0">'
+      +'<div style="font-size:13px;color:var(--text)">'+esc(s.date)+' · '+mins+' 分</div>'
+      +'<div style="font-size:12px;color:var(--text-2)">第 '+(s.startPage||0)+'–'+(s.endPage||0)+' 頁'+(s.rate?' · '+s.rate+' 頁/時':'')+'</div>'
+      +'</div>'
+      +'<button class="icon-btn" style="color:var(--text-3);font-size:16px;padding:0 4px;line-height:1" data-action="del-read-session" data-gi="'+r.gi+'">×</button>'
+      +'</div>';
+  }).join('');
+}
+function deleteReadSession(gi){
+  var s=readSessions[gi];if(!s)return;
+  var bookId=s.bookId;
+  readSessions.splice(gi,1);
+  save('lm-sessions',readSessions);
+  var b=books.find(function(x){return x.id===bookId;});
+  if(b){
+    var remain=readSessions.filter(function(x){return x.bookId===bookId;});
+    b.currentPage=remain.reduce(function(m,x){return Math.max(m,x.endPage||0);},0);
+    if(b.pages&&b.currentPage<b.pages&&b.status==='done')b.status='reading';
+    save('lm-books',books);
+  }
+  var bi=parseInt(document.getElementById('be-idx').value);
+  if(!isNaN(bi)&&books[bi]&&books[bi].id===bookId){
+    document.getElementById('be-currentpage').value=books[bi].currentPage||0;
+    document.getElementById('be-status').value=books[bi].status;
+    renderBookSessions(bi);
+  }
+  renderBooks();
+  showToast('已刪除紀錄');
 }
 function saveBookEdit(){
   var idx=parseInt(document.getElementById('be-idx').value);
@@ -2530,6 +2629,10 @@ function renderCases(){
         +(c.note?' · '+esc(c.note):'')+'</div></div>'
       +'<button class="icon-btn" data-action="open-case-edit" data-id="'+esc(c.id)+'">···</button>'
       +'</div>'
+      +(caseFilter==='pending'?
+        '<div style="margin-top:8px;padding-top:8px;border-top:0.5px solid var(--border);display:flex;justify-content:flex-end">'
+        +'<button class="btn btn-ghost btn-sm" data-action="open-draft-today" data-id="'+esc(c.id)+'">填寫草稿</button>'
+        +'</div>':'')
       +(showWeeklyToggle?
         '<div style="margin-top:8px;padding-top:8px;border-top:0.5px solid var(--border);display:flex;justify-content:flex-end;align-items:center;gap:8px">'
         +'<span style="font-size:12px;color:var(--text-2)">本週有排</span>'
@@ -2699,9 +2802,11 @@ function renderCaseDetail(){
     var st=s.written?'<span style="color:var(--teal);font-size:12px">✓已寫</span>':'<span style="color:var(--red);font-size:12px">待寫</span>';
     var evt=s.event&&s.event.trim()?'<div class="event-evt">'+esc(s.event)+'</div>':'';
     var editBtn='<button class="icon-btn" style="font-size:12px;color:var(--purple);padding:2px 6px" data-action="edit-sess-event" data-cid="'+esc(c.id)+'" data-sidx="'+realIdx+'">'+(s.event&&s.event.trim()?'編輯':'補述')+'</button>';
+    var hasDraft=draftHasContent(s.draft);
+    var draftBtn='<button class="icon-btn" style="font-size:12px;color:var(--teal);padding:2px 6px" data-action="open-draft-session" data-cid="'+esc(c.id)+'" data-sidx="'+realIdx+'">'+(hasDraft?'編輯草稿':'填寫草稿')+'</button>';
     return '<div class="event-line">'+mark
       +'<div class="event-body"><div class="event-top"><span class="event-date">'+s.date+'</span>'+st+'</div>'
-      +'<div class="event-meta">'+esc(label)+editBtn+'</div>'+evt+'</div></div>';
+      +'<div class="event-meta">'+esc(label)+editBtn+draftBtn+'</div>'+evt+draftSummaryHTML(s.draft)+'</div></div>';
   }).join(''):'<div class="empty" style="padding:14px 0">尚無事件紀錄</div>';
   document.getElementById('cd-body').innerHTML=
     '<div class="card card-sm" style="margin-bottom:10px"><div style="font-size:16px;font-weight:600;color:var(--text)">'+esc(caseDisplayName(c))+(c.isQuick?' <span style="font-size:11px;color:var(--red);background:var(--red-light);padding:2px 6px;border-radius:99px">'+esc(c.quickType||'臨時')+'</span>':'')+' '+statusBadge+'</div>'
@@ -2731,6 +2836,110 @@ function saveSessEvent(){
   save('lm-cases',cases);closeModal('sess-event');
   if(detailCaseId)renderCaseDetail();
   showToast('事件描述已更新');
+}
+// ── D：諮商歷程草稿系統 ────────────────────────────────
+var DRAFT_THEMES=['攻擊／權力控制','照顧滋養','家庭關係','焦慮恐懼','創傷重現','掌控勝任','退化','修復和好','探索試探','其他'];
+var DRAFT_PLACES=['諮商室-沙盤','諮商室-沙發','生活教室','教師休息室','其他'];
+var DRAFT_MATERIALS=['沙盤','沙盤物件','玩具','桌遊','黏土','繪畫','其他'];
+var _draftCtx=null,_draftData=null;
+function blankDraft(){return {themes:[],text:'',place:'',placeOther:'',materials:[],materialsOther:''};}
+function renderDraftChips(){
+  document.getElementById('draft-themes').innerHTML=DRAFT_THEMES.map(function(th){
+    var on=_draftData.themes.indexOf(th)>=0;
+    return '<button class="chip'+(on?' active':'')+'" data-action="draft-theme" data-val="'+esc(th)+'">'+esc(th)+'</button>';
+  }).join('');
+  document.getElementById('draft-places').innerHTML=DRAFT_PLACES.map(function(p){
+    var on=_draftData.place===p;
+    return '<button class="chip'+(on?' active':'')+'" data-action="draft-place" data-val="'+esc(p)+'">'+esc(p)+'</button>';
+  }).join('');
+  document.getElementById('draft-place-other').style.display=(_draftData.place==='其他')?'':'none';
+  document.getElementById('draft-materials').innerHTML=DRAFT_MATERIALS.map(function(m){
+    var on=_draftData.materials.indexOf(m)>=0;
+    return '<button class="chip'+(on?' active':'')+'" data-action="draft-material" data-val="'+esc(m)+'">'+esc(m)+'</button>';
+  }).join('');
+  document.getElementById('draft-material-other').style.display=(_draftData.materials.indexOf('其他')>=0)?'':'none';
+}
+function openDraft(ctx,existing,title){
+  _draftCtx=ctx;
+  _draftData=existing?{
+    themes:(existing.themes||[]).slice(),text:existing.text||'',
+    place:existing.place||'',placeOther:existing.placeOther||'',
+    materials:(existing.materials||[]).slice(),materialsOther:existing.materialsOther||''
+  }:blankDraft();
+  document.getElementById('draft-title').textContent=title||'諮商草稿';
+  document.getElementById('draft-text').value=_draftData.text;
+  document.getElementById('draft-place-other').value=_draftData.placeOther;
+  document.getElementById('draft-material-other').value=_draftData.materialsOther;
+  document.getElementById('draft-target-field').style.display=ctx.mode==='quick'?'':'none';
+  if(ctx.mode==='quick')document.getElementById('draft-target').value='';
+  document.getElementById('draft-mark-written').checked=false;
+  renderDraftChips();
+  openModal('draft');
+}
+// 從待提醒個案：找出或建立今天的 session，掛上草稿
+function openCaseDraftToday(cid){
+  var c=cases.find(function(x){return x.id===cid;});if(!c)return;
+  if(!c.sessions)c.sessions=[];
+  var t=today();
+  var s=c.sessions.find(function(x){return x.date===t&&!x.written;})||c.sessions.find(function(x){return x.date===t;});
+  if(!s){s={date:t,kind:'consult',written:false};c.sessions.push(s);save('lm-cases',cases);}
+  openDraft({mode:'case',cid:cid,sidx:c.sessions.indexOf(s)},s.draft,caseDisplayName(c)+' · 草稿');
+}
+// 從個案詳情時間線：既有 session
+function openCaseDraftSession(cid,sidx){
+  var c=cases.find(function(x){return x.id===cid;});if(!c||!c.sessions[sidx])return;
+  openDraft({mode:'case',cid:cid,sidx:sidx},c.sessions[sidx].draft,caseDisplayName(c)+' · 草稿');
+}
+// 不屬於既有個案的臨時草稿
+function openDraftQuick(){openDraft({mode:'quick'},null,'臨時草稿');}
+function saveDraft(){
+  var pOther=document.getElementById('draft-place-other').value.trim();
+  var mOther=document.getElementById('draft-material-other').value.trim();
+  var draft={
+    themes:_draftData.themes.slice(),
+    text:document.getElementById('draft-text').value.trim(),
+    place:_draftData.place,
+    placeOther:_draftData.place==='其他'?pOther:'',
+    materials:_draftData.materials.slice(),
+    materialsOther:(_draftData.materials.indexOf('其他')>=0)?mOther:''
+  };
+  var markWritten=document.getElementById('draft-mark-written').checked;
+  if(_draftCtx.mode==='quick'){
+    var label=document.getElementById('draft-target').value.trim();
+    var qc={id:String(Date.now()),code:label||('臨時'+nowTime()),className:'',quickType:'臨時草稿',isQuick:true,status:'active',sessions:[],startCount:0,skippedWeeks:[]};
+    var qs={date:today(),kind:'temp',written:markWritten,draft:draft};
+    if(markWritten)qs.writtenAt=nowTime();
+    qc.sessions.push(qs);cases.push(qc);
+  } else {
+    var c=cases.find(function(x){return x.id===_draftCtx.cid;});
+    if(!c||!c.sessions[_draftCtx.sidx]){showToast('找不到對應紀錄');return;}
+    var s=c.sessions[_draftCtx.sidx];
+    s.draft=draft;
+    if(markWritten&&!s.written){
+      s.written=true;s.writtenAt=nowTime();
+      if(isConsultSession(s)&&!s.count)s.count=nextSessionCount(c);
+    }
+  }
+  save('lm-cases',cases);closeModal('draft');
+  renderCases();renderHome();
+  if(detailCaseId)renderCaseDetail();
+  showToast('草稿已儲存');
+}
+function draftHasContent(d){
+  return !!(d&&((d.themes&&d.themes.length)||d.text||d.place||(d.materials&&d.materials.length)));
+}
+function draftSummaryHTML(d){
+  if(!draftHasContent(d))return '';
+  var parts=[];
+  if(d.place)parts.push('地點：'+(d.place==='其他'?(d.placeOther||'其他'):d.place));
+  if(d.materials&&d.materials.length){
+    var mats=d.materials.map(function(m){return m==='其他'?(d.materialsOther||'其他'):m;});
+    parts.push('媒材：'+mats.join('、'));
+  }
+  if(d.themes&&d.themes.length)parts.push('主題：'+d.themes.join('、'));
+  var meta=parts.length?'<div style="font-size:12px;color:var(--text-2);margin-top:5px">'+esc(parts.join('　'))+'</div>':'';
+  var text=d.text?'<div class="event-evt" style="margin-top:4px;white-space:pre-wrap">'+esc(d.text)+'</div>':'';
+  return meta+text;
 }
 // ── V9：歸入既有個案 ──────────────────────────────────
 function mergeQuickIntoCase(quickCaseId,targetCaseId){
@@ -3610,6 +3819,7 @@ document.body.addEventListener('click',function(e){
   if(!el)return;
   var action=el.dataset.action;
   if(action==='open-book-edit'){openBookEdit(parseInt(el.dataset.idx));}
+  else if(action==='del-read-session'){deleteReadSession(parseInt(el.dataset.gi));}
   else if(action==='start-timer'){startTimer(parseInt(el.dataset.idx));}
   else if(action==='open-exercise-edit'){openExerciseEdit(el.dataset.eid);}
   else if(action==='view-med'){mjIsNew=false;openMedJournal(el.dataset.sid);}
@@ -3655,6 +3865,22 @@ document.body.addEventListener('click',function(e){
   else if(action==='open-case-detail'){openCaseDetail(el.dataset.id);}
   else if(action==='open-case-edit-from-detail'){closeModal('case-detail');openCaseEdit(el.dataset.id);}
   else if(action==='edit-sess-event'){openSessEventEdit(el.dataset.cid,parseInt(el.dataset.sidx));}
+  else if(action==='open-draft-today'){openCaseDraftToday(el.dataset.id);}
+  else if(action==='open-draft-session'){openCaseDraftSession(el.dataset.cid,parseInt(el.dataset.sidx));}
+  else if(action==='draft-theme'){
+    var tv=el.dataset.val,ti=_draftData.themes.indexOf(tv);
+    if(ti>=0)_draftData.themes.splice(ti,1);else _draftData.themes.push(tv);
+    renderDraftChips();
+  }
+  else if(action==='draft-place'){
+    _draftData.place=(_draftData.place===el.dataset.val)?'':el.dataset.val;
+    renderDraftChips();
+  }
+  else if(action==='draft-material'){
+    var mv=el.dataset.val,mi=_draftData.materials.indexOf(mv);
+    if(mi>=0)_draftData.materials.splice(mi,1);else _draftData.materials.push(mv);
+    renderDraftChips();
+  }
   else if(action==='merge-quick'){openMergePick(el.dataset.id);}
   else if(action==='merge-from-open'){openMergeFrom(el.dataset.id);}
   else if(action==='do-merge-pick'){
@@ -3685,7 +3911,10 @@ document.body.addEventListener('click',function(e){
   else if(action==='night-del-extra'){delNightExtra(parseInt(el.dataset.idx));}
   else if(action==='routine-prev'){_routineViewDate=_prevDay(_routineViewDate);renderMorningCard();renderNightCard();}
   else if(action==='routine-next'){if(_routineViewDate<today()){_routineViewDate=_nextDay(_routineViewDate);renderMorningCard();renderNightCard();}}
-  else if(action==='routine-expand'){_routineOpen[el.dataset.which]=true;if(el.dataset.which==='morning')renderMorningCard();else renderNightCard();}
+  else if(action==='routine-expand'){
+    if(el.dataset.which==='morning'&&morningFsEnabled){openMorningFs();}
+    else{_routineOpen[el.dataset.which]=true;if(el.dataset.which==='morning')renderMorningCard();else renderNightCard();}
+  }
   else if(action==='routine-collapse'){_routineOpen[el.dataset.which]=false;if(el.dataset.which==='morning')renderMorningCard();else renderNightCard();}
   else if(action==='del-quote'){
     var qid=el.dataset.qid;
@@ -3815,9 +4044,9 @@ function renderMorningCard(){
   var log=morningLogs[dt];
   var isToday=dt===t;
   var allDone=log&&log.items.length&&log.items.every(function(it){return it.done;});
-  var urgent=isToday&&h>=5&&!allDone;
+  var urgent=isToday&&h>=5&&h<10&&!allDone;
   var canEdit=isToday;
-  if(!_routineOpen.morning){
+  if(!_routineOpen.morning||morningFsEnabled){
     var mst,msc;
     if(!log||!log.items.length){mst='尚無項目';msc='var(--text-3)';}
     else if(allDone){mst='✓ 已完成';msc='var(--teal)';}
@@ -3870,13 +4099,19 @@ function toggleMorningItem(idx){
   else if(!allDone){log.completedAt=null;}
   save('lm-morning-logs',morningLogs);
   renderMorningCard();
+  var fsOpen=document.getElementById('fullscreen-morning').classList.contains('open');
+  if(fsOpen){
+    if(allDone)hideMorningFs();
+    else renderMorningFs();
+  }
 }
 function renderMorningBaseList(){
+  var fsChk=document.getElementById('morning-fs-toggle');if(fsChk)fsChk.checked=morningFsEnabled;
   var el=document.getElementById('morning-base-list');if(!el)return;
   el.innerHTML=morningBase.map(function(name,i){
     return '<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:0.5px solid var(--border)">'
       +'<div style="flex:1;font-size:14px;color:var(--text)">'+esc(name)+'</div>'
-      +'<button class="icon-btn" style="color:var(--red)" data-action="del-morning-base" data-idx="'+i+'">刪</button></div>';
+      +'<button class="icon-btn" style="color:var(--text-3);font-size:16px;line-height:1;padding:0 4px" data-action="del-morning-base" data-idx="'+i+'">×</button></div>';
   }).join('');
 }
 function addMorningBaseItem(){
@@ -3884,6 +4119,68 @@ function addMorningBaseItem(){
   morningBase.push(v);save('lm-morning-base',morningBase);
   document.getElementById('morning-new-item').value='';
   renderMorningBaseList();showToast('已新增');
+}
+// ── 晨間 Routine 全螢幕專注模式 ──────────────────────────
+function renderMorningFs(){
+  var body=document.getElementById('morning-fs-body');if(!body)return;
+  var t=today();initMorningRoutine();
+  var log=morningLogs[t];
+  var itemsHTML=log.items.map(function(it,idx){
+    var check='<div class="routine-check '+(it.done?'done':'')+'" data-action="toggle-morning" data-idx="'+idx+'">'
+      +(it.done?'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>':'')+'</div>';
+    var wakeTag=(it.wake&&it.wakeTime)?' <span style="color:var(--amber);font-size:13px;font-weight:500">'+esc(it.wakeTime)+'</span>':'';
+    return '<div class="routine-item" style="padding:14px 0">'+check
+      +'<div style="font-size:16px;flex:1"><span style="'+(it.done?'color:var(--text-3);text-decoration:line-through':'color:var(--text)')+'">'+esc(it.name)+'</span>'+wakeTag+'</div></div>';
+  }).join('');
+  // 早晨快速跳轉（依成長頁設定顯示）
+  var jumps=[];
+  if(appSettings.pages.growth){
+    if(appSettings.growth.reading)jumps.push({sub:'books',label:'閱讀',ico:'<path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/>'});
+    if(appSettings.growth.exercise)jumps.push({sub:'exercise',label:'運動',ico:'<path d="M18 3a3 3 0 00-3 3v12a3 3 0 003 3 3 3 0 003-3 3 3 0 00-3-3H6a3 3 0 00-3 3 3 3 0 003 3 3 3 0 003-3V6a3 3 0 00-3-3 3 3 0 00-3 3 3 3 0 003 3h12a3 3 0 003-3 3 3 0 00-3-3z"/>'});
+    if(appSettings.growth.meditation)jumps.push({sub:'meditate',label:'冥想',ico:'<circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/>'});
+  }
+  var jumpHTML=jumps.length?'<div style="margin-top:auto;padding-top:24px">'
+    +'<div style="font-size:12px;color:var(--text-2);margin-bottom:10px">早晨也想做…</div>'
+    +'<div style="display:flex;gap:10px">'+jumps.map(function(j){
+      return '<button onclick="morningJump(\''+j.sub+'\')" style="flex:1;background:var(--surface);border:0.5px solid var(--border-med);border-radius:var(--radius);padding:14px 6px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;color:var(--text-2)">'
+        +'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">'+j.ico+'</svg>'
+        +'<span style="font-size:13px">'+j.label+'</span></button>';
+    }).join('')+'</div></div>':'';
+  body.innerHTML='<div style="font-size:14px;color:var(--text-2);margin-bottom:6px">'+esc(todayLabel())+'</div>'
+    +'<div style="margin-top:6px">'+itemsHTML+'</div>'+jumpHTML;
+}
+function openMorningFs(){
+  var t=today();initMorningRoutine();
+  morningLogs[t].fsOpened=true;
+  if(morningLogs[t].fsDismissed)morningLogs[t].fsDismissed=false;
+  save('lm-morning-logs',morningLogs);
+  renderMorningFs();
+  document.getElementById('fullscreen-morning').classList.add('open');
+}
+function hideMorningFs(){
+  var el=document.getElementById('fullscreen-morning');if(el)el.classList.remove('open');
+}
+function closeMorningFs(){
+  var t=today();
+  if(morningLogs[t]){morningLogs[t].fsDismissed=true;save('lm-morning-logs',morningLogs);}
+  hideMorningFs();renderMorningCard();
+}
+function morningJump(sub){hideMorningFs();goToGrowth(sub);}
+function toggleMorningFs(on){
+  morningFsEnabled=on;save('lm-morning-fs',morningFsEnabled);
+  if(!on)hideMorningFs();
+  renderMorningCard();
+}
+// 自動全螢幕：5–10 點主動彈出；已開啟過則離開再回首頁時維持顯示。已完成或已關閉則不顯示。
+function maybeShowMorningFs(){
+  if(!morningFsEnabled)return;
+  if(currentPage!=='home')return;
+  var t=today();initMorningRoutine();
+  var log=morningLogs[t];if(!log||!log.items.length)return;
+  var allDone=log.items.every(function(it){return it.done;});
+  if(allDone||log.fsDismissed)return;
+  var h=new Date().getHours();
+  if(log.fsOpened||(h>=5&&h<10))openMorningFs();
 }
 
 // ── 夜間 Routine ───────────────────────────────────────
@@ -3920,32 +4217,18 @@ function renderNightCard(){
     +'</div></div>';
   var urgentBanner=urgent?'<div style="font-size:12px;color:var(--teal);font-weight:500;margin-bottom:8px;padding:6px 8px;background:var(--teal-light);border-radius:6px">尚未記錄上床時間</div>':'';
   var sleepLine=plan.sleepTime?'<div style="font-size:13px;color:var(--teal);margin-bottom:10px">已記錄上床時間：'+esc(plan.sleepTime)+'</div>':'';
-  var baseSection='<div style="font-size:12px;color:var(--text-2);margin-bottom:6px">明日晨間項目</div>'
-    +plan.baseItems.map(function(bi,i){
-      if(canEdit){
-        return '<div style="display:flex;align-items:center;gap:10px;padding:6px 0">'
-          +'<label class="ios-toggle" style="transform:scale(0.8);transform-origin:left center">'
-          +'<input type="checkbox" onchange="toggleNightBase('+i+',this.checked)" '+(bi.enabled?'checked':'')+'>'
-          +'<span class="ios-track"></span></label>'
-          +'<span style="font-size:14px;color:var(--text)">'+esc(bi.name)+'</span></div>';
-      } else {
-        return '<div style="display:flex;align-items:center;gap:8px;padding:5px 0">'
-          +'<div style="width:14px;height:14px;border-radius:4px;background:'+(bi.enabled?'var(--teal)':'var(--border-med)')+';flex-shrink:0"></div>'
-          +'<span style="font-size:14px;color:'+(bi.enabled?'var(--text)':'var(--text-3)')+'">'+esc(bi.name)+'</span></div>';
-      }
-    }).join('');
-  var extrasSection='<div style="margin-top:12px;padding-top:10px;border-top:0.5px solid var(--border)">'
-    +'<div style="font-size:12px;color:var(--text-2);margin-bottom:8px">特別提醒（選填）</div>'
-    +plan.extras.map(function(ex,i){
-      return '<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">'
-        +'<div style="flex:1;font-size:13px;background:var(--bg);border-radius:6px;padding:7px 10px;color:var(--text)">'+esc(ex)+'</div>'
-        +(canEdit?'<button class="icon-btn" style="color:var(--red)" data-action="night-del-extra" data-idx="'+i+'">×</button>':'')+'</div>';
-    }).join('')
-    +(canEdit?'<div style="display:flex;gap:8px"><input type="text" id="night-extra-input" placeholder="新增明日提醒…" style="flex:1"><button class="btn btn-ghost btn-sm" onclick="addNightExtra()">新增</button></div>':'')
-    +'</div>';
-  var sleepBtn=canEdit&&!plan.sleepTime?'<button class="btn btn-primary btn-full" style="margin-top:12px" onclick="recordSleepTime()">記錄上床時間</button>':'';
+  var extrasSection='<div style="font-size:12px;color:var(--text-2);margin-bottom:8px">明天早上想做的事</div>'
+    +(plan.extras.length?plan.extras.map(function(ex,i){
+      return '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:0.5px solid var(--border)">'
+        +'<div style="width:18px;height:18px;border-radius:5px;border:1.5px solid var(--border-med);flex-shrink:0"></div>'
+        +'<span style="flex:1;font-size:14px;color:var(--text)">'+esc(ex)+'</span>'
+        +(canEdit?'<button class="icon-btn" style="color:var(--text-3);font-size:16px;padding:0 4px;line-height:1" data-action="night-del-extra" data-idx="'+i+'">×</button>':'')
+        +'</div>';
+    }).join(''):'<div style="font-size:13px;color:var(--text-3);padding:6px 0">尚未新增，明早想完成什麼呢？</div>')
+    +(canEdit?'<div style="display:flex;gap:8px;margin-top:10px"><input type="text" id="night-extra-input" placeholder="例如：晨跑 20 分鐘…" style="flex:1"><button class="btn btn-ghost btn-sm" onclick="addNightExtra()">新增</button></div>':'');
+  var sleepBtn=canEdit&&!plan.sleepTime?'<button class="btn btn-primary btn-full" style="margin-top:14px" onclick="recordSleepTime()">記錄上床時間</button>':'';
   el.innerHTML='<div class="routine-card" style="'+(urgent?'border:1.5px solid var(--teal);':'')+'">'
-    +header+urgentBanner+sleepLine+baseSection+extrasSection+sleepBtn+'</div>';
+    +header+urgentBanner+sleepLine+extrasSection+sleepBtn+'</div>';
 }
 function addNightExtra(){
   var v=document.getElementById('night-extra-input').value.trim();if(!v)return;
@@ -4092,7 +4375,7 @@ document.body.addEventListener('focusin',function(e){
 
 // ── 雲端同步（Supabase）──────────────────────────────
 var sbClient=null,sbUser=null,syncTimer=null;
-var DATA_KEYS=['lm-books','lm-exercises','lm-reviews','lm-sessions','lm-med','lm-cases','lm-wmenus','lm-ex-goal','lm-journal','lm-timer-logs','lm-quotes','lm-checkins','lm-morning-base','lm-morning-logs','lm-night-plans','lm-notes','lm-note-tags','lm-expenses'];
+var DATA_KEYS=['lm-books','lm-exercises','lm-reviews','lm-sessions','lm-med','lm-cases','lm-wmenus','lm-ex-goal','lm-journal','lm-timer-logs','lm-quotes','lm-checkins','lm-morning-base','lm-morning-logs','lm-morning-fs','lm-night-plans','lm-notes','lm-note-tags','lm-expenses'];
 
 var SB_URL='https://gsjljwupeyvqdsrzbadf.supabase.co';
 var SB_KEY='sb_publishable_2jglYptRkedrlZe-ZPHpbQ_U-A_R6ES';
