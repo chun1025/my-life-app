@@ -222,6 +222,8 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
 .jn-cat-btn.selected{border-color:rgba(0,0,0,0.35)!important}
 .ft-timer-display{font-size:60px;font-weight:200;color:var(--text);font-variant-numeric:tabular-nums;letter-spacing:4px;line-height:1;margin-bottom:36px}
 .home-timer-running-disp{font-size:26px;font-weight:300;color:var(--teal);font-variant-numeric:tabular-nums;letter-spacing:2px;margin:4px 0}
+@keyframes notifPulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.3);opacity:.65}}
+.routine-notif-dot{position:absolute;top:6px;right:6px;width:9px;height:9px;border-radius:50%;background:var(--teal);box-shadow:0 0 0 2px var(--surface);animation:notifPulse 1.6s ease-in-out infinite}
 .timer-tab-bar{display:flex;gap:6px;margin-bottom:14px}
 .timer-retro-btns{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
 .tb-check{width:16px;height:16px;border-radius:50%;border:1.5px solid currentColor;display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer}
@@ -509,9 +511,12 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
 <!-- 個案 -->
 <div class="page" id="page-cases">
   <div class="chip-row" id="case-filter-row">
-    <button class="chip active" onclick="filterCases('pending',this)">待撰寫</button>
-    <button class="chip" onclick="filterCases('done',this)">今日完成</button>
+    <button class="chip active" onclick="filterCases('record',this)">個案紀錄</button>
     <button class="chip" onclick="filterCases('manage',this)">個案管理</button>
+  </div>
+  <div class="chip-row" id="case-record-row">
+    <button class="chip active" data-action="case-record" data-sub="pending">待撰寫</button>
+    <button class="chip" data-action="case-record" data-sub="done">今日完成</button>
   </div>
   <div class="chip-row" id="case-mgmt-row" style="display:none">
     <button class="chip" data-action="case-mgmt" data-sub="active">進行中</button>
@@ -531,7 +536,7 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>臨時紀錄
     </button>
     <button class="add-row" style="color:var(--teal)" onclick="openDraftQuick()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>臨時草稿
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>撰寫草稿
     </button>
     <button class="add-row" style="color:var(--purple)" onclick="openCaseExport()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>匯出紀錄
@@ -962,11 +967,15 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
       <textarea id="draft-text" class="draft-fs-text" placeholder="自由書寫諮商歷程、觀察與主題…"></textarea>
     </div>
     <div class="draft-fs-side">
+      <div class="field" id="draft-format-field">
+        <label>紀錄格式</label>
+        <div class="chip-row" id="draft-formats"></div>
+      </div>
       <div class="field" id="draft-target-field" style="display:none">
         <label>對象 / 代號（可留空）</label>
         <input type="text" id="draft-target" placeholder="">
       </div>
-      <div class="field">
+      <div class="field" id="draft-themes-field">
         <label>遊戲治療主題（可複選）</label>
         <div class="chip-row" id="draft-themes"></div>
       </div>
@@ -975,7 +984,7 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
         <div class="chip-row" id="draft-places"></div>
         <input type="text" id="draft-place-other" placeholder="其他地點…" style="display:none;margin-top:6px">
       </div>
-      <div class="field">
+      <div class="field" id="draft-materials-field">
         <label>使用媒材（可複選）</label>
         <div class="chip-row" id="draft-materials"></div>
         <input type="text" id="draft-material-other" placeholder="其他媒材…" style="display:none;margin-top:6px">
@@ -1039,6 +1048,21 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
     <div style="display:flex;gap:8px;margin-top:10px">
       <button class="btn btn-ghost" style="flex:1;justify-content:center" onclick="copyExport()">複製全部</button>
       <button class="btn btn-primary" style="flex:1;justify-content:center" onclick="downloadExport()">下載 .txt</button>
+    </div>
+  </div>
+</div>
+
+<!-- 起床 / 就寢時間 編輯 -->
+<div class="modal-overlay" id="modal-wakesleep">
+  <div class="modal">
+    <div class="modal-title">起床 / 就寢時間 <button class="modal-close" onclick="closeModal('wakesleep')">×</button></div>
+    <div style="font-size:13px;color:var(--text-2);margin-bottom:12px" id="ws-date-label"></div>
+    <div class="field"><label>起床時間</label><input type="time" id="ws-wake"></div>
+    <div class="field"><label>就寢時間</label><input type="time" id="ws-sleep"></div>
+    <div style="font-size:12px;color:var(--text-3);margin-bottom:12px">清空某欄位後按儲存，即刪除該筆時間</div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-danger" style="flex:1;justify-content:center" onclick="deleteWakeSleep()">刪除整日</button>
+      <button class="btn btn-primary" style="flex:2;justify-content:center" onclick="saveWakeSleep()">儲存</button>
     </div>
   </div>
 </div>
@@ -1389,8 +1413,9 @@ function setGrowthSub(sub){
 
 // ── 記帳 ──────────────────────────────────────────────
 var MONEY_PRESETS=['餐費','飲料','日用品','娛樂','出遊','衣服','書'];
-var MONEY_COLORS={'餐費':'#E8833A','飲料':'#0F9E8E','日用品':'#7C9070','娛樂':'#3E8ED0','出遊':'#D9534F','衣服':'#B57BB8','書':'#6FA82E','收入':'#3DA35D'};
-var MONEY_PALETTE=['#C9A227','#5D7CB5','#A0664B','#4FB0A5','#9B6B9E','#E36588','#6B8E23','#D08C3A','#3F8E8E','#8A7BC8'];
+// 莫蘭迪柔和色系，與日式極簡風格和諧
+var MONEY_COLORS={'餐費':'#C49A6C','飲料':'#7FA8A0','日用品':'#A3A380','娛樂':'#8FA3B8','出遊':'#C28E7D','衣服':'#AD96B0','書':'#9DA873','收入':'#88A892'};
+var MONEY_PALETTE=['#B79F8E','#8C9CA8','#A8927D','#9FA886','#B58E8E','#8E9DA8','#A99BB0','#9DA873','#C0A98C','#849B92'];
 function moneyColor(cat,idx){return MONEY_COLORS[cat]||MONEY_PALETTE[idx%MONEY_PALETTE.length];}
 function fmtMoney(n){return Math.round(n).toLocaleString('en-US');}
 function curMonthKey(){return today().slice(0,7);}
@@ -1484,13 +1509,8 @@ function renderMoney(){
       +'<div style="flex:1;border-left:0.5px solid var(--border);border-right:0.5px solid var(--border)"><div style="font-size:12px;color:var(--text-2)">本月支出</div><div style="font-size:18px;font-weight:600;color:var(--red);margin-top:3px">$'+fmtMoney(expense)+'</div></div>'
       +'<div style="flex:1"><div style="font-size:12px;color:var(--text-2)">剩餘可用</div><div style="font-size:18px;font-weight:600;color:'+balColor+';margin-top:3px">$'+fmtMoney(balance)+'</div></div>'
     +'</div>'
-    +'<div style="display:flex;align-items:center;justify-content:space-between;margin-top:12px">'
-      +'<span style="font-size:12px;color:var(--text-2)">支出占收入比例</span>'
-      +'<span style="font-size:13px;font-weight:600;color:'+ratioColor+'">'+ratio+'%</span>'
-    +'</div>'
-    +'<div class="prog" style="margin-top:6px"><div class="prog-fill" style="width:'+Math.min(100,ratio)+'%;background:'+ratioColor+'"></div></div>'
     +'<div style="margin-top:14px;padding-top:12px;border-top:0.5px solid var(--border);display:flex;justify-content:flex-end">'
-      +'<button class="btn btn-ghost btn-sm" style="color:var(--teal)" onclick="openExpenseModal(\'\',\'income\')">＋ 記一筆收入（每月登記一次）</button>'
+      +'<button class="btn btn-ghost btn-sm" style="color:var(--teal)" onclick="openExpenseModal(\'\',\'income\')">＋ 紀錄收入</button>'
     +'</div>'
   ):'';
   document.getElementById('money-summary').innerHTML=
@@ -1520,7 +1540,11 @@ function renderMoney(){
     chartEl.innerHTML='<div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;justify-content:center">'
       +moneyPieSVG(segs,expense)
       +'<div style="flex:1;min-width:160px">'+legend+'</div></div>'
-      +'<div style="text-align:center;margin-top:12px;padding-top:10px;border-top:0.5px solid var(--border);font-size:13px;color:var(--text-2)">本月總支出 <span style="font-size:16px;font-weight:600;color:var(--red)">$'+fmtMoney(expense)+'</span></div>';
+      +'<div style="text-align:center;margin-top:12px;padding-top:10px;border-top:0.5px solid var(--border);font-size:13px;color:var(--text-2)">本月總支出 <span style="font-size:16px;font-weight:600;color:var(--red)">$'+fmtMoney(expense)+'</span></div>'
+      +'<div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px">'
+        +'<span style="font-size:12px;color:var(--text-2)">支出占收入比例</span>'
+        +'<span style="font-size:13px;font-weight:600;color:'+ratioColor+'">'+ratio+'%</span></div>'
+      +'<div class="prog" style="margin-top:6px"><div class="prog-fill" style="width:'+Math.min(100,ratio)+'%;background:'+ratioColor+'"></div></div>';
   }
   // 快速類別按鈕（預設 + 已用過的自訂類別）
   var usedCustom=Object.keys(catMap).filter(function(c){return MONEY_PRESETS.indexOf(c)<0;});
@@ -1572,8 +1596,12 @@ function weekDotsHTML(dates,hasFn,colorClass){
 }
 function renderHome(){
   _routineViewDate=today();
+  var isTodayView=homePeriod==='today';
+  // 晨間/夜間 routine 僅在「今天」檢視顯示；本週/本月只看圖表
+  var rcw=document.getElementById('routine-cards-wrap');
+  if(rcw)rcw.style.display=isTodayView?'flex':'none';
   renderMorningCard();renderNightCard();
-  maybeShowMorningFs();
+  if(isTodayView)maybeShowMorningFs();
   var qel=document.getElementById('home-checkin-quote');
   if(qel)qel.textContent=quotes.length?quotes[Math.floor(Math.random()*quotes.length)].text:'轉換打卡';
   var t=today(),wd=weekDates(),md=monthDates(),dash=document.getElementById('home-dashboard');
@@ -1669,10 +1697,12 @@ function renderHome(){
     if(isMedOnM){var mD=allDaysInMonth.filter(function(d){return d<=todayStr&&medSessions.some(function(s){return s.date===d;});}).length;monthSections+='<div><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px"><span style="font-size:12px;color:var(--text-2)">冥想</span><span style="font-size:12px;color:var(--amber);font-weight:500">'+mD+' 天</span></div>'+monthDotGrid(function(d){return medSessions.some(function(s){return s.date===d;});},'var(--amber)')+'</div>';}
     dash.innerHTML=(monthSections?'<div class="home-section"><div class="home-section-title">本月習慣（共'+totalInMonth+'天）</div>'+monthSections+'</div>':'')+wakeSleepChart(allDaysInMonth,allDaysInMonth.map(function(d,i){return i%7===0?parseInt(d.slice(8)):'';}));
   }
-  // 萬用計時器 widget
+  // 萬用計時器 widget（僅「今天」檢視顯示）
   renderTimerWidget();
-  // 閱讀中
-  var showReadSec=appSettings.pages.growth&&appSettings.growth.reading;
+  var tcard=document.getElementById('home-timer-card');
+  if(tcard)tcard.style.display=isTodayView?'':'none';
+  // 閱讀中（僅「今天」檢視顯示）
+  var showReadSec=isTodayView&&appSettings.pages.growth&&appSettings.growth.reading;
   var rSecEl=document.getElementById('home-reading-sec');
   if(rSecEl)rSecEl.style.display=showReadSec?'':'none';
   var rl=document.getElementById('home-reading-list');
@@ -2076,12 +2106,17 @@ function wakeSleepChart(dates,xLabels){
     grid+='<line x1="'+padL+'" y1="'+yy.toFixed(1)+'" x2="'+(W-padR)+'" y2="'+yy.toFixed(1)+'" stroke="var(--border)" stroke-width="0.5"/>';
     grid+='<text x="'+(padL-4)+'" y="'+(yy+3).toFixed(1)+'" text-anchor="end" font-size="8" fill="var(--text-3)">'+h+'</text>';
   });
-  var wakePts=[],sleepPts=[];
+  var wakePts=[],sleepPts=[],hitRects='';
+  var cw=n>0?plotW/n:plotW;
   dates.forEach(function(d,i){
     var w=toMin((morningLogs[d]||{}).wakeTime,false);
     var s=toMin((nightPlans[d]||{}).sleepTime,true);
     if(w!=null)wakePts.push([X(i),Y(w)]);
     if(s!=null)sleepPts.push([X(i),Y(s)]);
+    // 有紀錄的日期 → 整欄可點擊編輯
+    if((morningLogs[d]||{}).wakeTime||(nightPlans[d]||{}).sleepTime){
+      hitRects+='<rect x="'+(X(i)-cw/2).toFixed(1)+'" y="'+padT+'" width="'+cw.toFixed(1)+'" height="'+plotH+'" fill="#000" fill-opacity="0" style="pointer-events:all;cursor:pointer" data-action="edit-wakesleep" data-date="'+d+'"></rect>';
+    }
   });
   function lineEls(pts,color){
     if(!pts.length)return '';
@@ -2092,10 +2127,11 @@ function wakeSleepChart(dates,xLabels){
   var xlab=xLabels?xLabels.map(function(l,i){return l?'<text x="'+X(i).toFixed(1)+'" y="'+(H-6)+'" text-anchor="middle" font-size="8" fill="var(--text-3)">'+l+'</text>':'';}).join(''):'';
   var hasData=wakePts.length||sleepPts.length;
   var svg='<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;height:auto;display:block">'+grid
-    +lineEls(wakePts,'var(--amber)')+lineEls(sleepPts,'var(--blue)')+xlab+'</svg>';
+    +lineEls(wakePts,'var(--amber)')+lineEls(sleepPts,'var(--blue)')+xlab+hitRects+'</svg>';
   var legend='<div style="display:flex;gap:14px;justify-content:center;margin-top:2px">'
     +'<span style="font-size:11px;color:var(--text-2);display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:50%;background:var(--amber)"></span>起床</span>'
-    +'<span style="font-size:11px;color:var(--text-2);display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:50%;background:var(--blue)"></span>就寢</span></div>';
+    +'<span style="font-size:11px;color:var(--text-2);display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:50%;background:var(--blue)"></span>就寢</span></div>'
+    +'<div style="font-size:11px;color:var(--text-3);text-align:center;margin-top:6px">點圖表上有紀錄的日期即可編輯或刪除</div>';
   return '<div class="home-section" style="margin-top:14px"><div class="home-section-title">起床 / 就寢時間</div>'
     +(hasData?svg+legend:'<div class="empty" style="padding:14px 0">尚無起床 / 就寢紀錄</div>')+'</div>';
 }
@@ -2770,20 +2806,30 @@ function getTodayCases(){
 function filterCases(f,btn){
   document.querySelectorAll('#case-filter-row .chip').forEach(function(c){c.classList.remove('active');});
   btn.classList.add('active');
+  var recRow=document.getElementById('case-record-row');
   var mgmtRow=document.getElementById('case-mgmt-row');
   var sortRow=document.getElementById('case-sort-row');
   if(f==='manage'){
     // 個案管理：進行中／暫停中／結案 收納於此
     if(['active','paused','closed'].indexOf(caseFilter)<0)caseFilter='active';
+    recRow.style.display='none';
     mgmtRow.style.display='flex';
     document.querySelectorAll('#case-mgmt-row .chip').forEach(function(c){c.classList.toggle('active',c.dataset.sub===caseFilter);});
     sortRow.style.display='flex';
     document.querySelectorAll('#case-sort-row .chip').forEach(function(c){c.classList.toggle('active',c.dataset.mode===caseSortMode);});
   }else{
-    caseFilter=f;
+    // 個案紀錄：待撰寫／今日完成 收納於此
+    if(['pending','done'].indexOf(caseFilter)<0)caseFilter='pending';
+    recRow.style.display='flex';
+    document.querySelectorAll('#case-record-row .chip').forEach(function(c){c.classList.toggle('active',c.dataset.sub===caseFilter);});
     mgmtRow.style.display='none';
     sortRow.style.display='none';
   }
+  renderCases();
+}
+function setCaseRecord(sub){
+  caseFilter=sub;
+  document.querySelectorAll('#case-record-row .chip').forEach(function(c){c.classList.toggle('active',c.dataset.sub===sub);});
   renderCases();
 }
 function setCaseMgmt(sub){
@@ -3036,9 +3082,18 @@ function saveSessEvent(){
 var DRAFT_THEMES=['攻擊／權力控制','照顧滋養','家庭關係','焦慮恐懼','創傷重現','掌控勝任','退化','修復和好','探索試探','其他'];
 var DRAFT_PLACES=['諮商室-沙盤','諮商室-沙發','生活教室','教師休息室','其他'];
 var DRAFT_MATERIALS=['沙盤','沙盤物件','玩具','桌遊','黏土','繪畫','其他'];
+// 兩種紀錄格式：遊戲治療（主題/地點/媒材）、諮商（只有地點）
+var DRAFT_FORMATS=[{key:'play',label:'遊戲治療紀錄'},{key:'counsel',label:'諮商紀錄'}];
 var _draftCtx=null,_draftData=null;
-function blankDraft(){return {themes:[],text:'',place:'',placeOther:'',materials:[],materialsOther:''};}
+function blankDraft(){return {format:'play',themes:[],text:'',place:'',placeOther:'',materials:[],materialsOther:''};}
 function renderDraftChips(){
+  document.getElementById('draft-formats').innerHTML=DRAFT_FORMATS.map(function(f){
+    var on=_draftData.format===f.key;
+    return '<button class="chip'+(on?' active':'')+'" data-action="draft-format" data-val="'+f.key+'">'+esc(f.label)+'</button>';
+  }).join('');
+  var isPlay=_draftData.format==='play';
+  document.getElementById('draft-themes-field').style.display=isPlay?'':'none';
+  document.getElementById('draft-materials-field').style.display=isPlay?'':'none';
   document.getElementById('draft-themes').innerHTML=DRAFT_THEMES.map(function(th){
     var on=_draftData.themes.indexOf(th)>=0;
     return '<button class="chip'+(on?' active':'')+'" data-action="draft-theme" data-val="'+esc(th)+'">'+esc(th)+'</button>';
@@ -3057,6 +3112,7 @@ function renderDraftChips(){
 function openDraft(ctx,existing,title){
   _draftCtx=ctx;
   _draftData=existing?{
+    format:existing.format||'play',
     themes:(existing.themes||[]).slice(),text:existing.text||'',
     place:existing.place||'',placeOther:existing.placeOther||'',
     materials:(existing.materials||[]).slice(),materialsOther:existing.materialsOther||''
@@ -3087,23 +3143,26 @@ function openCaseDraftSession(cid,sidx){
   var c=cases.find(function(x){return x.id===cid;});if(!c||!c.sessions[sidx])return;
   openDraft({mode:'case',cid:cid,sidx:sidx},c.sessions[sidx].draft,caseDisplayName(c)+' · 草稿');
 }
-// 不屬於既有個案的臨時草稿
-function openDraftQuick(){openDraft({mode:'quick'},null,'臨時草稿');}
+// 不屬於既有個案的撰寫草稿
+function openDraftQuick(){openDraft({mode:'quick'},null,'撰寫草稿');}
 function saveDraft(){
   var pOther=document.getElementById('draft-place-other').value.trim();
   var mOther=document.getElementById('draft-material-other').value.trim();
+  var isPlay=_draftData.format==='play';
   var draft={
-    themes:_draftData.themes.slice(),
+    format:_draftData.format,
+    // 諮商紀錄格式不含主題/媒材
+    themes:isPlay?_draftData.themes.slice():[],
     text:document.getElementById('draft-text').value.trim(),
     place:_draftData.place,
     placeOther:_draftData.place==='其他'?pOther:'',
-    materials:_draftData.materials.slice(),
-    materialsOther:(_draftData.materials.indexOf('其他')>=0)?mOther:''
+    materials:isPlay?_draftData.materials.slice():[],
+    materialsOther:(isPlay&&_draftData.materials.indexOf('其他')>=0)?mOther:''
   };
   var markWritten=document.getElementById('draft-mark-written').checked;
   if(_draftCtx.mode==='quick'){
     var label=document.getElementById('draft-target').value.trim();
-    var qc={id:String(Date.now()),code:label||('臨時'+nowTime()),className:'',quickType:'臨時草稿',isQuick:true,status:'active',sessions:[],startCount:0,skippedWeeks:[]};
+    var qc={id:String(Date.now()),code:label||('草稿'+nowTime()),className:'',quickType:'撰寫草稿',isQuick:true,status:'active',sessions:[],startCount:0,skippedWeeks:[]};
     var qs={date:today(),kind:'temp',written:markWritten,draft:draft};
     if(markWritten)qs.writtenAt=nowTime();
     qc.sessions.push(qs);cases.push(qc);
@@ -3819,7 +3878,11 @@ function renderTimerWidget(){
       +'</div>';
   } else {
     el.className='home-timer-card';
-    el.innerHTML='<div style="display:flex;align-items:center;gap:8px">'
+    el.innerHTML='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">'
+      +'<span style="font-size:12px;font-weight:600;color:var(--teal);letter-spacing:.5px;text-transform:uppercase">萬用計時器</span>'
+      +'<span style="font-size:11px;color:var(--text-3)">待開始</span></div>'
+      +'<div class="home-timer-running-disp" id="home-timer-time" style="color:var(--text-3);text-align:center">00:00:00</div>'
+      +'<div style="display:flex;align-items:center;gap:8px;margin-top:8px">'
       +'<input id="home-timer-input" type="text" placeholder="" value="'+esc(uTimerTitle||'')+'" '
       +'style="flex:1;border:none;background:white;border-radius:8px;padding:8px 10px;font-size:13px;color:var(--text);outline:none;min-width:0" '
       +'oninput="uTimerTitle=this.value" onclick="event.stopPropagation()">'
@@ -4047,6 +4110,8 @@ document.body.addEventListener('click',function(e){
   else if(action==='toggle-weekly-schedule'){toggleWeeklySchedule(el.dataset.id);}
   else if(action==='case-sort'){setCaseSort(el.dataset.mode);}
   else if(action==='case-mgmt'){setCaseMgmt(el.dataset.sub);}
+  else if(action==='case-record'){setCaseRecord(el.dataset.sub);}
+  else if(action==='edit-wakesleep'){openWakeSleepEdit(el.dataset.date);}
   // ── V9 ──
   else if(action==='growth-sub'){setGrowthSub(el.dataset.sub);}
   else if(action==='journal-prev'){shiftJournalDate(journalView==='week'?-7:-1);}
@@ -4065,6 +4130,10 @@ document.body.addEventListener('click',function(e){
   else if(action==='edit-sess-event'){openSessEventEdit(el.dataset.cid,parseInt(el.dataset.sidx));}
   else if(action==='open-draft-today'){openCaseDraftToday(el.dataset.id);}
   else if(action==='open-draft-session'){openCaseDraftSession(el.dataset.cid,parseInt(el.dataset.sidx));}
+  else if(action==='draft-format'){
+    _draftData.format=el.dataset.val;
+    renderDraftChips();
+  }
   else if(action==='draft-theme'){
     var tv=el.dataset.val,ti=_draftData.themes.indexOf(tv);
     if(ti>=0)_draftData.themes.splice(ti,1);else _draftData.themes.push(tv);
@@ -4213,9 +4282,10 @@ function _routineCollapsedBtn(which,label,statusText,statusColor,urgent){
   var icon=which==='morning'
     ?'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>'
     :'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 12.8A9 9 0 1111.2 3 7 7 0 0021 12.8z"/></svg>';
+  var dot=urgent?'<span class="routine-notif-dot"></span>':'';
   return '<button data-action="routine-expand" data-which="'+which+'" '
-    +'style="width:100%;background:var(--surface);border:'+(urgent?'1.5px solid var(--teal)':'0.5px solid var(--border)')+';border-radius:var(--radius);padding:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:'+(urgent?'var(--teal)':'var(--text-3)')+'">'
-    +icon+'</button>';
+    +'style="position:relative;width:100%;background:var(--surface);border:'+(urgent?'1.5px solid var(--teal)':'0.5px solid var(--border)')+';border-radius:var(--radius);padding:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:'+(urgent?'var(--teal)':'var(--text-3)')+'">'
+    +icon+dot+'</button>';
 }
 function initMorningRoutine(){
   var t=today();
@@ -4338,15 +4408,15 @@ function renderMorningFs(){
     if(appSettings.growth.exercise)jumps.push({sub:'exercise',label:'運動',ico:'<path d="M18 3a3 3 0 00-3 3v12a3 3 0 003 3 3 3 0 003-3 3 3 0 00-3-3H6a3 3 0 00-3 3 3 3 0 003 3 3 3 0 003-3V6a3 3 0 00-3-3 3 3 0 00-3 3 3 3 0 003 3h12a3 3 0 003-3 3 3 0 00-3-3z"/>'});
     if(appSettings.growth.meditation)jumps.push({sub:'meditate',label:'冥想',ico:'<circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/>'});
   }
-  var jumpHTML=jumps.length?'<div style="margin-top:auto;padding-top:24px">'
-    +'<div style="font-size:12px;color:var(--text-2);margin-bottom:10px">早晨也想做…</div>'
-    +'<div style="display:flex;gap:10px">'+jumps.map(function(j){
+  var jumpHTML=jumps.length?'<div style="margin-top:22px;display:flex;gap:10px">'+jumps.map(function(j){
       return '<button onclick="morningJump(\''+j.sub+'\')" style="flex:1;background:var(--surface);border:0.5px solid var(--border-med);border-radius:var(--radius);padding:14px 6px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;color:var(--text-2)">'
         +'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">'+j.ico+'</svg>'
         +'<span style="font-size:13px">'+j.label+'</span></button>';
-    }).join('')+'</div></div>':'';
-  body.innerHTML='<div style="font-size:14px;color:var(--text-2);margin-bottom:6px">'+esc(todayLabel())+'</div>'
-    +'<div style="margin-top:6px">'+itemsHTML+'</div>'+jumpHTML;
+    }).join('')+'</div>':'';
+  // checklist 置中，閱讀/運動/冥想跳轉緊接其下
+  body.innerHTML='<div style="flex:1;display:flex;flex-direction:column;justify-content:center;width:100%;max-width:440px;margin:0 auto">'
+    +'<div style="font-size:14px;color:var(--text-2);margin-bottom:10px;text-align:center">'+esc(todayLabel())+'</div>'
+    +'<div>'+itemsHTML+'</div>'+jumpHTML+'</div>';
 }
 function openMorningFs(){
   var t=today();initMorningRoutine();
@@ -4423,7 +4493,7 @@ function renderNightCard(){
         +'<span style="flex:1;font-size:14px;color:var(--text)">'+esc(ex)+'</span>'
         +(canEdit?'<button class="icon-btn" style="color:var(--text-3);font-size:16px;padding:0 4px;line-height:1" data-action="night-del-extra" data-idx="'+i+'">×</button>':'')
         +'</div>';
-    }).join(''):'<div style="font-size:13px;color:var(--text-3);padding:6px 0">尚未新增，明早想完成什麼呢？</div>')
+    }).join(''):'')
     +(canEdit?'<div style="display:flex;gap:8px;margin-top:10px"><input type="text" id="night-extra-input" placeholder="" style="flex:1"><button class="btn btn-ghost btn-sm" onclick="addNightExtra()">新增</button></div>':'');
   var sleepBtn=canEdit&&!plan.sleepTime?'<button class="btn btn-primary btn-full" style="margin-top:14px" onclick="recordSleepTime()">記錄上床時間</button>':'';
   el.innerHTML='<div class="routine-card" style="'+(urgent?'border:1.5px solid var(--teal);':'')+'">'
@@ -4449,6 +4519,48 @@ function recordSleepTime(){
   var plan=_getNightPlan(today());
   plan.sleepTime=nowTime();save('lm-night-plans',nightPlans);
   renderNightCard();showToast('已記錄上床：'+plan.sleepTime);
+}
+// ── 起床 / 就寢時間 編輯（從本週/本月圖表點入）──────────────
+var _wsDate=null;
+function openWakeSleepEdit(date){
+  _wsDate=date;
+  document.getElementById('ws-date-label').textContent=date;
+  document.getElementById('ws-wake').value=(morningLogs[date]&&morningLogs[date].wakeTime)||'';
+  document.getElementById('ws-sleep').value=(nightPlans[date]&&nightPlans[date].sleepTime)||'';
+  openModal('wakesleep');
+}
+function _setWake(date,val){
+  if(val){
+    if(!morningLogs[date])morningLogs[date]={items:[],completedAt:null};
+    morningLogs[date].wakeTime=val;
+    var it=(morningLogs[date].items||[]).find(function(x){return x.wake;});
+    if(it){it.wakeTime=val;it.done=true;}
+  }else if(morningLogs[date]){
+    morningLogs[date].wakeTime=null;
+    var it2=(morningLogs[date].items||[]).find(function(x){return x.wake;});
+    if(it2){it2.wakeTime=null;}
+  }
+}
+function _setSleep(date,val){
+  if(val){
+    if(!nightPlans[date])nightPlans[date]={baseItems:[],extras:[],sleepTime:null};
+    nightPlans[date].sleepTime=val;
+  }else if(nightPlans[date]){
+    nightPlans[date].sleepTime=null;
+  }
+}
+function saveWakeSleep(){
+  if(!_wsDate)return;
+  _setWake(_wsDate,document.getElementById('ws-wake').value);
+  _setSleep(_wsDate,document.getElementById('ws-sleep').value);
+  save('lm-morning-logs',morningLogs);save('lm-night-plans',nightPlans);
+  closeModal('wakesleep');renderHome();showToast('已更新');
+}
+function deleteWakeSleep(){
+  if(!_wsDate)return;
+  _setWake(_wsDate,'');_setSleep(_wsDate,'');
+  save('lm-morning-logs',morningLogs);save('lm-night-plans',nightPlans);
+  closeModal('wakesleep');renderHome();showToast('已刪除該日起床/就寢時間');
 }
 
 // ── 靈感筆記 ───────────────────────────────────────────
