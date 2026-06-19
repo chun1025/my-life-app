@@ -221,7 +221,7 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
 .jn-cat-btn:active{transform:scale(0.96)}
 .jn-cat-btn.selected{border-color:rgba(0,0,0,0.35)!important}
 .ft-timer-display{font-size:60px;font-weight:200;color:var(--text);font-variant-numeric:tabular-nums;letter-spacing:4px;line-height:1;margin-bottom:36px}
-.home-timer-running-disp{font-size:26px;font-weight:300;color:var(--teal);font-variant-numeric:tabular-nums;letter-spacing:2px;margin:4px 0}
+.home-timer-running-disp{font-size:23px;font-weight:200;color:var(--teal);font-variant-numeric:tabular-nums;letter-spacing:3px;margin:4px 0}
 @keyframes notifPulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.3);opacity:.65}}
 .routine-notif-dot{position:absolute;top:6px;right:6px;width:9px;height:9px;border-radius:50%;background:var(--teal);box-shadow:0 0 0 2px var(--surface);animation:notifPulse 1.6s ease-in-out infinite}
 .timer-tab-bar{display:flex;gap:6px;margin-bottom:14px}
@@ -269,10 +269,11 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
 .draft-fs-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;padding-top:4px}
 .draft-fs-title{font-size:16px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .draft-fs-actions{display:flex;gap:8px;flex-shrink:0}
-.draft-fs-body{flex:1;display:flex;flex-direction:column;gap:18px;min-height:0}
+.draft-fs-body{display:flex;flex-direction:column;gap:18px}
+.draft-fs-format{margin-bottom:0}
 .draft-fs-main{display:flex;flex-direction:column;flex:1;min-height:0}
 .draft-fs-main>label{font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:6px}
-.draft-fs-text{flex:1;min-height:240px;resize:vertical;font-size:15px;line-height:1.75}
+.draft-fs-text{flex:1;min-height:260px;resize:vertical;font-size:15px;line-height:1.75}
 .draft-fs-side{display:flex;flex-direction:column;gap:16px}
 .draft-fs-side .field{margin-bottom:0}
 .checkin-quote-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px 4px;min-height:180px}
@@ -353,9 +354,10 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
   /* 諮商草稿撰寫：電腦版加寬、左右雙欄，方便書寫長篇內容 */
   #fullscreen-draft{padding:40px 32px}
   #fullscreen-draft>*{max-width:960px}
-  #fullscreen-draft .draft-fs-body{flex-direction:row;gap:32px;align-items:stretch}
-  #fullscreen-draft .draft-fs-main{flex:1.7}
-  #fullscreen-draft .draft-fs-side{flex:1;max-width:340px;overflow-y:auto}
+  #fullscreen-draft .draft-fs-body{display:grid;grid-template-columns:1.7fr 1fr;grid-template-rows:auto 1fr;grid-template-areas:"main format" "main side";column-gap:32px;row-gap:16px;align-items:start}
+  #fullscreen-draft .draft-fs-format{grid-area:format}
+  #fullscreen-draft .draft-fs-main{grid-area:main;align-self:stretch}
+  #fullscreen-draft .draft-fs-side{grid-area:side;max-width:340px;overflow-y:auto}
   #fullscreen-draft .draft-fs-text{min-height:58vh;font-size:16px;line-height:1.85}
   /* 滑鼠 hover 微回饋 */
   .card:hover,.home-section:hover{border-color:var(--border-med)}
@@ -962,15 +964,15 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
     </div>
   </div>
   <div class="draft-fs-body">
+    <div class="field draft-fs-format" id="draft-format-field">
+      <label>紀錄格式</label>
+      <div class="chip-row" id="draft-formats"></div>
+    </div>
     <div class="draft-fs-main">
       <label>諮商歷程與主題</label>
       <textarea id="draft-text" class="draft-fs-text" placeholder="自由書寫諮商歷程、觀察與主題…"></textarea>
     </div>
     <div class="draft-fs-side">
-      <div class="field" id="draft-format-field">
-        <label>紀錄格式</label>
-        <div class="chip-row" id="draft-formats"></div>
-      </div>
       <div class="field" id="draft-target-field" style="display:none">
         <label>對象 / 代號（可留空）</label>
         <input type="text" id="draft-target" placeholder="">
@@ -3867,26 +3869,22 @@ function renderTimerWidget(){
   var el=document.getElementById('home-timer-card');if(!el)return;
   if(uTimerRunning){
     el.className='home-timer-card running';
-    el.innerHTML='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">'
-      +'<div style="font-size:12px;font-weight:600;color:var(--teal);letter-spacing:.5px;text-transform:uppercase">萬用計時器 <span style="font-size:10px;animation:none">● 計時中</span></div>'
-      +'<span style="font-size:12px;color:var(--text-3)">'+(uTimerPaused?'已暫停':'進行中')+'</span></div>'
-      +'<div style="font-size:14px;font-weight:500;color:var(--text);margin-bottom:4px">'+esc(uTimerTitle||'計時中')+'</div>'
+    el.innerHTML='<div style="width:fit-content;margin:0 auto;text-align:center">'
+      +'<div style="font-size:11px;color:var(--teal);letter-spacing:.5px;margin-bottom:2px">● '+(uTimerPaused?'已暫停':'計時中')+'</div>'
       +'<div class="home-timer-running-disp" id="home-timer-time">'+fmt(uTimerSec)+'</div>'
-      +'<div style="display:flex;gap:8px;margin-top:8px">'
-      +'<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();toggleUTimer()">'+(uTimerPaused?'繼續':'暫停')+'</button>'
-      +'<button class="btn btn-danger btn-sm" onclick="event.stopPropagation();stopUTimer()">結束記錄</button>'
-      +'</div>';
+      +(uTimerTitle?'<div style="font-size:12px;color:var(--text-3);margin-top:2px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(uTimerTitle)+'</div>':'')
+      +'<div style="display:flex;gap:8px;margin-top:10px">'
+      +'<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();toggleUTimer()" style="flex:1">'+(uTimerPaused?'繼續':'暫停')+'</button>'
+      +'<button class="btn btn-danger btn-sm" onclick="event.stopPropagation();stopUTimer()" style="flex:1">結束</button>'
+      +'</div></div>';
   } else {
     el.className='home-timer-card';
-    el.innerHTML='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">'
-      +'<span style="font-size:12px;font-weight:600;color:var(--teal);letter-spacing:.5px;text-transform:uppercase">萬用計時器</span>'
-      +'<span style="font-size:11px;color:var(--text-3)">待開始</span></div>'
-      +'<div class="home-timer-running-disp" id="home-timer-time" style="color:var(--text-3);text-align:center">00:00:00</div>'
-      +'<div style="display:flex;align-items:center;gap:8px;margin-top:8px">'
+    el.innerHTML='<div style="width:fit-content;margin:0 auto;text-align:center">'
+      +'<div class="home-timer-running-disp" id="home-timer-time" style="color:var(--text-3);margin:0 0 10px">00:00:00</div>'
       +'<input id="home-timer-input" type="text" placeholder="" value="'+esc(uTimerTitle||'')+'" '
-      +'style="flex:1;border:none;background:white;border-radius:8px;padding:8px 10px;font-size:13px;color:var(--text);outline:none;min-width:0" '
+      +'style="display:block;width:100%;box-sizing:border-box;border:none;border-bottom:1px solid var(--border);background:transparent;padding:5px 2px;font-size:13px;color:var(--text);outline:none;text-align:center" '
       +'oninput="uTimerTitle=this.value" onclick="event.stopPropagation()">'
-      +'<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();startUTimerHome()" style="flex-shrink:0">開始</button>'
+      +'<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();startUTimerHome()" style="width:100%;margin-top:10px">開始</button>'
       +'</div>';
   }
 }
