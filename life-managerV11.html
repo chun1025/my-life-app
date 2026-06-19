@@ -511,9 +511,12 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
   <div class="chip-row" id="case-filter-row">
     <button class="chip active" onclick="filterCases('pending',this)">待撰寫</button>
     <button class="chip" onclick="filterCases('done',this)">今日完成</button>
-    <button class="chip" onclick="filterCases('active',this)">進行中</button>
-    <button class="chip" onclick="filterCases('paused',this)">暫停中</button>
-    <button class="chip" onclick="filterCases('closed',this)">結案個案</button>
+    <button class="chip" onclick="filterCases('manage',this)">個案管理</button>
+  </div>
+  <div class="chip-row" id="case-mgmt-row" style="display:none">
+    <button class="chip" data-action="case-mgmt" data-sub="active">進行中</button>
+    <button class="chip" data-action="case-mgmt" data-sub="paused">暫停中</button>
+    <button class="chip" data-action="case-mgmt" data-sub="closed">結案個案</button>
   </div>
   <div class="chip-row" id="case-sort-row" style="display:none">
     <button class="chip" data-action="case-sort" data-mode="time">本週時間順序</button>
@@ -568,9 +571,6 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
     <button class="add-row" onclick="openExpenseModal('','expense')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>自訂支出
     </button>
-    <button class="add-row" style="color:var(--teal)" onclick="openExpenseModal('','income')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>記一筆收入
-    </button>
   </div>
   <div class="sec" style="margin-top:18px">本月明細</div>
   <div id="money-list"></div>
@@ -593,8 +593,8 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
     <div class="modal-title">新增書籍 <button class="modal-close" onclick="closeModal('book')">x</button></div>
     <div class="field"><label>書名</label><input type="text" id="b-title" placeholder="書名"></div>
     <div class="field"><label>作者</label><input type="text" id="b-author" placeholder="作者"></div>
-    <div class="field"><label>總頁數</label><input type="number" id="b-pages" placeholder="300" min="1"></div>
-    <div class="field"><label>起始頁數</label><input type="number" id="b-startpage" placeholder="0" min="0"></div>
+    <div class="field"><label>總頁數</label><input type="number" id="b-pages" placeholder="" min="1"></div>
+    <div class="field"><label>起始頁數</label><input type="number" id="b-startpage" placeholder="" min="0"></div>
     <div class="field"><label>狀態</label><select id="b-status"><option value="want">待看</option><option value="reading" selected>閱讀中</option><option value="done">已完成</option></select></div>
     <button class="btn btn-primary btn-full" onclick="addBook()">新增</button>
   </div>
@@ -622,7 +622,7 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
   <div class="modal">
     <div class="modal-title">這次讀到哪裡？</div>
     <div style="font-size:13px;color:var(--text-2);margin-bottom:14px">計時時長：<span id="s-duration" style="font-weight:600;color:var(--text)"></span></div>
-    <div class="field"><label>結束頁數</label><input type="number" id="s-endpage" placeholder="142" min="1"></div>
+    <div class="field"><label>結束頁數</label><input type="number" id="s-endpage" placeholder="" min="1"></div>
     <div id="s-preview" style="display:none;background:var(--bg);border-radius:var(--radius-sm);padding:12px;margin-bottom:14px">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
         <div><div style="font-size:11px;color:var(--text-2);margin-bottom:3px">本次讀了</div><div style="font-size:18px;font-weight:600;color:var(--text)" id="s-pages-read"></div></div>
@@ -652,14 +652,14 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
         <div style="font-size:13px;font-weight:500;color:var(--text);margin-bottom:8px" id="ex-preview-name"></div>
         <div id="ex-preview-moves"></div>
       </div>
-      <div class="field" style="margin-top:8px"><label>時間（分鐘）</label><input type="number" id="e-menu-min" placeholder="45" min="1"></div>
+      <div class="field" style="margin-top:8px"><label>時間（分鐘）</label><input type="number" id="e-menu-min" placeholder="" min="1"></div>
       <div class="field"><label>備註（選填）</label><input type="text" id="e-menu-note"></div>
       <button class="btn btn-primary btn-full" onclick="addExerciseFromMenu()">記錄</button>
     </div>
     <!-- 快速記錄模式 -->
     <div id="ex-quick-mode" style="display:none">
       <div class="field"><label>運動類型</label><select id="e-type"><option>跑步</option><option>游泳</option><option>騎車</option><option>瑜珈</option><option>籃球</option><option>其他</option></select></div>
-      <div class="field"><label>時間（分鐘）</label><input type="number" id="e-min" placeholder="30" min="1"></div>
+      <div class="field"><label>時間（分鐘）</label><input type="number" id="e-min" placeholder="" min="1"></div>
       <div class="field"><label>備註（選填）</label><input type="text" id="e-note"></div>
       <button class="btn btn-primary btn-full" onclick="addExercise()">記錄</button>
     </div>
@@ -702,8 +702,8 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
   <div class="modal">
     <div class="modal-title" id="menu-edit-title">新增運動菜單 <button class="modal-close" onclick="closeModal('workout-menu-edit')">x</button></div>
     <input type="hidden" id="wm-id">
-    <div class="field"><label>菜單名稱（例：A日、推拉腿）</label><input type="text" id="wm-name" placeholder="A日"></div>
-    <div class="field"><label>目標部位（選填）</label><input type="text" id="wm-target" placeholder="例：胸肩三頭"></div>
+    <div class="field"><label>菜單名稱（例：A日、推拉腿）</label><input type="text" id="wm-name" placeholder=""></div>
+    <div class="field"><label>目標部位（選填）</label><input type="text" id="wm-target" placeholder=""></div>
     <div class="sec" style="margin-top:4px">動作列表</div>
     <div id="wm-moves-list"></div>
     <button class="add-row" onclick="addMoveRow()">
@@ -719,8 +719,8 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
 <div class="modal-overlay" id="modal-case">
   <div class="modal">
     <div class="modal-title">新增個案 <button class="modal-close" onclick="closeModal('case')">x</button></div>
-    <div class="field"><label>個案代號（不用真名）</label><input type="text" id="c-code" placeholder="例：A01"></div>
-    <div class="field"><label>班級（選填）</label><input type="text" id="c-class" placeholder="例：301"></div>
+    <div class="field"><label>個案代號（不用真名）</label><input type="text" id="c-code" placeholder=""></div>
+    <div class="field"><label>班級（選填）</label><input type="text" id="c-class" placeholder=""></div>
     <div class="field"><label>固定諮商時間</label><input type="time" id="c-time"></div>
     <div class="field"><label>固定諮商日</label><select id="c-day"><option value="">不固定</option><option value="1">週一</option><option value="2">週二</option><option value="3">週三</option><option value="4">週四</option><option value="5">週五</option></select></div>
     <div class="field"><label>備註（選填）</label><input type="text" id="c-note" placeholder="選填"></div>
@@ -738,7 +738,7 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
     <div class="field"><label>固定諮商日</label><select id="ce-day"><option value="">不固定</option><option value="1">週一</option><option value="2">週二</option><option value="3">週三</option><option value="4">週四</option><option value="5">週五</option></select></div>
     <div class="field"><label>個案狀態</label><select id="ce-status"><option value="active">進行中</option><option value="paused">暫停（不提醒）</option><option value="closed">結案</option></select></div>
     <div class="field"><label>備註</label><input type="text" id="ce-note"></div>
-    <div class="field"><label>起始諮商次數（已累積但未在App記錄的次數，新紀錄將從此+1接續）</label><input type="number" id="ce-startcount" min="0" placeholder="0"></div>
+    <div class="field"><label>起始諮商次數（已累積但未在App記錄的次數，新紀錄將從此+1接續）</label><input type="number" id="ce-startcount" min="0" placeholder=""></div>
     <div class="sec" id="ce-sessions-sec" style="margin-top:4px;display:none">歷史諮商次數（可編輯）</div>
     <div id="ce-sessions-list"></div>
     <div style="display:flex;gap:8px;margin-top:4px">
@@ -768,16 +768,16 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
     </div>
     <div id="jq-case-fields">
       <div style="display:flex;gap:8px">
-        <div class="field" style="flex:1"><label>班級（選填）</label><input type="text" id="jq-class" placeholder="例：301"></div>
-        <div class="field" style="flex:1"><label>代號（選填）</label><input type="text" id="jq-code" placeholder="例：A05"></div>
+        <div class="field" style="flex:1"><label>班級（選填）</label><input type="text" id="jq-class" placeholder=""></div>
+        <div class="field" style="flex:1"><label>代號（選填）</label><input type="text" id="jq-code" placeholder=""></div>
       </div>
     </div>
     <div style="display:flex;gap:8px">
       <div class="field" style="flex:1"><label>日期</label><input type="date" id="jq-date"></div>
       <div class="field" style="flex:1"><label>時間</label><input type="time" id="jq-time"></div>
     </div>
-    <div class="field"><label>估計時長(分)</label><input type="number" id="jq-dur" min="1" placeholder="15"></div>
-    <div class="field"><label>事件經過</label><textarea id="jq-event" rows="3" placeholder="例：情緒崩潰，已通知導師"></textarea></div>
+    <div class="field"><label>估計時長(分)</label><input type="number" id="jq-dur" min="1" placeholder=""></div>
+    <div class="field"><label>事件經過</label><textarea id="jq-event" rows="3" placeholder=""></textarea></div>
     <div class="field"><label>追蹤狀態</label>
       <div class="chip-row" id="jq-follow-chips" style="margin-bottom:0">
         <button class="chip active" data-action="jq-follow" data-follow="none">無</button>
@@ -964,7 +964,7 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
     <div class="draft-fs-side">
       <div class="field" id="draft-target-field" style="display:none">
         <label>對象 / 代號（可留空）</label>
-        <input type="text" id="draft-target" placeholder="例如：601-小明">
+        <input type="text" id="draft-target" placeholder="">
       </div>
       <div class="field">
         <label>遊戲治療主題（可複選）</label>
@@ -1155,11 +1155,11 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
     </div>
     <div class="field">
       <label>金額</label>
-      <input type="number" id="expense-amount" inputmode="decimal" placeholder="0">
+      <input type="number" id="expense-amount" inputmode="decimal" placeholder="">
     </div>
     <div class="field">
       <label>備註（可省略）</label>
-      <input type="text" id="expense-note" placeholder="例如：午餐便當" autocomplete="off">
+      <input type="text" id="expense-note" placeholder="" autocomplete="off">
     </div>
     <div class="field">
       <label>日期</label>
@@ -1464,6 +1464,8 @@ function moneyPieSVG(segs,total){
     +'<text x="64" y="59" text-anchor="middle" font-size="10" fill="var(--text-2)">本月支出</text>'
     +'<text x="64" y="78" text-anchor="middle" font-size="15" font-weight="600" fill="var(--text)">$'+fmtMoney(total)+'</text></svg>';
 }
+var moneySummaryOpen=false;
+function toggleMoneySummary(){moneySummaryOpen=!moneySummaryOpen;renderMoney();}
 function renderMoney(){
   var list=monthExpenses();
   var income=0,expense=0,catMap={};
@@ -1476,9 +1478,8 @@ function renderMoney(){
   // 總覽卡
   var ratioColor=ratio<70?'var(--teal)':(ratio<100?'var(--amber)':'var(--red)');
   var balColor=balance>=0?'var(--text)':'var(--red)';
-  document.getElementById('money-summary').innerHTML=
-    '<div class="card" style="margin-bottom:10px">'
-    +'<div style="display:flex;justify-content:space-between;gap:10px;text-align:center">'
+  var summaryBody=moneySummaryOpen?(
+    '<div style="display:flex;justify-content:space-between;gap:10px;text-align:center;margin-top:14px">'
       +'<div style="flex:1"><div style="font-size:12px;color:var(--text-2)">本月收入</div><div style="font-size:18px;font-weight:600;color:var(--teal);margin-top:3px">$'+fmtMoney(income)+'</div></div>'
       +'<div style="flex:1;border-left:0.5px solid var(--border);border-right:0.5px solid var(--border)"><div style="font-size:12px;color:var(--text-2)">本月支出</div><div style="font-size:18px;font-weight:600;color:var(--red);margin-top:3px">$'+fmtMoney(expense)+'</div></div>'
       +'<div style="flex:1"><div style="font-size:12px;color:var(--text-2)">剩餘可用</div><div style="font-size:18px;font-weight:600;color:'+balColor+';margin-top:3px">$'+fmtMoney(balance)+'</div></div>'
@@ -1488,6 +1489,17 @@ function renderMoney(){
       +'<span style="font-size:13px;font-weight:600;color:'+ratioColor+'">'+ratio+'%</span>'
     +'</div>'
     +'<div class="prog" style="margin-top:6px"><div class="prog-fill" style="width:'+Math.min(100,ratio)+'%;background:'+ratioColor+'"></div></div>'
+    +'<div style="margin-top:14px;padding-top:12px;border-top:0.5px solid var(--border);display:flex;justify-content:flex-end">'
+      +'<button class="btn btn-ghost btn-sm" style="color:var(--teal)" onclick="openExpenseModal(\'\',\'income\')">＋ 記一筆收入（每月登記一次）</button>'
+    +'</div>'
+  ):'';
+  document.getElementById('money-summary').innerHTML=
+    '<div class="card" style="margin-bottom:10px">'
+    +'<div style="display:flex;align-items:center;justify-content:space-between;cursor:pointer" onclick="toggleMoneySummary()">'
+      +'<span style="font-size:14px;font-weight:600;color:var(--text)">本月收支總覽</span>'
+      +'<span style="font-size:12px;color:var(--text-3)">'+(moneySummaryOpen?'點擊收合 ▲':'點擊展開 ▼')+'</span>'
+    +'</div>'
+    +summaryBody
     +'</div>';
   // 圓餅圖 + 圖例
   var chartEl=document.getElementById('money-chart');
@@ -1507,7 +1519,8 @@ function renderMoney(){
     }).join('');
     chartEl.innerHTML='<div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;justify-content:center">'
       +moneyPieSVG(segs,expense)
-      +'<div style="flex:1;min-width:160px">'+legend+'</div></div>';
+      +'<div style="flex:1;min-width:160px">'+legend+'</div></div>'
+      +'<div style="text-align:center;margin-top:12px;padding-top:10px;border-top:0.5px solid var(--border);font-size:13px;color:var(--text-2)">本月總支出 <span style="font-size:16px;font-weight:600;color:var(--red)">$'+fmtMoney(expense)+'</span></div>';
   }
   // 快速類別按鈕（預設 + 已用過的自訂類別）
   var usedCustom=Object.keys(catMap).filter(function(c){return MONEY_PRESETS.indexOf(c)<0;});
@@ -1838,15 +1851,8 @@ function exportData(){
     var cLines=[];
     cases.forEach(function(c){
       (c.sessions||[]).filter(function(s){return s.date>=from&&s.date<=to;}).forEach(function(s){
+        // AI 報告僅含完成狀況與時間，不匯出草稿/事件等個案隱私內容
         cLines.push('  '+s.date+' '+(s.writtenAt||'')+' '+caseDisplayName(c)+(c.isQuick?' ['+(c.quickType||'臨時')+']':'')+' '+(s.written?'已完成':'未完成')+(s.count?'（第'+s.count+'次）':''));
-        if(s.event&&s.event.trim())cLines.push('      事件：'+s.event.trim());
-        var d=s.draft;
-        if(draftHasContent(d)){
-          if(d.place)cLines.push('      地點：'+(d.place==='其他'?(d.placeOther||'其他'):d.place));
-          if(d.materials&&d.materials.length)cLines.push('      媒材：'+d.materials.map(function(m){return m==='其他'?(d.materialsOther||'其他'):m;}).join('、'));
-          if(d.themes&&d.themes.length)cLines.push('      主題：'+d.themes.join('、'));
-          if(d.text)cLines.push('      歷程：'+d.text);
-        }
       });
     });
     if(cLines.length)cLines.forEach(function(l){lines.push(l);});
@@ -2701,7 +2707,9 @@ function sortCasesAll(list){
 }
 function caseWeeklyBadge(c){
   if(isSkippedThisWeek(c)){
-    return '<span class="status-badge status-closed">本週未安排</span>';
+    // 本週未安排者改為顯示目前諮商總次數
+    var cnt=getCaseSessionCount(c);
+    return '<span class="status-badge" style="background:var(--surface);color:var(--text-2);border:0.5px solid var(--border)">諮商 '+cnt+' 次</span>';
   }
   var ws=getWeekSessions(c);
   if(ws.length>=1 && ws.every(function(s){return s.written;})){
@@ -2760,15 +2768,27 @@ function getTodayCases(){
   });
 }
 function filterCases(f,btn){
-  caseFilter=f;
   document.querySelectorAll('#case-filter-row .chip').forEach(function(c){c.classList.remove('active');});
   btn.classList.add('active');
+  var mgmtRow=document.getElementById('case-mgmt-row');
   var sortRow=document.getElementById('case-sort-row');
-  var showSort=(f==='active'||f==='paused'||f==='closed');
-  sortRow.style.display=showSort?'flex':'none';
-  if(showSort){
+  if(f==='manage'){
+    // 個案管理：進行中／暫停中／結案 收納於此
+    if(['active','paused','closed'].indexOf(caseFilter)<0)caseFilter='active';
+    mgmtRow.style.display='flex';
+    document.querySelectorAll('#case-mgmt-row .chip').forEach(function(c){c.classList.toggle('active',c.dataset.sub===caseFilter);});
+    sortRow.style.display='flex';
     document.querySelectorAll('#case-sort-row .chip').forEach(function(c){c.classList.toggle('active',c.dataset.mode===caseSortMode);});
+  }else{
+    caseFilter=f;
+    mgmtRow.style.display='none';
+    sortRow.style.display='none';
   }
+  renderCases();
+}
+function setCaseMgmt(sub){
+  caseFilter=sub;
+  document.querySelectorAll('#case-mgmt-row .chip').forEach(function(c){c.classList.toggle('active',c.dataset.sub===sub);});
   renderCases();
 }
 function renderCases(){
@@ -4026,6 +4046,7 @@ document.body.addEventListener('click',function(e){
   }
   else if(action==='toggle-weekly-schedule'){toggleWeeklySchedule(el.dataset.id);}
   else if(action==='case-sort'){setCaseSort(el.dataset.mode);}
+  else if(action==='case-mgmt'){setCaseMgmt(el.dataset.sub);}
   // ── V9 ──
   else if(action==='growth-sub'){setGrowthSub(el.dataset.sub);}
   else if(action==='journal-prev'){shiftJournalDate(journalView==='week'?-7:-1);}
@@ -4403,7 +4424,7 @@ function renderNightCard(){
         +(canEdit?'<button class="icon-btn" style="color:var(--text-3);font-size:16px;padding:0 4px;line-height:1" data-action="night-del-extra" data-idx="'+i+'">×</button>':'')
         +'</div>';
     }).join(''):'<div style="font-size:13px;color:var(--text-3);padding:6px 0">尚未新增，明早想完成什麼呢？</div>')
-    +(canEdit?'<div style="display:flex;gap:8px;margin-top:10px"><input type="text" id="night-extra-input" placeholder="例如：晨跑 20 分鐘…" style="flex:1"><button class="btn btn-ghost btn-sm" onclick="addNightExtra()">新增</button></div>':'');
+    +(canEdit?'<div style="display:flex;gap:8px;margin-top:10px"><input type="text" id="night-extra-input" placeholder="" style="flex:1"><button class="btn btn-ghost btn-sm" onclick="addNightExtra()">新增</button></div>':'');
   var sleepBtn=canEdit&&!plan.sleepTime?'<button class="btn btn-primary btn-full" style="margin-top:14px" onclick="recordSleepTime()">記錄上床時間</button>':'';
   el.innerHTML='<div class="routine-card" style="'+(urgent?'border:1.5px solid var(--teal);':'')+'">'
     +header+urgentBanner+sleepLine+extrasSection+sleepBtn+'</div>';
@@ -4552,7 +4573,7 @@ document.body.addEventListener('focusin',function(e){
 });
 
 // ── 雲端同步（Supabase）──────────────────────────────
-var sbClient=null,sbUser=null,syncTimer=null;
+var sbClient=null,sbUser=null,syncTimer=null,_syncPending=false;
 var DATA_KEYS=['lm-books','lm-exercises','lm-reviews','lm-sessions','lm-med','lm-cases','lm-wmenus','lm-ex-goal','lm-journal','lm-timer-logs','lm-quotes','lm-checkins','lm-morning-base','lm-morning-logs','lm-morning-fs','lm-night-plans','lm-notes','lm-note-tags','lm-expenses'];
 
 var SB_URL='https://gsjljwupeyvqdsrzbadf.supabase.co';
@@ -4617,6 +4638,7 @@ function applyAllData(obj){
 }
 function pushToCloud(){
   if(!sbClient||!sbUser)return;
+  _syncPending=false;
   var payload=collectAllData();
   sbClient.from('app_data').upsert({user_id:sbUser.id,data:payload,updated_at:new Date().toISOString()}).then(function(res){
     if(!res.error){
@@ -4626,12 +4648,13 @@ function pushToCloud(){
     }
   });
 }
-function pullFromCloud(reloadAfter){
+function pullFromCloud(reloadAfter,onApplied){
   if(!sbClient||!sbUser)return;
   sbClient.from('app_data').select('data').eq('user_id',sbUser.id).maybeSingle().then(function(res){
     if(res.data&&res.data.data){
       applyAllData(res.data.data);
       localStorage.setItem('lm-last-sync',new Date().toLocaleString('zh-TW'));
+      if(typeof onApplied==='function')onApplied();
       if(reloadAfter){showToast('資料已同步，重新載入中');setTimeout(function(){location.reload();},800);}
     } else {
       // 雲端尚無資料，把本機資料推上去
@@ -4671,9 +4694,18 @@ function resetAllData(){
 }
 function queueSync(){
   if(!sbClient||!sbUser)return;
+  _syncPending=true;
   clearTimeout(syncTimer);
   syncTimer=setTimeout(pushToCloud,2000);
 }
+// 立即把待同步的變更推上雲端（App 切到背景／關閉前呼叫，避免 2 秒 debounce 還沒送出就被結束，造成資料遺失）
+function flushSyncNow(){
+  if(!sbClient||!sbUser||!_syncPending)return;
+  clearTimeout(syncTimer);
+  pushToCloud();
+}
+document.addEventListener('visibilitychange',function(){if(document.visibilityState==='hidden')flushSyncNow();});
+window.addEventListener('pagehide',flushSyncNow);
 // 包裝 save，自動觸發雲端同步
 var _origSave=save;
 save=function(k,v){_origSave(k,v);if(DATA_KEYS.indexOf(k)>=0)queueSync();};
@@ -4694,22 +4726,23 @@ if(initSupabase()){
   sbClient.auth.getUser().then(function(res){
     if(res.data&&res.data.user){
       sbUser=res.data.user;
-      pullFromCloud(false);
-      setTimeout(function(){
-        books=load('lm-books',[]);exercises=load('lm-exercises',[]);reviews=load('lm-reviews',{});
-        readSessions=load('lm-sessions',[]);medSessions=load('lm-med',[]);cases=load('lm-cases',[]);
-        workoutMenus=load('lm-wmenus',[]);uTimerLogs=load('lm-timer-logs',[]);exGoal=load('lm-ex-goal',3);
-        quotes=load('lm-quotes',[]);checkins=load('lm-checkins',[]);morningBase=load('lm-morning-base',['喝水','刷牙','冥想']);
-        morningLogs=load('lm-morning-logs',{});nightPlans=load('lm-night-plans',{});
-        notes=load('lm-notes',[]);noteTags=load('lm-note-tags',['點子','隨筆','待辦']);
-        expenses=load('lm-expenses',[]);
-        renderHome();renderBooks();renderExercise();renderMedHistory();renderCases();renderReview();
-        if(currentPage==='journal')renderJournal();
-        if(currentPage==='growth')renderGrowth();
-        if(currentPage==='money')renderMoney();
-      },600);
+      // 拉取雲端資料後，於回呼中重新載入記憶體狀態並重繪（避免固定延遲時雲端尚未回應就讀到舊資料）
+      pullFromCloud(false,reloadAllFromStorage);
     }
   });
+}
+function reloadAllFromStorage(){
+  books=load('lm-books',[]);exercises=load('lm-exercises',[]);reviews=load('lm-reviews',{});
+  readSessions=load('lm-sessions',[]);medSessions=load('lm-med',[]);cases=load('lm-cases',[]);
+  workoutMenus=load('lm-wmenus',[]);uTimerLogs=load('lm-timer-logs',[]);exGoal=load('lm-ex-goal',3);
+  quotes=load('lm-quotes',[]);checkins=load('lm-checkins',[]);morningBase=load('lm-morning-base',['喝水','刷牙','冥想']);
+  morningLogs=load('lm-morning-logs',{});nightPlans=load('lm-night-plans',{});
+  notes=load('lm-notes',[]);noteTags=load('lm-note-tags',['點子','隨筆','待辦']);
+  expenses=load('lm-expenses',[]);
+  renderHome();renderBooks();renderExercise();renderMedHistory();renderCases();renderReview();
+  if(currentPage==='journal')renderJournal();
+  if(currentPage==='growth')renderGrowth();
+  if(currentPage==='money')renderMoney();
 }
 </script>
 </body>
