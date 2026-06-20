@@ -265,7 +265,7 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
 .detail-stat-num{font-size:20px;font-weight:600;color:var(--text)}
 .detail-stat-lbl{font-size:11px;color:var(--text-2);margin-top:2px}
 /* ── 轉換打卡全螢幕 ── */
-.fullscreen-overlay{position:fixed;inset:0;background:var(--bg);z-index:300;display:none;flex-direction:column;padding:env(safe-area-inset-top,52px) 24px env(safe-area-inset-bottom,32px);overflow-y:auto}
+.fullscreen-overlay{position:fixed;inset:0;background:var(--bg);z-index:300;display:none;flex-direction:column;padding:calc(env(safe-area-inset-top,0px) + 32px) 24px calc(env(safe-area-inset-bottom,0px) + 40px);overflow-y:auto}
 .fullscreen-overlay.open{display:flex}
 /* ── 諮商草稿撰寫全螢幕 ── */
 .draft-fs-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;padding-top:4px}
@@ -564,25 +564,53 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
   <div id="notes-section"></div>
 </div>
 
-<!-- 記帳 -->
+<!-- 記帳 / 資產配置 -->
 <div class="page" id="page-money">
-  <!-- 本月總覽 -->
-  <div id="money-summary"></div>
-  <!-- 支出分佈圓餅圖 -->
-  <div class="card">
-    <div class="home-section-title">本月支出分佈</div>
-    <div id="money-chart"></div>
+  <div class="period-tabs" style="display:flex;gap:8px;margin-bottom:16px">
+    <button class="rtab active" id="money-tab-expense" onclick="setMoneySub('expense')">記帳</button>
+    <button class="rtab" id="money-tab-asset" onclick="setMoneySub('asset')">資產配置</button>
   </div>
-  <!-- 快速記帳 -->
-  <div class="sec">快速記帳</div>
-  <div class="chip-row" id="money-cat-row"></div>
-  <div style="display:flex;gap:16px;padding-top:2px;flex-wrap:wrap">
-    <button class="add-row" onclick="openExpenseModal('','expense')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>自訂支出
-    </button>
+  <!-- 記帳檢視 -->
+  <div id="money-expense-view">
+    <!-- 本月總覽 -->
+    <div id="money-summary"></div>
+    <!-- 支出分佈圓餅圖 -->
+    <div class="card">
+      <div class="home-section-title">本月支出分佈</div>
+      <div id="money-chart"></div>
+    </div>
+    <!-- 快速記帳 -->
+    <div class="sec">快速記帳</div>
+    <div class="chip-row" id="money-cat-row"></div>
+    <div style="display:flex;gap:16px;padding-top:2px;flex-wrap:wrap">
+      <button class="add-row" onclick="openExpenseModal('','expense')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>自訂支出
+      </button>
+    </div>
+    <div class="sec" style="margin-top:18px">本月明細</div>
+    <div id="money-list"></div>
   </div>
-  <div class="sec" style="margin-top:18px">本月明細</div>
-  <div id="money-list"></div>
+  <!-- 資產配置檢視 -->
+  <div id="money-asset-view" style="display:none">
+    <div class="card">
+      <div class="home-section-title">資產配置</div>
+      <div id="asset-chart"></div>
+    </div>
+    <div class="sec">銀行帳戶</div>
+    <div id="asset-bank-list"></div>
+    <div style="display:flex;gap:16px;padding-top:2px;flex-wrap:wrap">
+      <button class="add-row" onclick="openBankModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>新增銀行帳戶
+      </button>
+    </div>
+    <div class="sec" style="margin-top:18px">定期定額 ETF</div>
+    <div id="asset-etf-list"></div>
+    <div style="display:flex;gap:16px;padding-top:2px;flex-wrap:wrap">
+      <button class="add-row" onclick="openEtfModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>新增 ETF
+      </button>
+    </div>
+  </div>
 </div>
 
 </div>
@@ -1219,6 +1247,43 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
   </div>
 </div>
 
+<div class="modal-overlay" id="modal-bank">
+  <div class="modal">
+    <div class="modal-title"><span id="bank-modal-title">新增銀行帳戶</span> <button class="modal-close" onclick="closeModal('bank')">x</button></div>
+    <div class="field">
+      <label>銀行 / 帳戶名稱</label>
+      <input type="text" id="bank-name" placeholder="" autocomplete="off">
+    </div>
+    <div class="field">
+      <label>帳戶餘額</label>
+      <input type="number" id="bank-balance" inputmode="decimal" placeholder="">
+    </div>
+    <button class="btn btn-primary btn-full" onclick="saveBank()">儲存</button>
+    <button class="btn btn-danger btn-full" id="bank-delete-btn" style="margin-top:8px;display:none" onclick="deleteBank()">刪除這個帳戶</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-etf">
+  <div class="modal">
+    <div class="modal-title"><span id="etf-modal-title">新增 ETF</span> <button class="modal-close" onclick="closeModal('etf')">x</button></div>
+    <div class="field">
+      <label>標的名稱 / 代號</label>
+      <input type="text" id="etf-name" placeholder="" autocomplete="off">
+    </div>
+    <div class="field">
+      <label>累積投入金額</label>
+      <input type="number" id="etf-invested" inputmode="decimal" placeholder="" oninput="_etfPlPreview()">
+    </div>
+    <div class="field">
+      <label>目前市值</label>
+      <input type="number" id="etf-market" inputmode="decimal" placeholder="" oninput="_etfPlPreview()">
+    </div>
+    <div id="etf-pl-preview" style="font-size:13px;color:var(--text-2);margin:-4px 0 14px"></div>
+    <button class="btn btn-primary btn-full" onclick="saveEtf()">儲存</button>
+    <button class="btn btn-danger btn-full" id="etf-delete-btn" style="margin-top:8px;display:none" onclick="deleteEtf()">刪除這筆</button>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -1235,6 +1300,10 @@ function esc(s){
 var books=load('lm-books',[]);
 var exercises=load('lm-exercises',[]);
 var expenses=load('lm-expenses',[]);
+var assets=load('lm-assets',{banks:[],etfs:[]});
+if(!assets||typeof assets!=='object'||Array.isArray(assets))assets={banks:[],etfs:[]};
+if(!Array.isArray(assets.banks))assets.banks=[];
+if(!Array.isArray(assets.etfs))assets.etfs=[];
 var reviews=load('lm-reviews',{});
 var readSessions=load('lm-sessions',[]);
 // 補欄位：每筆閱讀紀錄需有 id 與起訖時間（舊資料 time 視為開始時間）
@@ -1264,6 +1333,10 @@ if(!appSettings.pages)appSettings.pages={growth:true,journal:true,cases:true,rev
 if(!appSettings.growth)appSettings.growth={reading:true,exercise:true,meditation:true};
 ['growth','journal','cases','review','money'].forEach(function(k){if(appSettings.pages[k]===undefined)appSettings.pages[k]=true;});
 ['reading','exercise','meditation'].forEach(function(k){if(appSettings.growth[k]===undefined)appSettings.growth[k]=true;});
+if(appSettings.workMode===undefined)appSettings.workMode=false;
+// 工作模式：專注工作功能並保護隱私，連動關閉運動、冥想、回顧、記帳
+function effPageOn(p){if(appSettings.workMode&&(p==='review'||p==='money'))return false;return !!appSettings.pages[p];}
+function effGrowthOn(g){if(appSettings.workMode&&(g==='exercise'||g==='meditation'))return false;return !!appSettings.growth[g];}
 
 // ── 萬用計時器狀態 ────────────────────────────────────
 var uTimerRunning=false,uTimerPaused=false;
@@ -1327,24 +1400,38 @@ function openSettings(){renderSettingsModal();openModal('settings');}
 function renderSettingsModal(){
   var el=document.getElementById('settings-body');if(!el)return;
   var gOn=appSettings.pages.growth;
-  function row(label,checked,onchg,sub){
-    var dim=sub&&!gOn;
+  var wm=appSettings.workMode;
+  // forced：工作模式強制關閉的功能（顯示為鎖定，不可操作）
+  function row(label,checked,onchg,sub,forced){
+    var dim=(sub&&!gOn)||forced;
+    var lock=forced?' <span style="font-size:11px;color:var(--text-3)">· 工作模式關閉</span>':'';
     return '<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:0.5px solid var(--border);'+(sub?'padding-left:18px;':'')+'">'
-      +'<span style="font-size:14px;color:'+(dim?'var(--text-3)':'var(--text)')+'">'+label+'</span>'
-      +'<label class="ios-toggle"><input type="checkbox"'+(checked?' checked':'')+(dim?' disabled':'')+' onchange="'+onchg+'"><span class="ios-track" style="'+(dim?'opacity:.4':'')+'"></span></label>'
+      +'<span style="font-size:14px;color:'+(dim?'var(--text-3)':'var(--text)')+'">'+label+lock+'</span>'
+      +'<label class="ios-toggle"><input type="checkbox"'+(checked&&!forced?' checked':'')+(dim?' disabled':'')+' onchange="'+onchg+'"><span class="ios-track" style="'+(dim?'opacity:.4':'')+'"></span></label>'
       +'</div>';
   }
   el.innerHTML=
-    row('成長',gOn,"togglePageSetting('growth',this.checked)",false)
-    +'<div style="'+(gOn?'':'opacity:.5;pointer-events:none;')+'border-left:2px solid var(--border);margin:2px 0 4px 8px">'
-      +row('閱讀',appSettings.growth.reading,"toggleGrowthSetting('reading',this.checked)",true)
-      +row('運動',appSettings.growth.exercise,"toggleGrowthSetting('exercise',this.checked)",true)
-      +row('冥想',appSettings.growth.meditation,"toggleGrowthSetting('meditation',this.checked)",true)
+    '<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;margin-bottom:10px;border-radius:12px;background:var(--purple-light)">'
+      +'<div><div style="font-size:14px;font-weight:600;color:var(--text)">工作模式</div>'
+        +'<div style="font-size:12px;color:var(--text-2);margin-top:2px">專注工作、保護隱私，關閉運動／冥想／回顧／記帳</div></div>'
+      +'<label class="ios-toggle" style="flex-shrink:0;margin-left:12px"><input type="checkbox"'+(wm?' checked':'')+' onchange="toggleWorkMode(this.checked)"><span class="ios-track"></span></label>'
     +'</div>'
-    +row('日誌',appSettings.pages.journal,"togglePageSetting('journal',this.checked)",false)
-    +row('個案',appSettings.pages.cases,"togglePageSetting('cases',this.checked)",false)
-    +row('回顧',appSettings.pages.review,"togglePageSetting('review',this.checked)",false)
-    +row('記帳',appSettings.pages.money,"togglePageSetting('money',this.checked)",false);
+    +row('成長',gOn,"togglePageSetting('growth',this.checked)",false,false)
+    +'<div style="'+(gOn?'':'opacity:.5;pointer-events:none;')+'border-left:2px solid var(--border);margin:2px 0 4px 8px">'
+      +row('閱讀',appSettings.growth.reading,"toggleGrowthSetting('reading',this.checked)",true,false)
+      +row('運動',appSettings.growth.exercise,"toggleGrowthSetting('exercise',this.checked)",true,wm)
+      +row('冥想',appSettings.growth.meditation,"toggleGrowthSetting('meditation',this.checked)",true,wm)
+    +'</div>'
+    +row('日誌',appSettings.pages.journal,"togglePageSetting('journal',this.checked)",false,false)
+    +row('個案',appSettings.pages.cases,"togglePageSetting('cases',this.checked)",false,false)
+    +row('回顧',appSettings.pages.review,"togglePageSetting('review',this.checked)",false,wm)
+    +row('記帳',appSettings.pages.money,"togglePageSetting('money',this.checked)",false,wm);
+}
+function toggleWorkMode(on){
+  appSettings.workMode=on;
+  save('lm-settings',appSettings);
+  renderSettingsModal();
+  applySettings();
 }
 function togglePageSetting(key,checked){
   appSettings.pages[key]=checked;
@@ -1361,9 +1448,9 @@ function toggleGrowthSetting(key,checked){
 function applySettings(){
   ['growth','journal','cases','review','money'].forEach(function(p){
     var btn=document.getElementById('nav-'+p);
-    if(btn)btn.style.display=appSettings.pages[p]?'':'none';
+    if(btn)btn.style.display=effPageOn(p)?'':'none';
   });
-  if(currentPage!=='home'&&!appSettings.pages[currentPage]){
+  if(currentPage!=='home'&&!effPageOn(currentPage)){
     switchPage('home',document.getElementById('nav-home'));
   } else if(currentPage==='home'){
     renderHome();
@@ -1388,7 +1475,7 @@ function switchPage(name,btn){
   if(name==='journal'){journalDate=today();renderJournal();}
   if(name==='cases')renderCases();
   if(name==='review')renderReview();
-  if(name==='money')renderMoney();
+  if(name==='money')setMoneySub(moneySub);
 }
 
 // ── 成長頁（容器）──────────────────────────────────────
@@ -1410,9 +1497,9 @@ function renderGrowth(){
      ico:'<circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/>'}
   ];
   var cards=allCards.filter(function(c){
-    if(c.sub==='books')return appSettings.growth.reading;
-    if(c.sub==='exercise')return appSettings.growth.exercise;
-    if(c.sub==='meditate')return appSettings.growth.meditation;
+    if(c.sub==='books')return effGrowthOn('reading');
+    if(c.sub==='exercise')return effGrowthOn('exercise');
+    if(c.sub==='meditate')return effGrowthOn('meditation');
     return true;
   });
   var gcEl=document.getElementById('growth-cards');
@@ -1609,6 +1696,188 @@ function renderMoney(){
   }
 }
 
+// ── 資產配置 ──────────────────────────────────────────
+var moneySub='expense';
+function setMoneySub(sub){
+  moneySub=sub;
+  var te=document.getElementById('money-tab-expense'),ta=document.getElementById('money-tab-asset');
+  if(te)te.classList.toggle('active',sub==='expense');
+  if(ta)ta.classList.toggle('active',sub==='asset');
+  var ve=document.getElementById('money-expense-view'),va=document.getElementById('money-asset-view');
+  if(ve)ve.style.display=sub==='expense'?'':'none';
+  if(va)va.style.display=sub==='asset'?'':'none';
+  if(sub==='expense')renderMoney();else renderAssets();
+}
+function assetPieSVG(segs,total,label){
+  if(total<=0)return '';
+  var r=52,cx=64,cy=64,sw=22,circ=2*Math.PI*r,offset=0;
+  var arcs=segs.map(function(s){
+    var dash=(s.amount/total)*circ;
+    var el='<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="none" stroke="'+s.color+'" stroke-width="'+sw+'" stroke-dasharray="'+dash+' '+(circ-dash)+'" stroke-dashoffset="'+(-offset)+'" transform="rotate(-90 '+cx+' '+cy+')"/>';
+    offset+=dash;return el;
+  }).join('');
+  return '<svg viewBox="0 0 128 128" width="138" height="138" style="flex-shrink:0">'+arcs
+    +'<text x="64" y="59" text-anchor="middle" font-size="10" fill="var(--text-2)">'+label+'</text>'
+    +'<text x="64" y="78" text-anchor="middle" font-size="14" font-weight="600" fill="var(--text)">$'+fmtMoney(total)+'</text></svg>';
+}
+function saveAssets(){save('lm-assets',assets);}
+// 銀行帳戶
+var _bankEditId=null;
+function openBankModal(){
+  _bankEditId=null;
+  document.getElementById('bank-modal-title').textContent='新增銀行帳戶';
+  document.getElementById('bank-name').value='';
+  document.getElementById('bank-balance').value='';
+  document.getElementById('bank-delete-btn').style.display='none';
+  openModal('bank');
+  setTimeout(function(){document.getElementById('bank-name').focus();},120);
+}
+function openBankEdit(id){
+  var b=assets.banks.find(function(x){return x.id===id;});if(!b)return;
+  _bankEditId=id;
+  document.getElementById('bank-modal-title').textContent='編輯銀行帳戶';
+  document.getElementById('bank-name').value=b.name||'';
+  document.getElementById('bank-balance').value=b.balance;
+  document.getElementById('bank-delete-btn').style.display='';
+  openModal('bank');
+}
+function saveBank(){
+  var name=document.getElementById('bank-name').value.trim();
+  var bal=parseFloat(document.getElementById('bank-balance').value);
+  if(!name){showToast('請輸入名稱');return;}
+  if(isNaN(bal)){showToast('請輸入餘額');return;}
+  if(_bankEditId){
+    var b=assets.banks.find(function(x){return x.id===_bankEditId;});
+    if(b){b.name=name;b.balance=bal;}
+  }else{
+    assets.banks.push({id:'b'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),name:name,balance:bal});
+  }
+  saveAssets();closeModal('bank');renderAssets();showToast('已儲存');
+}
+function deleteBank(){
+  if(!_bankEditId)return;
+  assets.banks=assets.banks.filter(function(x){return x.id!==_bankEditId;});
+  saveAssets();closeModal('bank');renderAssets();showToast('已刪除');
+}
+// 定期定額 ETF
+var _etfEditId=null;
+function _etfPlPreview(){
+  var inv=parseFloat(document.getElementById('etf-invested').value);
+  var mkt=parseFloat(document.getElementById('etf-market').value);
+  var el=document.getElementById('etf-pl-preview');
+  if(isNaN(inv)||isNaN(mkt)){el.innerHTML='';return;}
+  var pl=mkt-inv,rate=inv>0?(pl/inv*100):0;
+  var col=pl>=0?'var(--teal)':'var(--red)';
+  el.innerHTML='損益 <span style="color:'+col+';font-weight:600">'+(pl>=0?'+':'')+'$'+fmtMoney(pl)+'（'+(pl>=0?'+':'')+rate.toFixed(1)+'%）</span>';
+}
+function openEtfModal(){
+  _etfEditId=null;
+  document.getElementById('etf-modal-title').textContent='新增 ETF';
+  document.getElementById('etf-name').value='';
+  document.getElementById('etf-invested').value='';
+  document.getElementById('etf-market').value='';
+  document.getElementById('etf-pl-preview').innerHTML='';
+  document.getElementById('etf-delete-btn').style.display='none';
+  openModal('etf');
+  setTimeout(function(){document.getElementById('etf-name').focus();},120);
+}
+function openEtfEdit(id){
+  var e=assets.etfs.find(function(x){return x.id===id;});if(!e)return;
+  _etfEditId=id;
+  document.getElementById('etf-modal-title').textContent='編輯 ETF';
+  document.getElementById('etf-name').value=e.name||'';
+  document.getElementById('etf-invested').value=e.invested;
+  document.getElementById('etf-market').value=e.market;
+  document.getElementById('etf-delete-btn').style.display='';
+  openModal('etf');
+  _etfPlPreview();
+}
+function saveEtf(){
+  var name=document.getElementById('etf-name').value.trim();
+  var inv=parseFloat(document.getElementById('etf-invested').value);
+  var mkt=parseFloat(document.getElementById('etf-market').value);
+  if(!name){showToast('請輸入名稱');return;}
+  if(isNaN(inv)||inv<0){showToast('請輸入投入金額');return;}
+  if(isNaN(mkt)||mkt<0){showToast('請輸入目前市值');return;}
+  if(_etfEditId){
+    var e=assets.etfs.find(function(x){return x.id===_etfEditId;});
+    if(e){e.name=name;e.invested=inv;e.market=mkt;}
+  }else{
+    assets.etfs.push({id:'e'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),name:name,invested:inv,market:mkt});
+  }
+  saveAssets();closeModal('etf');renderAssets();showToast('已儲存');
+}
+function deleteEtf(){
+  if(!_etfEditId)return;
+  assets.etfs=assets.etfs.filter(function(x){return x.id!==_etfEditId;});
+  saveAssets();closeModal('etf');renderAssets();showToast('已刪除');
+}
+function renderAssets(){
+  var banks=assets.banks,etfs=assets.etfs;
+  // 圓餅圖：各銀行餘額 + 各 ETF 市值
+  var segs=[],ci=0;
+  banks.forEach(function(b){if(b.balance>0){segs.push({label:b.name,amount:b.balance,color:MONEY_PALETTE[ci%MONEY_PALETTE.length]});ci++;}});
+  etfs.forEach(function(e){if(e.market>0){segs.push({label:e.name,amount:e.market,color:MONEY_PALETTE[ci%MONEY_PALETTE.length]});ci++;}});
+  var totalAsset=segs.reduce(function(a,s){return a+s.amount;},0);
+  var chartEl=document.getElementById('asset-chart');
+  if(!segs.length){
+    chartEl.innerHTML='<div class="empty">尚無資產資料，請於下方新增銀行帳戶或 ETF</div>';
+  }else{
+    var legend=segs.map(function(s){
+      var pct=totalAsset>0?Math.round(s.amount/totalAsset*100):0;
+      return '<div style="display:flex;align-items:center;gap:8px;padding:4px 0">'
+        +'<span style="width:10px;height:10px;border-radius:3px;background:'+s.color+';flex-shrink:0"></span>'
+        +'<span style="flex:1;font-size:13px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(s.label)+'</span>'
+        +'<span style="font-size:13px;color:var(--text-2)">$'+fmtMoney(s.amount)+'</span>'
+        +'<span style="font-size:12px;color:var(--text-3);width:36px;text-align:right">'+pct+'%</span>'
+        +'</div>';
+    }).join('');
+    chartEl.innerHTML='<div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;justify-content:center">'
+      +assetPieSVG(segs,totalAsset,'總資產')
+      +'<div style="flex:1;min-width:160px">'+legend+'</div></div>';
+  }
+  // 銀行帳戶清單
+  var bl=document.getElementById('asset-bank-list');
+  var bankTotal=banks.reduce(function(a,b){return a+(b.balance||0);},0);
+  if(!banks.length){
+    bl.innerHTML='<div class="empty">尚未新增銀行帳戶</div>';
+  }else{
+    bl.innerHTML='<div class="card">'+banks.map(function(b){
+      return '<div class="row-item" style="cursor:pointer" data-action="edit-bank" data-bid="'+esc(b.id)+'">'
+        +'<div class="icon-circle" style="background:var(--teal-light);color:var(--teal);font-weight:600;font-size:13px">'+esc((b.name||'?').slice(0,1))+'</div>'
+        +'<div class="row-main"><div class="row-title">'+esc(b.name||'')+'</div></div>'
+        +'<div style="font-size:15px;font-weight:600;color:var(--text)">$'+fmtMoney(b.balance||0)+'</div>'
+        +'</div>';
+    }).join('')
+    +'<div class="row-item" style="border-top:0.5px solid var(--border)"><div class="row-main"><div class="row-title" style="color:var(--text-2)">帳戶小計</div></div><div style="font-size:15px;font-weight:600;color:var(--teal)">$'+fmtMoney(bankTotal)+'</div></div>'
+    +'</div>';
+  }
+  // ETF 清單
+  var el=document.getElementById('asset-etf-list');
+  var etfInv=etfs.reduce(function(a,e){return a+(e.invested||0);},0);
+  var etfMkt=etfs.reduce(function(a,e){return a+(e.market||0);},0);
+  var etfPl=etfMkt-etfInv,etfRate=etfInv>0?(etfPl/etfInv*100):0,etfCol=etfPl>=0?'var(--teal)':'var(--red)';
+  if(!etfs.length){
+    el.innerHTML='<div class="empty">尚未新增 ETF</div>';
+  }else{
+    el.innerHTML='<div class="card">'+etfs.map(function(e){
+      var pl=(e.market||0)-(e.invested||0),rate=e.invested>0?(pl/e.invested*100):0;
+      var col=pl>=0?'var(--teal)':'var(--red)';
+      return '<div class="row-item" style="cursor:pointer;align-items:flex-start" data-action="edit-etf" data-eid="'+esc(e.id)+'">'
+        +'<div class="icon-circle" style="background:var(--purple-light);color:var(--purple-dark);font-weight:600;font-size:13px">'+esc((e.name||'?').slice(0,1))+'</div>'
+        +'<div class="row-main"><div class="row-title">'+esc(e.name||'')+'</div>'
+        +'<div class="row-sub">投入 $'+fmtMoney(e.invested||0)+' · 市值 $'+fmtMoney(e.market||0)+'</div></div>'
+        +'<div style="text-align:right"><div style="font-size:14px;font-weight:600;color:'+col+'">'+(pl>=0?'+':'')+'$'+fmtMoney(pl)+'</div>'
+        +'<div style="font-size:12px;color:'+col+'">'+(pl>=0?'+':'')+rate.toFixed(1)+'%</div></div>'
+        +'</div>';
+    }).join('')
+    +'<div class="row-item" style="border-top:0.5px solid var(--border);align-items:flex-start"><div class="row-main"><div class="row-title" style="color:var(--text-2)">ETF 小計</div><div class="row-sub">投入 $'+fmtMoney(etfInv)+' · 市值 $'+fmtMoney(etfMkt)+'</div></div>'
+    +'<div style="text-align:right"><div style="font-size:14px;font-weight:600;color:'+etfCol+'">'+(etfPl>=0?'+':'')+'$'+fmtMoney(etfPl)+'</div>'
+    +'<div style="font-size:12px;color:'+etfCol+'">'+(etfInv>0?((etfPl>=0?'+':'')+etfRate.toFixed(1)+'%'):'')+'</div></div>'
+    +'</div>';
+  }
+}
+
 // ── 首頁 ──────────────────────────────────────────────
 var homePeriod='today';
 function setPeriod(p,btn){
@@ -1625,6 +1894,14 @@ function weekDotsHTML(dates,hasFn,colorClass){
       +(has?'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>':'')
       +'</div></div>';
   }).join('')+'</div>';
+}
+// 本週分鐘長條圖（閱讀/冥想共用）
+function weekMinBarHTML(wd,t,days,mins,mainCol,lightCol){
+  var maxMin=0;mins.forEach(function(m){if(m>maxMin)maxMin=m;});
+  if(maxMin===0)maxMin=60;
+  return '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;align-items:flex-end;height:80px;margin-bottom:4px">'
+    +wd.map(function(d,i){var m=mins[i];var pct=Math.round(m/maxMin*100);var isT=d===t;return '<div style="display:flex;flex-direction:column;align-items:center;gap:2px;height:100%;justify-content:flex-end"><div style="font-size:9px;color:var(--text-3)">'+(m>0?m:'')+'</div><div style="width:100%;background:'+(m>0?lightCol:'var(--bg)')+';border-radius:3px 3px 0 0;height:'+(m>0?Math.max(pct,8):4)+'%;border:'+(isT?'1.5px solid '+mainCol:'0.5px solid var(--border-med)')+'">'+(m>0?'<div style="width:100%;height:100%;background:'+mainCol+';opacity:0.7;border-radius:3px 3px 0 0"></div>':'')+'</div></div>';}).join('')+'</div>'
+    +'<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:4px">'+days.map(function(d,i){return '<div style="font-size:9px;color:'+(wd[i]===t?mainCol:'var(--text-3)')+';text-align:center">'+d+'</div>';}).join('')+'</div>';
 }
 function renderHome(){
   _routineViewDate=today();
@@ -1649,19 +1926,19 @@ function renderHome(){
     var medStreakHtml=medStreak>=2?' <span style="font-size:11px;color:var(--amber)">連續'+medStreak+'天</span>':'';
     var _hg=[];
     if(appSettings.pages.growth){
-      if(appSettings.growth.reading)_hg.push('<div class="home-growth-card" onclick="goToGrowth(\'books\')">'
+      if(effGrowthOn('reading'))_hg.push('<div class="home-growth-card" onclick="goToGrowth(\'books\')">'
         +'<div class="growth-card-ico ic-purple" style="margin:0 auto 6px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg></div>'
         +'<div class="growth-card-name">閱讀</div>'
         +'<div class="growth-card-val" style="color:var(--purple)">'+(rSec>0?Math.round(rSec/60)+' 分':'尚未開始')+'</div>'
         +(readStreak>=2?'<div class="growth-card-streak" style="color:var(--purple)">連續'+readStreak+'天</div>':'<div class="growth-card-streak">&nbsp;</div>')
         +'</div>');
-      if(appSettings.growth.exercise)_hg.push('<div class="home-growth-card" onclick="goToGrowth(\'exercise\')">'
+      if(effGrowthOn('exercise'))_hg.push('<div class="home-growth-card" onclick="goToGrowth(\'exercise\')">'
         +'<div class="growth-card-ico ic-teal" style="margin:0 auto 6px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 3a3 3 0 00-3 3v12a3 3 0 003 3 3 3 0 003-3 3 3 0 00-3-3H6a3 3 0 00-3 3 3 3 0 003 3 3 3 0 003-3V6a3 3 0 00-3-3 3 3 0 00-3 3 3 3 0 003 3h12a3 3 0 003-3 3 3 0 00-3-3z"/></svg></div>'
         +'<div class="growth-card-name">運動</div>'
         +'<div class="growth-card-val" style="color:'+(hasEx?'var(--teal)':'var(--text-3)')+'">'+(hasEx?'已完成':'尚未進行')+'</div>'
         +(exStreak>=2?'<div class="growth-card-streak" style="color:var(--teal)">連續'+exStreak+'天</div>':'<div class="growth-card-streak">&nbsp;</div>')
         +'</div>');
-      if(appSettings.growth.meditation)_hg.push('<div class="home-growth-card" onclick="goToGrowth(\'meditate\')">'
+      if(effGrowthOn('meditation'))_hg.push('<div class="home-growth-card" onclick="goToGrowth(\'meditate\')">'
         +'<div class="growth-card-ico ic-amber" style="margin:0 auto 6px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg></div>'
         +'<div class="growth-card-name">冥想</div>'
         +'<div class="growth-card-val" style="color:var(--amber)">'+(mSec>0?Math.round(mSec/60)+' 分':'尚未開始')+'</div>'
@@ -1672,27 +1949,23 @@ function renderHome(){
   } else if(homePeriod==='week'){
     var days=['一','二','三','四','五','六','日'];
     var isGrowthOn=appSettings.pages.growth;
-    var isReadOn=isGrowthOn&&appSettings.growth.reading;
-    var isExOn=isGrowthOn&&appSettings.growth.exercise;
-    var isMedOn=isGrowthOn&&appSettings.growth.meditation;
+    var isReadOn=isGrowthOn&&effGrowthOn('reading');
+    var isExOn=isGrowthOn&&effGrowthOn('exercise');
+    var isMedOn=isGrowthOn&&effGrowthOn('meditation');
     var weekSections='';
     if(isReadOn){
-      var maxMin=0;
-      var readMins=wd.map(function(d){var sec=readSessions.filter(function(s){return s.date===d;}).reduce(function(a,s){return a+s.sec;},0);var m=Math.round(sec/60);if(m>maxMin)maxMin=m;return m;});
-      if(maxMin===0)maxMin=60;
-      var barHTML='<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;align-items:flex-end;height:80px;margin-bottom:4px">'
-        +wd.map(function(d,i){var m=readMins[i];var pct=Math.round(m/maxMin*100);var isT=d===t;return '<div style="display:flex;flex-direction:column;align-items:center;gap:2px;height:100%;justify-content:flex-end"><div style="font-size:9px;color:var(--text-3)">'+(m>0?m:'')+'</div><div style="width:100%;background:'+(m>0?'var(--purple-light)':'var(--bg)')+';border-radius:3px 3px 0 0;height:'+(m>0?Math.max(pct,8):4)+'%;border:'+(isT?'1.5px solid var(--purple)':'0.5px solid var(--border-med)')+'">'+( m>0?'<div style="width:100%;height:100%;background:var(--purple);opacity:0.7;border-radius:3px 3px 0 0"></div>':'')+'</div></div>';}).join('')+'</div>'
-        +'<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:4px">'+days.map(function(d,i){return '<div style="font-size:9px;color:'+(wd[i]===t?'var(--purple)':'var(--text-3)')+';text-align:center">'+d+'</div>';}).join('')+'</div>';
+      var readMins=wd.map(function(d){var sec=readSessions.filter(function(s){return s.date===d;}).reduce(function(a,s){return a+s.sec;},0);return Math.round(sec/60);});
       var rSecW=readSessions.filter(function(s){return wd.indexOf(s.date)>=0;}).reduce(function(a,s){return a+s.sec;},0);
-      weekSections+='<div style="margin-bottom:14px"><div style="font-size:12px;color:var(--text-2);margin-bottom:8px">閱讀（分鐘）</div>'+barHTML+'<div style="font-size:12px;color:var(--purple);text-align:center">本週共 '+Math.round(rSecW/60)+' 分鐘</div></div>';
+      weekSections+='<div style="margin-bottom:14px"><div style="font-size:12px;color:var(--text-2);margin-bottom:8px">閱讀（分鐘）</div>'+weekMinBarHTML(wd,t,days,readMins,'var(--purple)','var(--purple-light)')+'<div style="font-size:12px;color:var(--purple);text-align:center">本週共 '+Math.round(rSecW/60)+' 分鐘</div></div>';
     }
     if(isExOn){
       var exDaysW=wd.filter(function(d){return exercises.some(function(e){return e.date===d;});}).length;
       weekSections+='<div style="margin-bottom:12px"><div style="font-size:12px;color:var(--text-2);margin-bottom:4px">運動</div>'+weekDotsHTML(wd,function(d){return exercises.some(function(e){return e.date===d;});},'wd-done')+'<div style="font-size:12px;color:var(--teal);margin-top:5px;text-align:center">本週共 '+exDaysW+' 天</div></div>';
     }
     if(isMedOn){
+      var medMins=wd.map(function(d){var sec=medSessions.filter(function(s){return s.date===d;}).reduce(function(a,s){return a+s.sec;},0);return Math.round(sec/60);});
       var mSecW=medSessions.filter(function(s){return wd.indexOf(s.date)>=0;}).reduce(function(a,s){return a+s.sec;},0);
-      weekSections+='<div><div style="font-size:12px;color:var(--text-2);margin-bottom:4px">冥想</div>'+weekDotsHTML(wd,function(d){return medSessions.some(function(s){return s.date===d;});},'wd-done-a')+'<div style="font-size:12px;color:var(--amber);margin-top:5px;text-align:center">本週共 '+Math.round(mSecW/60)+' 分鐘</div></div>';
+      weekSections+='<div style="margin-bottom:14px"><div style="font-size:12px;color:var(--text-2);margin-bottom:8px">冥想（分鐘）</div>'+weekMinBarHTML(wd,t,days,medMins,'var(--amber)','var(--amber-light)')+'<div style="font-size:12px;color:var(--amber);text-align:center">本週共 '+Math.round(mSecW/60)+' 分鐘</div></div>';
     }
     dash.innerHTML=(weekSections?'<div class="home-section"><div class="home-section-title">本週概覽</div>'+weekSections+'</div>':'')+wakeSleepChart(wd,days);
   } else {
@@ -1720,9 +1993,9 @@ function renderHome(){
       }).join('')+'</div>';
     }
     var isGrowthOnM=appSettings.pages.growth;
-    var isReadOnM=isGrowthOnM&&appSettings.growth.reading;
-    var isExOnM=isGrowthOnM&&appSettings.growth.exercise;
-    var isMedOnM=isGrowthOnM&&appSettings.growth.meditation;
+    var isReadOnM=isGrowthOnM&&effGrowthOn('reading');
+    var isExOnM=isGrowthOnM&&effGrowthOn('exercise');
+    var isMedOnM=isGrowthOnM&&effGrowthOn('meditation');
     var monthSections='';
     if(isReadOnM){var rD=allDaysInMonth.filter(function(d){return d<=todayStr&&readSessions.some(function(s){return s.date===d;});}).length;monthSections+='<div style="margin-bottom:14px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px"><span style="font-size:12px;color:var(--text-2)">閱讀</span><span style="font-size:12px;color:var(--purple);font-weight:500">'+rD+' 天</span></div>'+monthDotGrid(function(d){return readSessions.some(function(s){return s.date===d;});},'var(--purple)')+'</div>';}
     if(isExOnM){var eD=allDaysInMonth.filter(function(d){return d<=todayStr&&exercises.some(function(e){return e.date===d;});}).length;monthSections+='<div style="margin-bottom:14px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px"><span style="font-size:12px;color:var(--text-2)">運動</span><span style="font-size:12px;color:var(--teal);font-weight:500">'+eD+' 天</span></div>'+monthDotGrid(function(d){return exercises.some(function(e){return e.date===d;});},'var(--teal)')+'</div>';}
@@ -4191,6 +4464,8 @@ document.body.addEventListener('click',function(e){
   else if(action==='open-exercise-edit'){openExerciseEdit(el.dataset.eid);}
   else if(action==='view-med'){mjIsNew=false;openMedJournal(el.dataset.sid);}
   else if(action==='edit-read'){openReadEdit(el.dataset.rid);}
+  else if(action==='edit-bank'){openBankEdit(el.dataset.bid);}
+  else if(action==='edit-etf'){openEtfEdit(el.dataset.eid);}
   else if(action==='toggle-case'){toggleCaseWritten(el.dataset.id);}
   else if(action==='open-case-edit'){openCaseEdit(el.dataset.id);}
   else if(action==='del-quick-case'){deleteQuickCaseSession(el.dataset.id,el.dataset.date);}
@@ -4797,7 +5072,7 @@ document.body.addEventListener('focusin',function(e){
 
 // ── 雲端同步（Supabase）──────────────────────────────
 var sbClient=null,sbUser=null,syncTimer=null,_syncPending=false;
-var DATA_KEYS=['lm-books','lm-exercises','lm-reviews','lm-sessions','lm-med','lm-cases','lm-wmenus','lm-ex-goal','lm-journal','lm-timer-logs','lm-quotes','lm-checkins','lm-morning-base','lm-morning-logs','lm-morning-fs','lm-night-plans','lm-notes','lm-note-tags','lm-expenses'];
+var DATA_KEYS=['lm-books','lm-exercises','lm-reviews','lm-sessions','lm-med','lm-cases','lm-wmenus','lm-ex-goal','lm-journal','lm-timer-logs','lm-quotes','lm-checkins','lm-morning-base','lm-morning-logs','lm-morning-fs','lm-night-plans','lm-notes','lm-note-tags','lm-expenses','lm-assets'];
 
 var SB_URL='https://gsjljwupeyvqdsrzbadf.supabase.co';
 var SB_KEY='sb_publishable_2jglYptRkedrlZe-ZPHpbQ_U-A_R6ES';
@@ -4962,10 +5237,14 @@ function reloadAllFromStorage(){
   morningLogs=load('lm-morning-logs',{});nightPlans=load('lm-night-plans',{});
   notes=load('lm-notes',[]);noteTags=load('lm-note-tags',['點子','隨筆','待辦']);
   expenses=load('lm-expenses',[]);
+  assets=load('lm-assets',{banks:[],etfs:[]});
+  if(!assets||typeof assets!=='object'||Array.isArray(assets))assets={banks:[],etfs:[]};
+  if(!Array.isArray(assets.banks))assets.banks=[];
+  if(!Array.isArray(assets.etfs))assets.etfs=[];
   renderHome();renderBooks();renderExercise();renderMedHistory();renderCases();renderReview();
   if(currentPage==='journal')renderJournal();
   if(currentPage==='growth')renderGrowth();
-  if(currentPage==='money')renderMoney();
+  if(currentPage==='money')setMoneySub(moneySub);
 }
 </script>
 </body>
