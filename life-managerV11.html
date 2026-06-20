@@ -204,6 +204,8 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
 .timeline-block{position:absolute;left:54px;right:2px;border-radius:6px;padding:4px 8px;overflow:hidden;box-sizing:border-box;font-size:11px;display:flex;flex-direction:column;justify-content:flex-start}
 .timeline-block .tb-title{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:5px}
 .timeline-block .tb-sub{font-size:10px;opacity:0.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.timeline-now-line{position:absolute;left:52px;right:2px;height:0;border-top:1.5px solid var(--red);z-index:6;pointer-events:none}
+.timeline-now-line::before{content:'';position:absolute;left:-3px;top:-4px;width:7px;height:7px;border-radius:50%;background:var(--red)}
 .tb-read{background:var(--purple-light);color:var(--purple-dark);border:0.5px solid var(--purple)}
 .tb-ex{background:var(--green-light);color:var(--green);border:0.5px solid var(--green)}
 .tb-med{background:var(--amber-light);color:var(--amber);border:0.5px solid var(--amber)}
@@ -1069,6 +1071,27 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
   </div>
 </div>
 
+<!-- 閱讀紀錄 詳情 / 編輯（從日誌點入）-->
+<div class="modal-overlay" id="modal-read-edit">
+  <div class="modal">
+    <div class="modal-title">閱讀紀錄 <button class="modal-close" onclick="closeModal('read-edit')">×</button></div>
+    <div style="font-size:13px;color:var(--text-2);margin-bottom:12px" id="re-book"></div>
+    <div style="display:flex;gap:10px">
+      <div class="field" style="flex:1"><label>開始時間</label><input type="time" id="re-start"></div>
+      <div class="field" style="flex:1"><label>結束時間</label><input type="time" id="re-end"></div>
+    </div>
+    <div style="display:flex;gap:10px">
+      <div class="field" style="flex:1"><label>起始頁</label><input type="number" id="re-sp" min="0"></div>
+      <div class="field" style="flex:1"><label>結束頁</label><input type="number" id="re-ep" min="0"></div>
+    </div>
+    <div style="font-size:12px;color:var(--text-3);margin-bottom:12px" id="re-info"></div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-danger" style="flex:1;justify-content:center" onclick="deleteReadEdit()">刪除</button>
+      <button class="btn btn-primary" style="flex:2;justify-content:center" onclick="saveReadEdit()">儲存</button>
+    </div>
+  </div>
+</div>
+
 <!-- 個案紀錄匯出（依日期 / 勾選紀錄 → 文字檔） -->
 <div class="modal-overlay" id="modal-case-export">
   <div class="modal">
@@ -1214,6 +1237,12 @@ var exercises=load('lm-exercises',[]);
 var expenses=load('lm-expenses',[]);
 var reviews=load('lm-reviews',{});
 var readSessions=load('lm-sessions',[]);
+// 補欄位：每筆閱讀紀錄需有 id 與起訖時間（舊資料 time 視為開始時間）
+(function(){var changed=false,seed=0;readSessions.forEach(function(s){
+  if(!s.id){s.id='r'+Date.now().toString(36)+(seed++).toString(36)+Math.random().toString(36).slice(2,6);changed=true;}
+  if(!s.startTime){s.startTime=s.time||'';changed=true;}
+  if(!s.endTime){s.endTime=(s.startTime?minToHM(hmToMin(s.startTime)+Math.round((s.sec||0)/60)):'');changed=true;}
+});if(changed)save('lm-sessions',readSessions);})();
 var medSessions=load('lm-med',[]);
 var cases=load('lm-cases',[]);
 var workoutMenus=load('lm-wmenus',[]);
@@ -1255,6 +1284,7 @@ function showToast(msg){var t=document.getElementById('toast');t.textContent=msg
 function fmt(sec){var h=Math.floor(sec/3600),m=Math.floor((sec%3600)/60),s=sec%60;return(h?(h<10?'0':'')+h+':':'')+(m<10?'0':'')+m+':'+(s<10?'0':'')+s;}
 function fmtMin(sec){var m=Math.floor(sec/60),s=sec%60;return(m<10?'0':'')+m+':'+(s<10?'0':'')+s;}
 function nowTime(){var d=new Date();return (d.getHours()<10?'0':'')+d.getHours()+':'+(d.getMinutes()<10?'0':'')+d.getMinutes();}
+function minToHM(m){m=Math.round(((m%1440)+1440)%1440);var h=Math.floor(m/60),mm=m%60;return (h<10?'0':'')+h+':'+(mm<10?'0':'')+mm;}
 function calcStreak(hasDateFn){
   var d=new Date(),n=0;
   while(true){
@@ -2247,6 +2277,58 @@ function deleteReadSession(gi){
   renderBooks();
   showToast('已刪除紀錄');
 }
+// ── 從日誌編輯閱讀紀錄 ───────────────────────────────────
+var _reId=null;
+function _recalcBookPage(bookId){
+  var b=books.find(function(x){return x.id===bookId;});if(!b)return;
+  var remain=readSessions.filter(function(x){return x.bookId===bookId;});
+  b.currentPage=remain.reduce(function(m,x){return Math.max(m,x.endPage||0);},0);
+  if(b.pages&&b.currentPage>=b.pages)b.status='done';
+  else if(b.pages&&b.currentPage<b.pages&&b.status==='done')b.status='reading';
+  save('lm-books',books);
+}
+function openReadEdit(id){
+  var s=readSessions.find(function(x){return String(x.id)===String(id);});if(!s)return;
+  _reId=String(id);
+  var b=books.find(function(x){return x.id===s.bookId;});
+  document.getElementById('re-book').textContent='《'+((b&&b.title)||'未知書籍')+'》 · '+esc(s.date||'');
+  document.getElementById('re-start').value=s.startTime||s.time||'';
+  document.getElementById('re-end').value=s.endTime||'';
+  document.getElementById('re-sp').value=(s.startPage!=null?s.startPage:'');
+  document.getElementById('re-ep').value=(s.endPage!=null?s.endPage:'');
+  document.getElementById('re-info').textContent='時長 '+Math.round((s.sec||0)/60)+' 分'+(s.rate?' · '+s.rate+' 頁/時':'');
+  openModal('read-edit');
+}
+function saveReadEdit(){
+  var s=readSessions.find(function(x){return String(x.id)===String(_reId);});if(!s)return;
+  var st=document.getElementById('re-start').value,en=document.getElementById('re-end').value;
+  var sp=parseInt(document.getElementById('re-sp').value),ep=parseInt(document.getElementById('re-ep').value);
+  if(!st){showToast('請填開始時間');return;}
+  var stM=hmToMin(st),enM=en?hmToMin(en):null;
+  var dur=(enM!=null&&enM>stM)?(enM-stM):Math.round((s.sec||0)/60);
+  if(enM!=null&&enM<=stM){showToast('結束時間需晚於開始');return;}
+  s.startTime=st;s.time=st;s.endTime=en||minToHM(stM+dur);
+  s.sec=dur*60;
+  if(!isNaN(sp))s.startPage=sp;
+  if(!isNaN(ep))s.endPage=ep;
+  s.pagesRead=Math.max(0,(s.endPage||0)-(s.startPage||0));
+  var hrs=s.sec/3600;s.rate=hrs>0?Math.round(s.pagesRead/hrs):0;
+  save('lm-sessions',readSessions);
+  _recalcBookPage(s.bookId);
+  closeModal('read-edit');_reId=null;
+  if(currentPage==='journal')renderJournal();
+  renderBooks();showToast('已更新閱讀紀錄');
+}
+function deleteReadEdit(){
+  var idx=readSessions.findIndex(function(x){return String(x.id)===String(_reId);});if(idx<0)return;
+  var bookId=readSessions[idx].bookId;
+  readSessions.splice(idx,1);
+  save('lm-sessions',readSessions);
+  _recalcBookPage(bookId);
+  closeModal('read-edit');_reId=null;
+  if(currentPage==='journal')renderJournal();
+  renderBooks();showToast('已刪除紀錄');
+}
 function saveBookEdit(){
   var idx=parseInt(document.getElementById('be-idx').value);
   books[idx].title=document.getElementById('be-title').value.trim()||books[idx].title;
@@ -2325,7 +2407,8 @@ function saveSession(){
   var b=books[timerBookIdx],ep=parseInt(document.getElementById('s-endpage').value);
   if(!ep||ep<(b.currentPage||0)){showToast('請輸入有效頁數');return;}
   var sp=b.currentPage||0,pr=ep-sp,hrs=timerSec/3600,rate=hrs>0?Math.round(pr/hrs):0;
-  readSessions.push({bookId:b.id,date:today(),time:nowTime(),sec:timerSec,startPage:sp,endPage:ep,pagesRead:pr,rate});
+  var endT=nowTime(),startT=minToHM(hmToMin(endT)-Math.round(timerSec/60));
+  readSessions.push({id:'r'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),bookId:b.id,date:today(),time:startT,startTime:startT,endTime:endT,sec:timerSec,startPage:sp,endPage:ep,pagesRead:pr,rate});
   save('lm-sessions',readSessions);
   books[timerBookIdx].currentPage=ep;
   if(b.pages&&ep>=b.pages)books[timerBookIdx].status='done';
@@ -3357,8 +3440,9 @@ function collectAutoItems(date){
   readSessions.filter(function(s){return s.date===date&&s.time;}).forEach(function(s){
     var b=books.find(function(x){return x.id===s.bookId;});
     var bookName=b?b.title:'';
-    items.push({key:'read-'+(s.bookId+'-'+s.time+'-'+s.endPage),cls:'tb-read',start:hmToMin(s.time),dur:Math.max(1,Math.round(s.sec/60)),
-      title:'閱讀'+(bookName?'《'+esc(bookName)+'》':''),sub:Math.round(s.sec/60)+'分',noCheck:true});
+    var rdSt=s.startTime||s.time,rdEn=s.endTime||(rdSt?minToHM(hmToMin(rdSt)+Math.round((s.sec||0)/60)):'');
+    items.push({key:'read-'+s.id,cls:'tb-read',start:hmToMin(rdSt),dur:Math.max(1,Math.round(s.sec/60)),readId:String(s.id),
+      title:'閱讀'+(bookName?'《'+esc(bookName)+'》':''),sub:(rdSt&&rdEn?rdSt+'–'+rdEn+' · ':'')+Math.round(s.sec/60)+'分',noCheck:true});
   });
   exercises.filter(function(e){return e.date===date&&e.time;}).forEach(function(e){
     items.push({key:'ex-'+e.id,cls:'tb-ex',start:hmToMin(e.time),dur:Math.max(1,e.min||1),
@@ -3418,7 +3502,7 @@ function renderJournalWork(){
     if(it.start<tlStart)return;
     var top=localPx(it.start);
     var h=Math.max(MIN_BLOCK_H,it.dur*PX_PER_MIN);
-    var durMin=Math.max(MIN_BLOCK_H/PX_PER_MIN,it.dur);
+    var realDur=Math.max(1,it.dur);
     var cls,inner,attrs='',extraStyle='';
     if(it.projected){
       cls=it.cls+' tb-unconfirmed';
@@ -3426,19 +3510,21 @@ function renderJournalWork(){
     } else if(it.noCheck){
       cls=it.cls+(it.isLive?' tb-unconfirmed':'');
       if(it.medId){attrs='data-action="view-med" data-sid="'+it.medId+'"';extraStyle='cursor:pointer;';}
+      else if(it.readId){attrs='data-action="edit-read" data-rid="'+esc(it.readId)+'"';extraStyle='cursor:pointer;';}
       inner='<div class="tb-title">'+it.title+(it.isLive?' ●':'')+'</div>'+(h>34?'<div class="tb-sub">'+it.sub+'</div>':'');
     } else {
       var conf=it.confirmedDefault||confirmed.indexOf(it.key)>=0;
       cls=it.cls+(conf?'':' tb-unconfirmed');
       inner='<div class="tb-title"><span class="tb-check'+(conf?' on':'')+'" data-action="journal-confirm" data-key="'+esc(it.key)+'">'+(conf?'<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>':'')+'</span>'+it.title+'</div>'+(h>34?'<div class="tb-sub">'+it.sub+'</div>':'');
     }
-    allBlocks.push({start:it.start,end:it.start+durMin,top:top,h:h,cls:cls,inner:inner,attrs:attrs,extraStyle:extraStyle});
+    allBlocks.push({start:it.start,realDur:realDur,top:top,natH:h,cls:cls,inner:inner,attrs:attrs,extraStyle:extraStyle});
   });
   (dayObj.workItems||[]).forEach(function(w){
     var start=hmToMin(w.startTime);if(start===null)return;
     var top=localPx(start);
     var dur=w.durationMin||10;
     var h=Math.max(MIN_BLOCK_H,dur*PX_PER_MIN);
+    var realDur=Math.max(1,dur);
     var cls,inner,attrs='',extraStyle='';
     if(w.kind==='quick'){
       var nm=(w.className?w.className+'-':'')+(w.code||'');
@@ -3450,21 +3536,36 @@ function renderJournalWork(){
       inner='<div class="tb-title">'+esc(w.text||'雜事')+'</div>';
       if(w.color)extraStyle='background:'+w.color+';border-color:'+w.color+';color:#3a3a3a;';
     }
-    allBlocks.push({start:start,end:start+Math.max(MIN_BLOCK_H/PX_PER_MIN,dur),top:top,h:h,cls:cls,inner:inner,attrs:attrs,extraStyle:extraStyle});
+    allBlocks.push({start:start,realDur:realDur,top:top,natH:h,cls:cls,inner:inner,attrs:attrs,extraStyle:extraStyle});
   });
-  // 重疊偵測：指派欄位
-  allBlocks.sort(function(a,b){return a.start-b.start;});
-  var colEnds=[];
+  // 重疊偵測：只有「實際時間」真正重疊才左右並排
+  allBlocks.sort(function(a,b){return a.start-b.start||a.top-b.top;});
+  allBlocks.forEach(function(b){b.realEnd=b.start+b.realDur;});
+  // 依時間重疊連通分群；同群內以貪婪法指派欄位
+  var clusters=[],cur=null;
   allBlocks.forEach(function(b){
-    var col=-1;
-    for(var i=0;i<colEnds.length;i++){if(colEnds[i]<=b.start){col=i;break;}}
-    if(col===-1)col=colEnds.length;
-    colEnds[col]=b.end;b.col=col;
+    if(cur&&b.start<cur.end-1e-6){cur.items.push(b);cur.end=Math.max(cur.end,b.realEnd);}
+    else{cur={items:[b],end:b.realEnd};clusters.push(cur);}
   });
+  clusters.forEach(function(cl){
+    var colEnds=[];
+    cl.items.forEach(function(b){
+      var col=-1;
+      for(var i=0;i<colEnds.length;i++){if(colEnds[i]<=b.start+1e-6){col=i;break;}}
+      if(col===-1)col=colEnds.length;
+      colEnds[col]=b.realEnd;b.col=col;
+    });
+    var n=colEnds.length;
+    cl.items.forEach(function(b){b.numCols=n;b.f1=b.col/n;b.f2=(b.col+1)/n;});
+  });
+  // 高度裁切：短事件不可在視覺上蓋到下一個（水平重疊）的事件
   allBlocks.forEach(function(b){
-    var mx=b.col;
-    allBlocks.forEach(function(b2){if(b2.start<b.end&&b2.end>b.start&&b2.col>mx)mx=b2.col;});
-    b.numCols=mx+1;
+    var minTop=Infinity;
+    allBlocks.forEach(function(c){
+      if(c===b)return;
+      if(c.top>b.top+0.5 && c.f1<b.f2-1e-6 && b.f1<c.f2-1e-6 && c.top<minTop)minTop=c.top;
+    });
+    b.h=isFinite(minTop)?Math.min(b.natH,Math.max(14,minTop-b.top-1)):b.natH;
   });
   // 渲染
   var blocks='';
@@ -3476,12 +3577,20 @@ function renderJournalWork(){
     var attrsStr=b.attrs?(' '+b.attrs):'';
     blocks+='<div class="timeline-block '+b.cls+'"'+attrsStr+' style="'+pos+b.extraStyle+'">'+b.inner+'</div>';
   });
+  // 現在時間線（僅今天）
+  var nowLine='';
+  if(date===today()){
+    var _nm=hmToMin(nowTime());
+    if(_nm!==null&&_nm>=tlStart&&_nm<=TL_END){
+      nowLine='<div class="timeline-now-line" style="top:'+localPx(_nm).toFixed(1)+'px"></div>';
+    }
+  }
   var body=document.getElementById('journal-body');
   body.innerHTML='<div class="journal-addbar">'
     +'<button class="btn btn-orange btn-sm" data-action="add-journal-quick">+ 臨時紀錄</button>'
     +'<button class="btn btn-ghost btn-sm" data-action="add-journal-note">+ 記一筆</button>'
     +'</div>'
-    +'<div class="timeline-wrap" style="height:'+height.toFixed(1)+'px">'+bg+blocks+'</div>';
+    +'<div class="timeline-wrap" style="height:'+height.toFixed(1)+'px">'+bg+blocks+nowLine+'</div>';
   // 自動捲動到當前時刻（今天才捲，其他日期維持頂部）
   if(date===today()){
     var nowMin=hmToMin(nowTime());
@@ -4081,6 +4190,7 @@ document.body.addEventListener('click',function(e){
   else if(action==='start-timer'){startTimer(parseInt(el.dataset.idx));}
   else if(action==='open-exercise-edit'){openExerciseEdit(el.dataset.eid);}
   else if(action==='view-med'){mjIsNew=false;openMedJournal(el.dataset.sid);}
+  else if(action==='edit-read'){openReadEdit(el.dataset.rid);}
   else if(action==='toggle-case'){toggleCaseWritten(el.dataset.id);}
   else if(action==='open-case-edit'){openCaseEdit(el.dataset.id);}
   else if(action==='del-quick-case'){deleteQuickCaseSession(el.dataset.id,el.dataset.date);}
@@ -4342,7 +4452,8 @@ function renderMorningCard(){
     itemsHTML=log.items.map(function(it,idx){
       var check='<div class="routine-check '+(it.done?'done':'')+(canEdit?' '+'" data-action="toggle-morning" data-idx="'+idx+'"':'" style="cursor:default"')+'>'
         +(it.done?'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>':'')+'</div>';
-      var wakeTag=(it.wake&&it.wakeTime)?' <span style="color:var(--amber);font-size:12px;font-weight:500;text-decoration:none">'+esc(it.wakeTime)+'</span>':'';
+      var _tm=it.wake?it.wakeTime:it.doneTime;
+      var wakeTag=(it.done&&_tm)?' <span style="color:var(--amber);font-size:12px;font-weight:500;text-decoration:none">'+esc(_tm)+'</span>':'';
       return '<div class="routine-item">'+check+'<div style="font-size:14px;flex:1">'
         +'<span style="'+(it.done?'color:var(--text-3);text-decoration:line-through':'color:var(--text)')+'">'+esc(it.name)+'</span>'+wakeTag+'</div></div>';
     }).join('');
@@ -4357,8 +4468,9 @@ function toggleMorningItem(idx){
   var log=morningLogs[t];if(!log)return;
   var it=log.items[idx];
   it.done=!it.done;
+  if(it.done)it.doneTime=nowTime();else it.doneTime=null;
   if(it.wake){
-    if(it.done){it.wakeTime=nowTime();log.wakeTime=it.wakeTime;showToast('已記錄起床時間 '+it.wakeTime);}
+    if(it.done){it.wakeTime=it.doneTime;log.wakeTime=it.wakeTime;showToast('已記錄起床時間 '+it.wakeTime);}
     else{it.wakeTime=null;log.wakeTime=null;}
   }
   var allDone=log.items.every(function(it){return it.done;});
@@ -4395,7 +4507,8 @@ function renderMorningFs(){
   var itemsHTML=log.items.map(function(it,idx){
     var check='<div class="routine-check '+(it.done?'done':'')+'" data-action="toggle-morning" data-idx="'+idx+'">'
       +(it.done?'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>':'')+'</div>';
-    var wakeTag=(it.wake&&it.wakeTime)?' <span style="color:var(--amber);font-size:13px;font-weight:500">'+esc(it.wakeTime)+'</span>':'';
+    var _tm=it.wake?it.wakeTime:it.doneTime;
+    var wakeTag=(it.done&&_tm)?' <span style="color:var(--amber);font-size:13px;font-weight:500">'+esc(_tm)+'</span>':'';
     return '<div class="routine-item" style="padding:14px 0">'+check
       +'<div style="font-size:16px;flex:1"><span style="'+(it.done?'color:var(--text-3);text-decoration:line-through':'color:var(--text)')+'">'+esc(it.name)+'</span>'+wakeTag+'</div></div>';
   }).join('');
