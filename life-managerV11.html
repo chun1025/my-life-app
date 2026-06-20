@@ -249,6 +249,23 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
 .week-item.projected{opacity:0.62}
 .week-item.projected .week-item-title::after{content:'（預定）';font-size:10px;font-weight:400;color:var(--text-3)}
 .week-day-empty{font-size:12px;color:var(--text-3);padding:4px 0}
+/* V12.7：整週 7 日並排時間分布 */
+.jweek-head{display:flex;gap:2px;position:sticky;top:0;background:var(--bg);z-index:5;padding-bottom:5px}
+.jweek-axis-head{width:26px;flex-shrink:0}
+.jweek-col-head{flex:1;min-width:0;text-align:center;cursor:pointer;padding:3px 0;border-radius:6px;line-height:1.2}
+.jweek-col-head.is-today{background:var(--purple-light)}
+.jweek-col-head .wd-dow{font-size:11px;color:var(--text-2);font-weight:600}
+.jweek-col-head.is-today .wd-dow{color:var(--purple-dark)}
+.jweek-col-head .wd-date{font-size:9px;color:var(--text-3)}
+.jweek-tl{display:flex;gap:2px;position:relative}
+.jweek-axis{width:26px;flex-shrink:0;position:relative}
+.jweek-axis-h{position:absolute;right:3px;font-size:8px;color:var(--text-3);transform:translateY(-50%);font-variant-numeric:tabular-nums}
+.jweek-col{flex:1;min-width:0;position:relative;cursor:pointer;border-left:0.5px solid var(--border);background-image:repeating-linear-gradient(to bottom,var(--border) 0,var(--border) 0.5px,transparent 0.5px,transparent 72px)}
+.jweek-col:last-child{border-right:0.5px solid var(--border)}
+.jweek-col.is-today{background-color:rgba(124,144,112,0.07)}
+.jweek-block{position:absolute;border-radius:2px;box-sizing:border-box;min-height:3px}
+.jweek-block.tb-unconfirmed{opacity:0.4}
+.jweek-now{position:absolute;left:26px;right:0;height:0;border-top:1.5px solid var(--red);z-index:4;pointer-events:none}
 .journal-confirm-row{display:flex;gap:6px;margin-bottom:6px}
 .event-line{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:0.5px solid var(--border)}
 .event-line:last-child{border-bottom:none}
@@ -3662,7 +3679,7 @@ function shiftJournalDate(delta){
 function renderJournal(){
   document.getElementById('journal-view-single').classList.toggle('active',journalView!=='week');
   document.getElementById('journal-view-week').classList.toggle('active',journalView==='week');
-  document.getElementById('journal-body').className=journalView==='week'?'journal-week-grid':'';
+  document.getElementById('journal-body').className=journalView==='week'?'journal-week-tl':'';
   if(journalView==='week'){renderJournalWeek();}
   else{
     var d=new Date(journalDate+'T00:00:00');
@@ -3877,6 +3894,56 @@ function weekDatesOf(date){
   var a=[];for(var i=0;i<7;i++){var x=new Date(mon);x.setDate(mon.getDate()+i);a.push(fmtLocalDate(x));}
   return a;
 }
+// 收集某日所有區塊（時間分布用），含自動帶入與手動 workItems
+function collectDayBlocks(date){
+  var blocks=[];
+  var COL={'tb-read':'var(--purple)','tb-ex':'var(--green)','tb-med':'var(--amber)','tb-case':'var(--blue)','tb-quick':'#B5712E','tb-note':'var(--text-3)','tb-timer':'var(--teal)'};
+  collectAutoItems(date).forEach(function(it){
+    if(it.start===null||it.start<TL_START)return;
+    blocks.push({start:it.start,realDur:Math.max(1,it.dur),cls:it.cls,color:COL[it.cls]||'var(--text-3)',title:it.title,projected:!!it.projected});
+  });
+  (journalDayObj(date).workItems||[]).forEach(function(w){
+    var start=hmToMin(w.startTime);if(start===null||start<TL_START)return;
+    var dur=w.durationMin||10;
+    if(w.kind==='quick'){
+      var nm=(w.className?w.className+'-':'')+(w.code||'');if(!nm)nm=w.quickType||'臨時紀錄';
+      blocks.push({start:start,realDur:Math.max(1,dur),cls:'tb-quick',color:'#B5712E',title:esc(nm),projected:false});
+    } else {
+      blocks.push({start:start,realDur:Math.max(1,dur),cls:'tb-note',color:w.color||'var(--text-3)',title:esc(w.text||'雜事'),projected:false});
+    }
+  });
+  return blocks;
+}
+// 計算區塊版面（top/高度/重疊欄位），與單日時間軸同邏輯
+function layoutDayBlocks(blocks){
+  blocks.sort(function(a,b){return a.start-b.start;});
+  blocks.forEach(function(b){b.top=(b.start-TL_START)*PX_PER_MIN;b.natH=Math.max(5,b.realDur*PX_PER_MIN);b.realEnd=b.start+b.realDur;});
+  var clusters=[],cur=null;
+  blocks.forEach(function(b){
+    if(cur&&b.start<cur.end-1e-6){cur.items.push(b);cur.end=Math.max(cur.end,b.realEnd);}
+    else{cur={items:[b],end:b.realEnd};clusters.push(cur);}
+  });
+  clusters.forEach(function(cl){
+    var colEnds=[];
+    cl.items.forEach(function(b){
+      var col=-1;
+      for(var i=0;i<colEnds.length;i++){if(colEnds[i]<=b.start+1e-6){col=i;break;}}
+      if(col===-1)col=colEnds.length;
+      colEnds[col]=b.realEnd;b.col=col;
+    });
+    var n=colEnds.length;cl.items.forEach(function(b){b.numCols=n;});
+  });
+  blocks.forEach(function(b){
+    var minTop=Infinity,bf1=b.col/b.numCols,bf2=(b.col+1)/b.numCols;
+    blocks.forEach(function(c){
+      if(c===b)return;var cf1=c.col/c.numCols,cf2=(c.col+1)/c.numCols;
+      if(c.top>b.top+0.5 && cf1<bf2-1e-6 && bf1<cf2-1e-6 && c.top<minTop)minTop=c.top;
+    });
+    b.h=isFinite(minTop)?Math.min(b.natH,Math.max(4,minTop-b.top)):b.natH;
+  });
+  return blocks;
+}
+// 整週：7 日並排迷你時間軸，一次看到整週時間分布
 function renderJournalWeek(){
   var wd=weekDatesOf(journalDate);
   var days=['日','一','二','三','四','五','六'];
@@ -3885,42 +3952,45 @@ function renderJournalWeek(){
   document.getElementById('journal-date-label').firstChild.textContent='本週 '+rangeLabel;
   document.getElementById('journal-date-sub').textContent='';
   var t=today();
-  var html='';
+  var startH=TL_START/60,endH=TL_END/60;
+  var height=(TL_END-TL_START)*PX_PER_MIN;
+  // 表頭：星期 + 日期
+  var head='<div class="jweek-axis-head"></div>';
   wd.forEach(function(date){
-    var d=new Date(date+'T00:00:00');
-    // 該日所有項目：自動帶入（含個案投影/紀錄） + 手動 workItems
-    var items=collectAutoItems(date).map(function(it){
-      return {start:it.start,cls:it.cls,title:it.title,sub:it.sub,projected:!!it.projected};
-    });
-    var dayObj=journalDayObj(date);
-    (dayObj.workItems||[]).forEach(function(w){
-      var start=hmToMin(w.startTime);
-      if(w.kind==='quick'){
-        var nm=(w.className?w.className+'-':'')+(w.code||'');
-        if(!nm)nm=w.quickType||'臨時紀錄';
-        items.push({start:start,cls:'tb-quick',title:esc(nm)+(w.linkedCaseId?' ✓個案':''),sub:esc(w.event||w.quickType||'臨時紀錄'),projected:false});
-      } else {
-        items.push({start:start,cls:'tb-note',title:esc(w.text||'雜事'),sub:'',projected:false,noteColor:w.color||null});
-      }
-    });
-    items.sort(function(a,b){return (a.start===null?99999:a.start)-(b.start===null?99999:b.start);});
-    var isToday=date===t;
-    var rows=items.length?items.map(function(it){
-      var clr=(it.cls==='tb-note'&&it.noteColor)?it.noteColor:({'tb-read':'var(--purple)','tb-ex':'var(--green)','tb-med':'var(--amber)','tb-case':'var(--blue)','tb-quick':'#B5712E','tb-note':'var(--text-3)','tb-timer':'var(--teal)'}[it.cls]||'var(--text-3)');
-      var tm=it.start===null?'':((it.start/60|0)<10?'0':'')+(it.start/60|0)+':'+((it.start%60)<10?'0':'')+(it.start%60);
-      return '<div class="week-item'+(it.projected?' projected':'')+'">'
-        +'<div class="week-item-time">'+tm+'</div>'
-        +'<div class="week-item-tag" style="background:'+clr+'"></div>'
-        +'<div class="week-item-body"><div class="week-item-title">'+it.title+'</div>'
-        +(it.sub?'<div class="week-item-sub">'+it.sub+'</div>':'')+'</div></div>';
-    }).join(''):'<div class="week-day-empty">沒有紀錄</div>';
-    html+='<div class="week-day-card'+(isToday?' is-today':'')+'">'
-      +'<div class="week-day-head" data-action="week-open-day" data-date="'+date+'">'
-      +'<div class="week-day-title">'+(d.getMonth()+1)+'/'+d.getDate()+' 週'+days[d.getDay()]+(isToday?'<span class="wd-today-tag">今天</span>':'')+'</div>'
-      +'<div class="week-day-count">'+items.length+' 項 ›</div></div>'
-      +rows+'</div>';
+    var d=new Date(date+'T00:00:00'),isToday=date===t;
+    head+='<div class="jweek-col-head'+(isToday?' is-today':'')+'" data-action="week-open-day" data-date="'+date+'">'
+      +'<div class="wd-dow">'+days[d.getDay()]+'</div>'
+      +'<div class="wd-date">'+(d.getMonth()+1)+'/'+d.getDate()+'</div></div>';
   });
-  document.getElementById('journal-body').innerHTML=html;
+  // 左側時間刻度（每 2 小時）
+  var axis='';
+  for(var h=startH;h<=endH;h+=2){
+    axis+='<div class="jweek-axis-h" style="top:'+((h-startH)*60*PX_PER_MIN).toFixed(1)+'px">'+h+'</div>';
+  }
+  // 7 日欄位
+  var cols='';
+  wd.forEach(function(date){
+    var isToday=date===t;
+    var blocks=layoutDayBlocks(collectDayBlocks(date));
+    var bHtml=blocks.map(function(b){
+      var w=100/b.numCols,left=b.col*w;
+      return '<div class="jweek-block '+b.cls+(b.projected?' tb-unconfirmed':'')+'" title="'+b.title+'" style="top:'+b.top.toFixed(1)+'px;height:'+b.h.toFixed(1)+'px;left:calc('+left+'% + 1px);width:calc('+w+'% - 2px);background:'+b.color+'"></div>';
+    }).join('');
+    cols+='<div class="jweek-col'+(isToday?' is-today':'')+'" data-action="week-open-day" data-date="'+date+'">'+bHtml+'</div>';
+  });
+  // 現在時間線（橫跨整週，僅當本週包含今天時顯示）
+  var nowLine='';
+  if(wd.indexOf(t)>=0){
+    var _nm=hmToMin(nowTime());
+    if(_nm!==null&&_nm>=TL_START&&_nm<=TL_END){
+      nowLine='<div class="jweek-now" style="top:'+((_nm-TL_START)*PX_PER_MIN).toFixed(1)+'px"></div>';
+    }
+  }
+  document.getElementById('journal-body').innerHTML=
+    '<div class="jweek-head">'+head+'</div>'
+    +'<div class="jweek-tl" style="height:'+height.toFixed(1)+'px">'
+      +'<div class="jweek-axis">'+axis+'</div>'+cols+nowLine
+    +'</div>';
 }
 // 確認自動帶入
 function toggleJournalConfirm(key){
