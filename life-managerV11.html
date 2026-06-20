@@ -263,8 +263,10 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
 .jweek-col{flex:1;min-width:0;position:relative;cursor:pointer;border-left:0.5px solid var(--border);background-image:repeating-linear-gradient(to bottom,var(--border) 0,var(--border) 0.5px,transparent 0.5px,transparent 72px)}
 .jweek-col:last-child{border-right:0.5px solid var(--border)}
 .jweek-col.is-today{background-color:rgba(124,144,112,0.07)}
-.jweek-block{position:absolute;border-radius:2px;box-sizing:border-box;min-height:3px}
-.jweek-block.tb-unconfirmed{opacity:0.4}
+.jweek-block{position:absolute;border-radius:3px;box-sizing:border-box;min-height:3px;overflow:hidden}
+.jweek-block-txt{font-size:9px;line-height:1.15;color:inherit;padding:2px 3px;word-break:break-word;overflow:hidden;font-weight:600}
+.jweek-block.tb-note .jweek-block-txt{color:var(--text)}
+.jweek-block.tb-unconfirmed{opacity:0.5}
 .jweek-now{position:absolute;left:26px;right:0;height:0;border-top:1.5px solid var(--red);z-index:4;pointer-events:none}
 .journal-confirm-row{display:flex;gap:6px;margin-bottom:6px}
 .event-line{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:0.5px solid var(--border)}
@@ -3909,7 +3911,7 @@ function collectDayBlocks(date){
       var nm=(w.className?w.className+'-':'')+(w.code||'');if(!nm)nm=w.quickType||'臨時紀錄';
       blocks.push({start:start,realDur:Math.max(1,dur),cls:'tb-quick',color:'#B5712E',title:esc(nm),projected:false});
     } else {
-      blocks.push({start:start,realDur:Math.max(1,dur),cls:'tb-note',color:w.color||'var(--text-3)',title:esc(w.text||'雜事'),projected:false});
+      blocks.push({start:start,realDur:Math.max(1,dur),cls:'tb-note',noteColor:w.color||null,title:esc(w.text||'雜事'),projected:false});
     }
   });
   return blocks;
@@ -3974,7 +3976,11 @@ function renderJournalWeek(){
     var blocks=layoutDayBlocks(collectDayBlocks(date));
     var bHtml=blocks.map(function(b){
       var w=100/b.numCols,left=b.col*w;
-      return '<div class="jweek-block '+b.cls+(b.projected?' tb-unconfirmed':'')+'" title="'+b.title+'" style="top:'+b.top.toFixed(1)+'px;height:'+b.h.toFixed(1)+'px;left:calc('+left+'% + 1px);width:calc('+w+'% - 2px);background:'+b.color+'"></div>';
+      var pos='top:'+b.top.toFixed(1)+'px;height:'+b.h.toFixed(1)+'px;left:calc('+left+'% + 1px);width:calc('+w+'% - 2px)';
+      // 備註若有自訂顏色，沿用該柔和色當底（深色文字）；其餘類別用 tb-* 淺底＋同色文字
+      if(b.cls==='tb-note'&&b.noteColor)pos+=';background:'+b.noteColor+';border-color:'+b.noteColor;
+      var txt=b.h>=15?'<div class="jweek-block-txt">'+b.title+'</div>':'';
+      return '<div class="jweek-block '+b.cls+(b.projected?' tb-unconfirmed':'')+'" title="'+b.title+'" style="'+pos+'">'+txt+'</div>';
     }).join('');
     cols+='<div class="jweek-col'+(isToday?' is-today':'')+'" data-action="week-open-day" data-date="'+date+'">'+bHtml+'</div>';
   });
