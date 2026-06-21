@@ -268,6 +268,28 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
 .jweek-block.tb-note .jweek-block-txt{color:var(--text)}
 .jweek-block.tb-unconfirmed{opacity:0.5}
 .jweek-now{position:absolute;left:26px;right:0;height:0;border-top:1.5px solid var(--red);z-index:4;pointer-events:none}
+/* V12.8：日計畫（拖拉排程）*/
+.plan-datebar{display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:6px}
+.plan-datebar .rtab{padding:5px 14px;font-size:18px;line-height:1;font-weight:600}
+.plan-date-label{font-size:15px;font-weight:600;color:var(--text);min-width:150px;text-align:center}
+.plan-hint{font-size:11px;color:var(--text-3);text-align:center;margin-bottom:12px;line-height:1.45}
+.plan-layout{display:flex;flex-direction:column;gap:12px}
+.plan-palette{display:flex;flex-wrap:wrap;gap:7px;position:sticky;top:0;z-index:6;background:var(--bg);padding:6px 0 8px}
+.plan-pal-block{padding:7px 12px;border-radius:9px;font-size:12px;font-weight:600;color:#fff;cursor:grab;user-select:none;touch-action:none;box-shadow:0 1px 2px rgba(0,0,0,.1);white-space:nowrap}
+.plan-pal-block.plan-pal-custom{background:var(--surface)!important;color:var(--text-2);border:1px dashed var(--border-med);box-shadow:none}
+.plan-tl-wrap{position:relative}
+.plan-timeline{position:relative;margin-left:30px;border-left:0.5px solid var(--border);border-radius:0 0 4px 4px;background-image:repeating-linear-gradient(to bottom,var(--border) 0,var(--border) 0.5px,transparent 0.5px,transparent 72px)}
+.plan-axis-h{position:absolute;left:-30px;width:26px;text-align:right;font-size:9px;color:var(--text-3);transform:translateY(-50%);font-variant-numeric:tabular-nums;pointer-events:none}
+.plan-block{position:absolute;border-radius:6px;box-sizing:border-box;color:#fff;overflow:hidden;cursor:grab;touch-action:none;box-shadow:0 1px 3px rgba(0,0,0,.14);display:flex;flex-direction:column}
+.plan-block.dragging{opacity:.9;box-shadow:0 6px 16px rgba(0,0,0,.25);z-index:30;cursor:grabbing}
+.plan-block-label{font-size:11px;font-weight:600;padding:3px 6px 0;line-height:1.2;word-break:break-word;overflow:hidden}
+.plan-block-time{font-size:9px;opacity:.9;padding:1px 6px 0}
+.plan-block-resize{position:absolute;left:0;right:0;bottom:0;height:13px;cursor:ns-resize;touch-action:none}
+.plan-block-resize::after{content:'';position:absolute;left:50%;bottom:3px;width:18px;height:2px;border-radius:1px;background:rgba(255,255,255,.75);transform:translateX(-50%)}
+.plan-ghost{position:fixed;z-index:400;pointer-events:none;border-radius:9px;color:#fff;font-size:12px;font-weight:600;padding:7px 12px;opacity:.92;box-shadow:0 6px 16px rgba(0,0,0,.25);white-space:nowrap}
+.plan-drop-hint{position:absolute;left:2px;right:2px;border:1.5px dashed var(--purple);border-radius:6px;background:rgba(124,144,112,.14);pointer-events:none;z-index:3}
+.plan-empty{position:absolute;left:0;right:0;top:46%;text-align:center;font-size:12px;color:var(--text-3);pointer-events:none}
+.plan-actionbar{display:flex;gap:10px;justify-content:flex-end;margin-top:14px;position:sticky;bottom:0;background:linear-gradient(to top,var(--bg) 55%,transparent);padding:10px 0 4px}
 .journal-confirm-row{display:flex;gap:6px;margin-bottom:6px}
 .event-line{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:0.5px solid var(--border)}
 .event-line:last-child{border-bottom:none}
@@ -346,6 +368,12 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
   /* 主內容捲動區 */
   .body{padding:28px 44px 56px}
   .page{max-width:780px;margin:0 auto}
+  /* 日計畫：調色盤左欄、時間軸右側 */
+  #page-plan.active{max-width:880px}
+  #page-plan .plan-layout{flex-direction:row;align-items:flex-start;gap:24px}
+  #page-plan .plan-palette{flex-direction:column;flex-wrap:nowrap;width:158px;flex-shrink:0;position:sticky;top:8px;background:transparent;padding:0}
+  #page-plan .plan-pal-block{width:100%;text-align:center}
+  #page-plan .plan-tl-wrap{flex:1;min-width:0}
   /* 首頁：兩欄並排（限作用於顯示中的分頁，避免蓋過 .page 的隱藏） */
   #page-home.active{max-width:940px;display:grid;grid-template-columns:1fr 1fr;gap:14px 20px;align-items:start}
   #page-home>*{margin-bottom:0}
@@ -632,11 +660,32 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
   </div>
 </div>
 
+<!-- 日計畫 -->
+<div class="page" id="page-plan">
+  <div class="plan-datebar">
+    <button class="rtab" data-action="plan-prev" aria-label="前一天">‹</button>
+    <div class="plan-date-label" id="plan-date-label">今天</div>
+    <button class="rtab" data-action="plan-next" aria-label="後一天">›</button>
+  </div>
+  <div class="plan-hint">拖曳下方活動方塊到時間軸排入行程；點方塊可編輯，拖底部把手調整長度。</div>
+  <div class="plan-layout">
+    <div class="plan-palette" id="plan-palette"></div>
+    <div class="plan-tl-wrap">
+      <div class="plan-timeline" id="plan-timeline"></div>
+    </div>
+  </div>
+  <div class="plan-actionbar">
+    <button class="btn btn-ghost btn-sm" data-action="plan-clear">清空</button>
+    <button class="btn btn-primary btn-sm" data-action="plan-apply">一鍵加入日誌</button>
+  </div>
+</div>
+
 </div>
 <nav class="nav">
   <button class="nav-btn active" id="nav-home" onclick="switchPage('home',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>首頁</button>
   <button class="nav-btn" id="nav-growth" onclick="switchPage('growth',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg>成長</button>
   <button class="nav-btn" id="nav-journal" onclick="switchPage('journal',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><line x1="8" y1="9" x2="16" y2="9"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></svg>日誌</button>
+  <button class="nav-btn" id="nav-plan" onclick="switchPage('plan',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><rect x="6" y="13" width="5" height="3" rx="1" fill="currentColor" stroke="none"/><rect x="13" y="13" width="5" height="5" rx="1" fill="currentColor" stroke="none"/></svg>日計畫</button>
   <button class="nav-btn" id="nav-cases" onclick="switchPage('cases',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>個案</button>
   <button class="nav-btn" id="nav-review" onclick="switchPage('review',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>回顧</button>
   <button class="nav-btn" id="nav-money" onclick="switchPage('money',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>記帳</button>
@@ -1303,6 +1352,40 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
   </div>
 </div>
 
+<div class="modal-overlay" id="modal-plan-item">
+  <div class="modal">
+    <div class="modal-title">編輯行程 <button class="modal-close" onclick="closeModal('plan-item')">x</button></div>
+    <div class="field">
+      <label>名稱</label>
+      <input type="text" id="plan-item-label" placeholder="" autocomplete="off">
+    </div>
+    <div class="field">
+      <label>顏色</label>
+      <div class="chip-row" id="plan-item-colors"></div>
+    </div>
+    <div style="display:flex;gap:12px">
+      <div class="field" style="flex:1"><label>開始</label><input type="time" id="plan-item-start"></div>
+      <div class="field" style="flex:1"><label>長度（分鐘）</label><input type="number" id="plan-item-dur" inputmode="numeric" min="5" step="5"></div>
+    </div>
+    <button class="btn btn-primary btn-full" onclick="savePlanItem()">儲存</button>
+    <button class="btn btn-danger btn-full" style="margin-top:8px" onclick="deletePlanItem()">刪除這項</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-plan-apply">
+  <div class="modal">
+    <div class="modal-title">加入日誌 <button class="modal-close" onclick="closeModal('plan-apply')">x</button></div>
+    <div style="font-size:13px;color:var(--text-2);margin-bottom:14px">把這份計畫的行程寫入日誌的時間軸。</div>
+    <div class="field">
+      <label>套用到日期</label>
+      <input type="date" id="plan-apply-date">
+    </div>
+    <div id="plan-apply-info" style="font-size:12px;color:var(--text-2);margin:-4px 0 14px"></div>
+    <button class="btn btn-primary btn-full" onclick="doApplyPlan('append')">附加到日誌</button>
+    <button class="btn btn-ghost btn-full" style="margin-top:8px" onclick="doApplyPlan('replace')">取代先前由計畫帶入的項目</button>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -1323,6 +1406,23 @@ var assets=load('lm-assets',{banks:[],etfs:[]});
 if(!assets||typeof assets!=='object'||Array.isArray(assets))assets={banks:[],etfs:[]};
 if(!Array.isArray(assets.banks))assets.banks=[];
 if(!Array.isArray(assets.etfs))assets.etfs=[];
+// 日計畫：{ 'YYYY-MM-DD': [ {id,label,color,start,dur} ] }
+var dayPlans=load('lm-dayplans',{});
+if(!dayPlans||typeof dayPlans!=='object'||Array.isArray(dayPlans))dayPlans={};
+var PLAN_PRESETS=[
+  {label:'閱讀',color:'#8E9C7C'},
+  {label:'運動',color:'#6E9B8A'},
+  {label:'冥想',color:'#C49A6C'},
+  {label:'備課',color:'#8FA3B8'},
+  {label:'個案晤談',color:'#7FA8C9'},
+  {label:'行政',color:'#A8A08C'},
+  {label:'用餐',color:'#C9A87F'},
+  {label:'休息',color:'#A8B0A0'},
+  {label:'家務',color:'#B5A0B0'},
+  {label:'陪伴家人',color:'#CDA0A0'},
+  {label:'自由時間',color:'#9DA873'},
+  {label:'睡眠',color:'#8A93A8'}
+];
 var reviews=load('lm-reviews',{});
 var readSessions=load('lm-sessions',[]);
 // 補欄位：每筆閱讀紀錄需有 id 與起訖時間（舊資料 time 視為開始時間）
@@ -1350,7 +1450,7 @@ var appSettings=load('lm-settings',{pages:{growth:true,journal:true,cases:true,r
 // migrate: ensure all keys exist
 if(!appSettings.pages)appSettings.pages={growth:true,journal:true,cases:true,review:true,money:true};
 if(!appSettings.growth)appSettings.growth={reading:true,exercise:true,meditation:true};
-['growth','journal','cases','review','money'].forEach(function(k){if(appSettings.pages[k]===undefined)appSettings.pages[k]=true;});
+['growth','journal','plan','cases','review','money'].forEach(function(k){if(appSettings.pages[k]===undefined)appSettings.pages[k]=true;});
 ['reading','exercise','meditation'].forEach(function(k){if(appSettings.growth[k]===undefined)appSettings.growth[k]=true;});
 if(appSettings.workMode===undefined)appSettings.workMode=false;
 // 工作模式：專注工作功能並保護隱私，連動關閉運動、冥想、回顧、記帳
@@ -1442,6 +1542,7 @@ function renderSettingsModal(){
       +row('冥想',appSettings.growth.meditation,"toggleGrowthSetting('meditation',this.checked)",true,wm)
     +'</div>'
     +row('日誌',appSettings.pages.journal,"togglePageSetting('journal',this.checked)",false,false)
+    +row('日計畫',appSettings.pages.plan,"togglePageSetting('plan',this.checked)",false,false)
     +row('個案',appSettings.pages.cases,"togglePageSetting('cases',this.checked)",false,false)
     +row('回顧',appSettings.pages.review,"togglePageSetting('review',this.checked)",false,wm)
     +row('記帳',appSettings.pages.money,"togglePageSetting('money',this.checked)",false,wm);
@@ -1465,7 +1566,7 @@ function toggleGrowthSetting(key,checked){
   applySettings();
 }
 function applySettings(){
-  ['growth','journal','cases','review','money'].forEach(function(p){
+  ['growth','journal','plan','cases','review','money'].forEach(function(p){
     var btn=document.getElementById('nav-'+p);
     if(btn)btn.style.display=effPageOn(p)?'':'none';
   });
@@ -1479,7 +1580,7 @@ function applySettings(){
 }
 
 var currentPage='home';
-var pageTitles={home:'今天',growth:'成長',journal:'日誌',cases:'個案紀錄',review:'回顧',money:'記帳'};
+var pageTitles={home:'今天',growth:'成長',journal:'日誌',plan:'日計畫',cases:'個案紀錄',review:'回顧',money:'記帳'};
 function switchPage(name,btn){
   if(name!=='home'){var ftEl=document.getElementById('fullscreen-timer');if(ftEl)ftEl.classList.remove('open');}
   document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});
@@ -1495,6 +1596,7 @@ function switchPage(name,btn){
   if(name==='cases')renderCases();
   if(name==='review')renderReview();
   if(name==='money')setMoneySub(moneySub);
+  if(name==='plan')renderPlan();
 }
 
 // ── 成長頁（容器）──────────────────────────────────────
@@ -1895,6 +1997,170 @@ function renderAssets(){
     +'<div style="font-size:12px;color:'+etfCol+'">'+(etfInv>0?((etfPl>=0?'+':'')+etfRate.toFixed(1)+'%'):'')+'</div></div>'
     +'</div>';
   }
+}
+
+// ── 日計畫（拖拉排程）──────────────────────────────────
+var planDate=today();
+function planItems(){if(!dayPlans[planDate])dayPlans[planDate]=[];return dayPlans[planDate];}
+function savePlans(){save('lm-dayplans',dayPlans);}
+function planColorAt(i){return PLAN_PRESETS[i%PLAN_PRESETS.length].color;}
+function shiftPlanDate(delta){var d=new Date(planDate+'T00:00:00');d.setDate(d.getDate()+delta);planDate=fmtLocalDate(d);renderPlan();}
+function planDateLabel(){var d=new Date(planDate+'T00:00:00'),days=['日','一','二','三','四','五','六'];var s=(d.getMonth()+1)+'月'+d.getDate()+'日 週'+days[d.getDay()];if(planDate===today())s='今天 · '+s;return s;}
+function planSnap(m){return Math.round(m/15)*15;}
+function _findPlanItem(id){return planItems().find(function(x){return String(x.id)===String(id);});}
+function renderPlan(){
+  var lab=document.getElementById('plan-date-label');if(lab)lab.textContent=planDateLabel();
+  var pal=document.getElementById('plan-palette');
+  if(pal){
+    pal.innerHTML=PLAN_PRESETS.map(function(p){
+      return '<div class="plan-pal-block" data-plan-new="1" data-label="'+esc(p.label)+'" data-color="'+p.color+'" style="background:'+p.color+'">'+esc(p.label)+'</div>';
+    }).join('')+'<div class="plan-pal-block plan-pal-custom" data-plan-new="1" data-custom="1" data-label="自訂" data-color="#9AA0A6">＋ 自訂</div>';
+  }
+  renderPlanTimeline();
+}
+function renderPlanTimeline(){
+  var tl=document.getElementById('plan-timeline');if(!tl)return;
+  var height=(TL_END-TL_START)*PX_PER_MIN;
+  tl.style.height=height.toFixed(1)+'px';
+  var startH=TL_START/60,endH=TL_END/60,axis='';
+  for(var h=startH;h<=endH;h++){axis+='<div class="plan-axis-h" style="top:'+((h-startH)*60*PX_PER_MIN).toFixed(1)+'px">'+h+'</div>';}
+  var items=planItems(),blocksHtml='';
+  if(!items.length){
+    blocksHtml='<div class="plan-empty">把上方活動方塊拖進來，組合你的一天</div>';
+  } else {
+    var laid=layoutDayBlocks(items.map(function(it){return {start:it.start,realDur:it.dur,ref:it};}));
+    blocksHtml=laid.map(function(b){
+      var it=b.ref,w=100/b.numCols,left=b.col*w,showTime=b.h>=30;
+      return '<div class="plan-block" data-plan-id="'+esc(it.id)+'" style="top:'+b.top.toFixed(1)+'px;height:'+b.h.toFixed(1)+'px;left:calc('+left+'% + 1px);width:calc('+w+'% - 2px);background:'+it.color+'">'
+        +'<div class="plan-block-label">'+esc(it.label)+'</div>'
+        +(showTime?'<div class="plan-block-time">'+minToHM(it.start)+'–'+minToHM(it.start+it.dur)+'</div>':'')
+        +'<div class="plan-block-resize" data-plan-resize="1"></div>'
+        +'</div>';
+    }).join('');
+  }
+  var nowLine='';
+  if(planDate===today()){var nm=hmToMin(nowTime());if(nm!==null&&nm>=TL_START&&nm<=TL_END)nowLine='<div class="jweek-now" style="left:0;top:'+((nm-TL_START)*PX_PER_MIN).toFixed(1)+'px"></div>';}
+  tl.innerHTML=axis+blocksHtml+nowLine;
+}
+function _planTLRect(){return document.getElementById('plan-timeline').getBoundingClientRect();}
+function _planDefaultSlot(){var items=planItems();if(!items.length)return 8*60;var end=planSnap(items.reduce(function(m,it){return Math.max(m,it.start+it.dur);},TL_START));if(end+30>TL_END)end=8*60;return end;}
+function _planAutoScroll(clientY){var sc=document.querySelector('.body');if(!sc)return;var vh=window.innerHeight;if(clientY<110)sc.scrollTop-=14;else if(clientY>vh-110)sc.scrollTop+=14;}
+function _planUpdateBlockTime(el,it){var tEl=el.querySelector('.plan-block-time');if(tEl)tEl.textContent=minToHM(it.start)+'–'+minToHM(it.start+it.dur);}
+function _clearDropHint(){var hh=document.getElementById('_plan-drop');if(hh)hh.remove();}
+function _planShowDrop(x,y){
+  var tl=document.getElementById('plan-timeline');var r=tl.getBoundingClientRect();_clearDropHint();
+  if(x<r.left-40||x>r.right+10||y<r.top-4||y>r.bottom+4)return;
+  var start=Math.max(TL_START,Math.min(TL_END-30,planSnap(TL_START+(y-r.top)/PX_PER_MIN)));
+  var hh=document.createElement('div');hh.id='_plan-drop';hh.className='plan-drop-hint';
+  hh.style.top=((start-TL_START)*PX_PER_MIN)+'px';hh.style.height=(60*PX_PER_MIN)+'px';
+  tl.appendChild(hh);
+}
+var _planDrag=null;
+function planPointerDown(e){
+  var palBlock=e.target.closest('[data-plan-new]');
+  var resize=e.target.closest('[data-plan-resize]');
+  var block=e.target.closest('.plan-block');
+  if(palBlock){
+    e.preventDefault();
+    _planDrag={mode:'new',label:palBlock.dataset.label,color:palBlock.dataset.color,custom:palBlock.dataset.custom==='1',startX:e.clientX,startY:e.clientY,moved:false,ghost:null};
+  } else if(resize&&block){
+    e.preventDefault();var it=_findPlanItem(block.dataset.planId);if(!it)return;
+    _planDrag={mode:'resize',item:it,el:block,startY:e.clientY,moved:false};block.classList.add('dragging');
+  } else if(block){
+    e.preventDefault();var it2=_findPlanItem(block.dataset.planId);if(!it2)return;
+    var r=block.getBoundingClientRect();
+    _planDrag={mode:'move',item:it2,el:block,grabOffset:e.clientY-r.top,startY:e.clientY,moved:false};
+  } else {return;}
+  document.addEventListener('pointermove',planPointerMove);
+  document.addEventListener('pointerup',planPointerUp);
+}
+function planPointerMove(e){
+  var d=_planDrag;if(!d)return;
+  if(!d.moved&&(Math.abs(e.clientY-d.startY)>4||Math.abs((e.clientX||0)-(d.startX||0))>4))d.moved=true;
+  if(d.mode==='new'){
+    if(!d.ghost){d.ghost=document.createElement('div');d.ghost.className='plan-ghost';d.ghost.style.background=d.color;d.ghost.textContent=d.label;document.body.appendChild(d.ghost);}
+    d.ghost.style.left=(e.clientX+12)+'px';d.ghost.style.top=(e.clientY-14)+'px';
+    _planAutoScroll(e.clientY);_planShowDrop(e.clientX,e.clientY);
+  } else if(d.mode==='move'){
+    if(!d.moved)return;d.el.classList.add('dragging');
+    var start=Math.max(TL_START,Math.min(TL_END-d.item.dur,planSnap(TL_START+(e.clientY-_planTLRect().top-d.grabOffset)/PX_PER_MIN)));
+    d.item.start=start;d.el.style.top=((start-TL_START)*PX_PER_MIN).toFixed(1)+'px';_planUpdateBlockTime(d.el,d.item);_planAutoScroll(e.clientY);
+  } else if(d.mode==='resize'){
+    var mins=Math.max(15,Math.min(TL_END-d.item.start,planSnap((e.clientY-_planTLRect().top)/PX_PER_MIN+TL_START-d.item.start)));
+    d.item.dur=mins;d.el.style.height=(mins*PX_PER_MIN).toFixed(1)+'px';_planUpdateBlockTime(d.el,d.item);_planAutoScroll(e.clientY);
+  }
+}
+function planPointerUp(e){
+  document.removeEventListener('pointermove',planPointerMove);
+  document.removeEventListener('pointerup',planPointerUp);
+  var d=_planDrag;_planDrag=null;_clearDropHint();
+  if(!d)return;
+  if(d.mode==='new'){
+    if(d.ghost&&d.ghost.parentNode)d.ghost.parentNode.removeChild(d.ghost);
+    var r=_planTLRect();
+    var overTL=e.clientX>=r.left-40&&e.clientX<=r.right+10&&e.clientY>=r.top-4&&e.clientY<=r.bottom+4;
+    var label=d.label,color=d.color;
+    if(d.custom){var nm=prompt('活動名稱');if(nm===null)return;label=(nm.trim()||'活動');color=planColorAt(planItems().length);}
+    var start=(overTL&&d.moved)?planSnap(TL_START+(e.clientY-r.top)/PX_PER_MIN):_planDefaultSlot();
+    start=Math.max(TL_START,Math.min(TL_END-30,start));
+    var dur=Math.min(60,TL_END-start);
+    planItems().push({id:'p'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),label:label,color:color,start:start,dur:dur});
+    savePlans();renderPlanTimeline();
+  } else if(d.mode==='move'){
+    if(d.el)d.el.classList.remove('dragging');
+    if(!d.moved){openPlanItem(d.item.id);return;}
+    savePlans();renderPlanTimeline();
+  } else if(d.mode==='resize'){
+    if(d.el)d.el.classList.remove('dragging');savePlans();renderPlanTimeline();
+  }
+}
+var _planEditId=null,_planEditColor=null;
+function openPlanItem(id){
+  var it=_findPlanItem(id);if(!it)return;_planEditId=id;_planEditColor=it.color;
+  document.getElementById('plan-item-label').value=it.label||'';
+  document.getElementById('plan-item-start').value=minToHM(it.start);
+  document.getElementById('plan-item-dur').value=it.dur;
+  document.getElementById('plan-item-colors').innerHTML=PLAN_PRESETS.map(function(p){
+    return '<button type="button" class="plan-color-chip" data-color="'+p.color+'" onclick="_planPickColor(this)" style="width:26px;height:26px;border-radius:50%;background:'+p.color+';border:2px solid '+(p.color===it.color?'var(--text)':'transparent')+';cursor:pointer;padding:0"></button>';
+  }).join('');
+  openModal('plan-item');
+}
+function _planPickColor(btn){_planEditColor=btn.dataset.color;[].forEach.call(document.querySelectorAll('#plan-item-colors .plan-color-chip'),function(b){b.style.border='2px solid '+(b.dataset.color===_planEditColor?'var(--text)':'transparent');});}
+function savePlanItem(){
+  var it=_findPlanItem(_planEditId);if(!it)return;
+  var label=document.getElementById('plan-item-label').value.trim()||'活動';
+  var start=hmToMin(document.getElementById('plan-item-start').value);
+  var dur=parseInt(document.getElementById('plan-item-dur').value,10);
+  if(start===null)start=it.start;if(!dur||dur<5)dur=it.dur;
+  it.label=label;it.color=_planEditColor||it.color;
+  it.start=Math.max(TL_START,Math.min(TL_END-5,start));
+  it.dur=Math.min(dur,TL_END-it.start);
+  savePlans();closeModal('plan-item');renderPlanTimeline();showToast('已更新');
+}
+function deletePlanItem(){
+  var arr=planItems(),i=arr.findIndex(function(x){return String(x.id)===String(_planEditId);});
+  if(i>=0)arr.splice(i,1);savePlans();closeModal('plan-item');renderPlanTimeline();showToast('已刪除');
+}
+function planClear(){
+  if(!planItems().length){showToast('沒有可清空的項目');return;}
+  if(!confirm('清空這天的所有計畫項目？'))return;
+  dayPlans[planDate]=[];savePlans();renderPlanTimeline();
+}
+function openPlanApply(){
+  if(!planItems().length){showToast('這天還沒有任何計畫');return;}
+  document.getElementById('plan-apply-date').value=planDate;
+  document.getElementById('plan-apply-info').textContent='共 '+planItems().length+' 項行程，將寫入日誌時間軸';
+  openModal('plan-apply');
+}
+function doApplyPlan(mode){
+  var target=document.getElementById('plan-apply-date').value||planDate;
+  var items=planItems();if(!items.length){closeModal('plan-apply');return;}
+  var j=getJournalDay(target),day=j[target];
+  if(mode==='replace')day.workItems=(day.workItems||[]).filter(function(w){return !w.fromPlan;});
+  items.forEach(function(it){
+    day.workItems.push({id:'pl'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),kind:'note',startTime:minToHM(it.start),durationMin:it.dur,text:it.label,color:it.color,fromPlan:true});
+  });
+  saveJournalDay(j);closeModal('plan-apply');showToast('已加入日誌');
 }
 
 // ── 首頁 ──────────────────────────────────────────────
@@ -4577,6 +4843,10 @@ document.body.addEventListener('click',function(e){
   else if(action==='journal-next'){shiftJournalDate(journalView==='week'?7:1);}
   else if(action==='journal-view'){journalView=el.dataset.view;renderJournal();}
   else if(action==='week-open-day'){journalView='single';journalDate=el.dataset.date;renderJournal();}
+  else if(action==='plan-prev'){shiftPlanDate(-1);}
+  else if(action==='plan-next'){shiftPlanDate(1);}
+  else if(action==='plan-clear'){planClear();}
+  else if(action==='plan-apply'){openPlanApply();}
   else if(action==='journal-confirm'){toggleJournalConfirm(el.dataset.key);}
   else if(action==='add-journal-quick'){openJournalQuickModal(null);}
   else if(action==='open-journal-quick'){openJournalQuickModal(el.dataset.id);}
@@ -5148,7 +5418,7 @@ document.body.addEventListener('focusin',function(e){
 
 // ── 雲端同步（Supabase）──────────────────────────────
 var sbClient=null,sbUser=null,syncTimer=null,_syncPending=false;
-var DATA_KEYS=['lm-books','lm-exercises','lm-reviews','lm-sessions','lm-med','lm-cases','lm-wmenus','lm-ex-goal','lm-journal','lm-timer-logs','lm-quotes','lm-checkins','lm-morning-base','lm-morning-logs','lm-morning-fs','lm-night-plans','lm-notes','lm-note-tags','lm-expenses','lm-assets'];
+var DATA_KEYS=['lm-books','lm-exercises','lm-reviews','lm-sessions','lm-med','lm-cases','lm-wmenus','lm-ex-goal','lm-journal','lm-timer-logs','lm-quotes','lm-checkins','lm-morning-base','lm-morning-logs','lm-morning-fs','lm-night-plans','lm-notes','lm-note-tags','lm-expenses','lm-assets','lm-dayplans'];
 
 var SB_URL='https://gsjljwupeyvqdsrzbadf.supabase.co';
 var SB_KEY='sb_publishable_2jglYptRkedrlZe-ZPHpbQ_U-A_R6ES';
@@ -5293,6 +5563,7 @@ if('serviceWorker' in navigator){
 
 document.getElementById('header-sub').textContent=todayLabel();
 if(isDark){document.body.classList.add('dark');document.getElementById('dark-chk').checked=true;}
+(function(){var pp=document.getElementById('page-plan');if(pp)pp.addEventListener('pointerdown',planPointerDown);})();
 applySettings();
 renderHome();renderReview();
 setMedDuration(15,document.querySelectorAll('#med-presets .chip')[2]);
@@ -5317,10 +5588,13 @@ function reloadAllFromStorage(){
   if(!assets||typeof assets!=='object'||Array.isArray(assets))assets={banks:[],etfs:[]};
   if(!Array.isArray(assets.banks))assets.banks=[];
   if(!Array.isArray(assets.etfs))assets.etfs=[];
+  dayPlans=load('lm-dayplans',{});
+  if(!dayPlans||typeof dayPlans!=='object'||Array.isArray(dayPlans))dayPlans={};
   renderHome();renderBooks();renderExercise();renderMedHistory();renderCases();renderReview();
   if(currentPage==='journal')renderJournal();
   if(currentPage==='growth')renderGrowth();
   if(currentPage==='money')setMoneySub(moneySub);
+  if(currentPage==='plan')renderPlan();
 }
 </script>
 </body>
