@@ -290,10 +290,10 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
 .plan-drop-hint{position:absolute;left:2px;right:2px;border:1.5px dashed var(--purple);border-radius:6px;background:rgba(124,144,112,.14);pointer-events:none;z-index:3}
 .plan-empty{position:absolute;left:0;right:0;top:46%;text-align:center;font-size:12px;color:var(--text-3);pointer-events:none}
 .plan-block.will-delete{opacity:.4;outline:2px solid var(--red);outline-offset:-2px}
-.plan-actionbar{display:flex;gap:10px;align-items:center;margin-top:20px;position:sticky;bottom:calc(var(--safe-bottom) + 78px);z-index:8;background:var(--surface);border:0.5px solid var(--border);border-radius:16px;box-shadow:0 4px 18px rgba(0,0,0,.12);padding:10px 12px}
-.plan-actionbar .btn{min-height:42px}
+.plan-actionbar{display:flex;gap:10px;align-items:center;margin-top:22px}
+.plan-actionbar .btn{min-height:44px}
 .plan-actionbar .plan-apply-btn{flex:1;justify-content:center}
-.plan-bottom-space{height:40px}
+.plan-bottom-space{height:24px}
 .plan-trash{position:fixed;top:0;left:50%;transform:translateX(-50%) translateY(-100%);width:100%;max-width:430px;box-sizing:border-box;z-index:380;display:flex;align-items:center;justify-content:center;gap:8px;height:calc(env(safe-area-inset-top,0px) + 56px);padding-top:env(safe-area-inset-top,0px);background:rgba(163,45,45,.92);color:#fff;font-size:13px;font-weight:600;pointer-events:none;opacity:0;transition:transform .18s,opacity .18s}
 .plan-trash svg{width:18px;height:18px}
 .plan-trash.show{transform:translateX(-50%) translateY(0);opacity:1}
@@ -383,7 +383,6 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
   #page-plan .plan-palette{flex-direction:column;flex-wrap:nowrap;width:158px;flex-shrink:0;position:sticky;top:8px;background:transparent;padding:0}
   #page-plan .plan-pal-block{width:100%;text-align:center}
   #page-plan .plan-tl-wrap{flex:1;min-width:0}
-  #page-plan .plan-actionbar{bottom:20px}
   .plan-trash{left:228px;right:0;width:auto;max-width:none;transform:translateY(-100%)}
   .plan-trash.show{transform:translateY(0)}
   /* 首頁：兩欄並排（限作用於顯示中的分頁，避免蓋過 .page 的隱藏） */
