@@ -289,7 +289,16 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
 .plan-ghost{position:fixed;z-index:400;pointer-events:none;border-radius:9px;color:#fff;font-size:12px;font-weight:600;padding:7px 12px;opacity:.92;box-shadow:0 6px 16px rgba(0,0,0,.25);white-space:nowrap}
 .plan-drop-hint{position:absolute;left:2px;right:2px;border:1.5px dashed var(--purple);border-radius:6px;background:rgba(124,144,112,.14);pointer-events:none;z-index:3}
 .plan-empty{position:absolute;left:0;right:0;top:46%;text-align:center;font-size:12px;color:var(--text-3);pointer-events:none}
-.plan-actionbar{display:flex;gap:10px;justify-content:flex-end;margin-top:14px;position:sticky;bottom:0;background:linear-gradient(to top,var(--bg) 55%,transparent);padding:10px 0 4px}
+.plan-block.will-delete{opacity:.4;outline:2px solid var(--red);outline-offset:-2px}
+.plan-actionbar{display:flex;gap:10px;align-items:center;margin-top:20px;position:sticky;bottom:calc(var(--safe-bottom) + 78px);z-index:8;background:var(--surface);border:0.5px solid var(--border);border-radius:16px;box-shadow:0 4px 18px rgba(0,0,0,.12);padding:10px 12px}
+.plan-actionbar .btn{min-height:42px}
+.plan-actionbar .plan-apply-btn{flex:1;justify-content:center}
+.plan-bottom-space{height:40px}
+.plan-trash{position:fixed;top:0;left:50%;transform:translateX(-50%) translateY(-100%);width:100%;max-width:430px;box-sizing:border-box;z-index:380;display:flex;align-items:center;justify-content:center;gap:8px;height:calc(env(safe-area-inset-top,0px) + 56px);padding-top:env(safe-area-inset-top,0px);background:rgba(163,45,45,.92);color:#fff;font-size:13px;font-weight:600;pointer-events:none;opacity:0;transition:transform .18s,opacity .18s}
+.plan-trash svg{width:18px;height:18px}
+.plan-trash.show{transform:translateX(-50%) translateY(0);opacity:1}
+.plan-trash.armed{background:rgba(163,45,45,1);box-shadow:0 4px 16px rgba(163,45,45,.5)}
+.plan-trash.armed svg{transform:scale(1.18)}
 .journal-confirm-row{display:flex;gap:6px;margin-bottom:6px}
 .event-line{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:0.5px solid var(--border)}
 .event-line:last-child{border-bottom:none}
@@ -374,6 +383,9 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
   #page-plan .plan-palette{flex-direction:column;flex-wrap:nowrap;width:158px;flex-shrink:0;position:sticky;top:8px;background:transparent;padding:0}
   #page-plan .plan-pal-block{width:100%;text-align:center}
   #page-plan .plan-tl-wrap{flex:1;min-width:0}
+  #page-plan .plan-actionbar{bottom:20px}
+  .plan-trash{left:228px;right:0;width:auto;max-width:none;transform:translateY(-100%)}
+  .plan-trash.show{transform:translateY(0)}
   /* 首頁：兩欄並排（限作用於顯示中的分頁，避免蓋過 .page 的隱藏） */
   #page-home.active{max-width:940px;display:grid;grid-template-columns:1fr 1fr;gap:14px 20px;align-items:start}
   #page-home>*{margin-bottom:0}
@@ -667,7 +679,7 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
     <div class="plan-date-label" id="plan-date-label">今天</div>
     <button class="rtab" data-action="plan-next" aria-label="後一天">›</button>
   </div>
-  <div class="plan-hint">拖曳下方活動方塊到時間軸排入行程；點方塊可編輯，拖底部把手調整長度。</div>
+  <div class="plan-hint">拖曳活動方塊到時間軸排入行程；點活動標籤可改名／換色，行程方塊點一下編輯、拖到頂端刪除。</div>
   <div class="plan-layout">
     <div class="plan-palette" id="plan-palette"></div>
     <div class="plan-tl-wrap">
@@ -675,10 +687,12 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
     </div>
   </div>
   <div class="plan-actionbar">
-    <button class="btn btn-ghost btn-sm" data-action="plan-clear">清空</button>
-    <button class="btn btn-primary btn-sm" data-action="plan-apply">一鍵加入日誌</button>
+    <button class="btn btn-ghost" data-action="plan-clear">清空</button>
+    <button class="btn btn-primary plan-apply-btn" data-action="plan-apply">一鍵加入日誌</button>
   </div>
+  <div class="plan-bottom-space"></div>
 </div>
+<div class="plan-trash" id="plan-trash"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg><span>拖到這裡刪除</span></div>
 
 </div>
 <nav class="nav">
@@ -1372,6 +1386,22 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
   </div>
 </div>
 
+<div class="modal-overlay" id="modal-plan-pal">
+  <div class="modal">
+    <div class="modal-title"><span id="plan-pal-title">新增活動</span> <button class="modal-close" onclick="closeModal('plan-pal')">x</button></div>
+    <div class="field">
+      <label>活動名稱</label>
+      <input type="text" id="plan-pal-label" placeholder="" autocomplete="off">
+    </div>
+    <div class="field">
+      <label>顏色</label>
+      <div class="chip-row" id="plan-pal-colors"></div>
+    </div>
+    <button class="btn btn-primary btn-full" onclick="savePlanPaletteItem()">儲存</button>
+    <button class="btn btn-danger btn-full" id="plan-pal-delete" style="margin-top:8px;display:none" onclick="deletePlanPaletteItem()">刪除這個活動</button>
+  </div>
+</div>
+
 <div class="modal-overlay" id="modal-plan-apply">
   <div class="modal">
     <div class="modal-title">加入日誌 <button class="modal-close" onclick="closeModal('plan-apply')">x</button></div>
@@ -1423,6 +1453,16 @@ var PLAN_PRESETS=[
   {label:'自由時間',color:'#9DA873'},
   {label:'睡眠',color:'#8A93A8'}
 ];
+// 可選顏色（編輯活動標籤用）
+var PLAN_COLORS=['#8E9C7C','#6E9B8A','#C49A6C','#8FA3B8','#7FA8C9','#A8A08C','#C9A87F','#A8B0A0','#B5A0B0','#CDA0A0','#9DA873','#8A93A8','#B5712E','#A3866C'];
+// 使用者可編輯的活動標籤調色盤（可增刪改）
+var planPalette=load('lm-plan-palette',null);
+if(!Array.isArray(planPalette)||!planPalette.length){
+  planPalette=PLAN_PRESETS.map(function(p,i){return {id:'pp'+i,label:p.label,color:p.color};});
+  save('lm-plan-palette',planPalette);
+}
+planPalette.forEach(function(p,i){if(!p.id)p.id='pp'+i+''+Date.now().toString(36);});
+function savePlanPalette(){save('lm-plan-palette',planPalette);}
 var reviews=load('lm-reviews',{});
 var readSessions=load('lm-sessions',[]);
 // 補欄位：每筆閱讀紀錄需有 id 與起訖時間（舊資料 time 視為開始時間）
@@ -2012,9 +2052,9 @@ function renderPlan(){
   var lab=document.getElementById('plan-date-label');if(lab)lab.textContent=planDateLabel();
   var pal=document.getElementById('plan-palette');
   if(pal){
-    pal.innerHTML=PLAN_PRESETS.map(function(p){
-      return '<div class="plan-pal-block" data-plan-new="1" data-label="'+esc(p.label)+'" data-color="'+p.color+'" style="background:'+p.color+'">'+esc(p.label)+'</div>';
-    }).join('')+'<div class="plan-pal-block plan-pal-custom" data-plan-new="1" data-custom="1" data-label="自訂" data-color="#9AA0A6">＋ 自訂</div>';
+    pal.innerHTML=planPalette.map(function(p){
+      return '<div class="plan-pal-block" data-pp-id="'+esc(p.id)+'" data-label="'+esc(p.label)+'" data-color="'+p.color+'" style="background:'+p.color+'">'+esc(p.label)+'</div>';
+    }).join('')+'<div class="plan-pal-block plan-pal-custom" data-action="plan-pal-add">＋ 新增活動</div>';
   }
   renderPlanTimeline();
 }
@@ -2055,21 +2095,24 @@ function _planShowDrop(x,y){
   hh.style.top=((start-TL_START)*PX_PER_MIN)+'px';hh.style.height=(60*PX_PER_MIN)+'px';
   tl.appendChild(hh);
 }
+function _planShowTrash(){var t=document.getElementById('plan-trash');if(t)t.classList.add('show');}
+function _planHideTrash(){var t=document.getElementById('plan-trash');if(t)t.classList.remove('show','armed');}
+function _planTrashBottom(){var t=document.getElementById('plan-trash');if(!t)return 64;return t.offsetHeight||64;}
 var _planDrag=null;
 function planPointerDown(e){
-  var palBlock=e.target.closest('[data-plan-new]');
+  var palBlock=e.target.closest('[data-pp-id]');
   var resize=e.target.closest('[data-plan-resize]');
   var block=e.target.closest('.plan-block');
   if(palBlock){
     e.preventDefault();
-    _planDrag={mode:'new',label:palBlock.dataset.label,color:palBlock.dataset.color,custom:palBlock.dataset.custom==='1',startX:e.clientX,startY:e.clientY,moved:false,ghost:null};
+    _planDrag={mode:'new',ppId:palBlock.dataset.ppId,label:palBlock.dataset.label,color:palBlock.dataset.color,startX:e.clientX,startY:e.clientY,moved:false,ghost:null};
   } else if(resize&&block){
     e.preventDefault();var it=_findPlanItem(block.dataset.planId);if(!it)return;
     _planDrag={mode:'resize',item:it,el:block,startY:e.clientY,moved:false};block.classList.add('dragging');
   } else if(block){
     e.preventDefault();var it2=_findPlanItem(block.dataset.planId);if(!it2)return;
     var r=block.getBoundingClientRect();
-    _planDrag={mode:'move',item:it2,el:block,grabOffset:e.clientY-r.top,startY:e.clientY,moved:false};
+    _planDrag={mode:'move',item:it2,el:block,grabOffset:e.clientY-r.top,startY:e.clientY,moved:false,overTrash:false};
   } else {return;}
   document.addEventListener('pointermove',planPointerMove);
   document.addEventListener('pointerup',planPointerUp);
@@ -2082,9 +2125,17 @@ function planPointerMove(e){
     d.ghost.style.left=(e.clientX+12)+'px';d.ghost.style.top=(e.clientY-14)+'px';
     _planAutoScroll(e.clientY);_planShowDrop(e.clientX,e.clientY);
   } else if(d.mode==='move'){
-    if(!d.moved)return;d.el.classList.add('dragging');
-    var start=Math.max(TL_START,Math.min(TL_END-d.item.dur,planSnap(TL_START+(e.clientY-_planTLRect().top-d.grabOffset)/PX_PER_MIN)));
-    d.item.start=start;d.el.style.top=((start-TL_START)*PX_PER_MIN).toFixed(1)+'px';_planUpdateBlockTime(d.el,d.item);_planAutoScroll(e.clientY);
+    if(!d.moved)return;
+    d.el.classList.add('dragging');_planShowTrash();
+    var overTrash=e.clientY<_planTrashBottom();
+    d.overTrash=overTrash;
+    var tz=document.getElementById('plan-trash');if(tz)tz.classList.toggle('armed',overTrash);
+    d.el.classList.toggle('will-delete',overTrash);
+    if(!overTrash){
+      var start=Math.max(TL_START,Math.min(TL_END-d.item.dur,planSnap(TL_START+(e.clientY-_planTLRect().top-d.grabOffset)/PX_PER_MIN)));
+      d.item.start=start;d.el.style.top=((start-TL_START)*PX_PER_MIN).toFixed(1)+'px';_planUpdateBlockTime(d.el,d.item);
+    }
+    _planAutoScroll(e.clientY);
   } else if(d.mode==='resize'){
     var mins=Math.max(15,Math.min(TL_END-d.item.start,planSnap((e.clientY-_planTLRect().top)/PX_PER_MIN+TL_START-d.item.start)));
     d.item.dur=mins;d.el.style.height=(mins*PX_PER_MIN).toFixed(1)+'px';_planUpdateBlockTime(d.el,d.item);_planAutoScroll(e.clientY);
@@ -2093,26 +2144,62 @@ function planPointerMove(e){
 function planPointerUp(e){
   document.removeEventListener('pointermove',planPointerMove);
   document.removeEventListener('pointerup',planPointerUp);
-  var d=_planDrag;_planDrag=null;_clearDropHint();
+  var d=_planDrag;_planDrag=null;_clearDropHint();_planHideTrash();
   if(!d)return;
   if(d.mode==='new'){
     if(d.ghost&&d.ghost.parentNode)d.ghost.parentNode.removeChild(d.ghost);
+    if(!d.moved){openPlanPalette(d.ppId);return;}
     var r=_planTLRect();
     var overTL=e.clientX>=r.left-40&&e.clientX<=r.right+10&&e.clientY>=r.top-4&&e.clientY<=r.bottom+4;
-    var label=d.label,color=d.color;
-    if(d.custom){var nm=prompt('活動名稱');if(nm===null)return;label=(nm.trim()||'活動');color=planColorAt(planItems().length);}
-    var start=(overTL&&d.moved)?planSnap(TL_START+(e.clientY-r.top)/PX_PER_MIN):_planDefaultSlot();
-    start=Math.max(TL_START,Math.min(TL_END-30,start));
+    if(!overTL)return;
+    var start=Math.max(TL_START,Math.min(TL_END-30,planSnap(TL_START+(e.clientY-r.top)/PX_PER_MIN)));
     var dur=Math.min(60,TL_END-start);
-    planItems().push({id:'p'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),label:label,color:color,start:start,dur:dur});
+    planItems().push({id:'p'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),label:d.label,color:d.color,start:start,dur:dur});
     savePlans();renderPlanTimeline();
   } else if(d.mode==='move'){
-    if(d.el)d.el.classList.remove('dragging');
+    if(d.el)d.el.classList.remove('dragging','will-delete');
+    if(d.overTrash){var arr=planItems(),i=arr.findIndex(function(x){return x.id===d.item.id;});if(i>=0)arr.splice(i,1);savePlans();renderPlanTimeline();showToast('已刪除');return;}
     if(!d.moved){openPlanItem(d.item.id);return;}
     savePlans();renderPlanTimeline();
   } else if(d.mode==='resize'){
     if(d.el)d.el.classList.remove('dragging');savePlans();renderPlanTimeline();
   }
+}
+// 活動標籤（調色盤）增刪改
+var _ppEditId=null,_ppColor=null;
+function openPlanPaletteAdd(){
+  _ppEditId=null;_ppColor=PLAN_COLORS[0];
+  document.getElementById('plan-pal-title').textContent='新增活動';
+  document.getElementById('plan-pal-label').value='';
+  document.getElementById('plan-pal-delete').style.display='none';
+  _renderPpColors();openModal('plan-pal');
+  setTimeout(function(){document.getElementById('plan-pal-label').focus();},120);
+}
+function openPlanPalette(id){
+  var p=planPalette.find(function(x){return x.id===id;});if(!p){openPlanPaletteAdd();return;}
+  _ppEditId=id;_ppColor=p.color;
+  document.getElementById('plan-pal-title').textContent='編輯活動';
+  document.getElementById('plan-pal-label').value=p.label||'';
+  document.getElementById('plan-pal-delete').style.display='';
+  _renderPpColors();openModal('plan-pal');
+}
+function _renderPpColors(){
+  document.getElementById('plan-pal-colors').innerHTML=PLAN_COLORS.map(function(c){
+    return '<button type="button" class="plan-color-chip" data-color="'+c+'" onclick="_ppPickColor(this)" style="width:28px;height:28px;border-radius:50%;background:'+c+';border:2px solid '+(c===_ppColor?'var(--text)':'transparent')+';cursor:pointer;padding:0"></button>';
+  }).join('');
+}
+function _ppPickColor(btn){_ppColor=btn.dataset.color;[].forEach.call(document.querySelectorAll('#plan-pal-colors .plan-color-chip'),function(b){b.style.border='2px solid '+(b.dataset.color===_ppColor?'var(--text)':'transparent');});}
+function savePlanPaletteItem(){
+  var label=document.getElementById('plan-pal-label').value.trim();
+  if(!label){showToast('請輸入名稱');return;}
+  if(_ppEditId){var p=planPalette.find(function(x){return x.id===_ppEditId;});if(p){p.label=label;p.color=_ppColor;}}
+  else{planPalette.push({id:'pp'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),label:label,color:_ppColor});}
+  savePlanPalette();closeModal('plan-pal');renderPlan();showToast('已儲存');
+}
+function deletePlanPaletteItem(){
+  if(!_ppEditId)return;
+  planPalette=planPalette.filter(function(x){return x.id!==_ppEditId;});
+  savePlanPalette();closeModal('plan-pal');renderPlan();showToast('已刪除');
 }
 var _planEditId=null,_planEditColor=null;
 function openPlanItem(id){
@@ -4847,6 +4934,7 @@ document.body.addEventListener('click',function(e){
   else if(action==='plan-next'){shiftPlanDate(1);}
   else if(action==='plan-clear'){planClear();}
   else if(action==='plan-apply'){openPlanApply();}
+  else if(action==='plan-pal-add'){openPlanPaletteAdd();}
   else if(action==='journal-confirm'){toggleJournalConfirm(el.dataset.key);}
   else if(action==='add-journal-quick'){openJournalQuickModal(null);}
   else if(action==='open-journal-quick'){openJournalQuickModal(el.dataset.id);}
@@ -5418,7 +5506,7 @@ document.body.addEventListener('focusin',function(e){
 
 // ── 雲端同步（Supabase）──────────────────────────────
 var sbClient=null,sbUser=null,syncTimer=null,_syncPending=false;
-var DATA_KEYS=['lm-books','lm-exercises','lm-reviews','lm-sessions','lm-med','lm-cases','lm-wmenus','lm-ex-goal','lm-journal','lm-timer-logs','lm-quotes','lm-checkins','lm-morning-base','lm-morning-logs','lm-morning-fs','lm-night-plans','lm-notes','lm-note-tags','lm-expenses','lm-assets','lm-dayplans'];
+var DATA_KEYS=['lm-books','lm-exercises','lm-reviews','lm-sessions','lm-med','lm-cases','lm-wmenus','lm-ex-goal','lm-journal','lm-timer-logs','lm-quotes','lm-checkins','lm-morning-base','lm-morning-logs','lm-morning-fs','lm-night-plans','lm-notes','lm-note-tags','lm-expenses','lm-assets','lm-dayplans','lm-plan-palette'];
 
 var SB_URL='https://gsjljwupeyvqdsrzbadf.supabase.co';
 var SB_KEY='sb_publishable_2jglYptRkedrlZe-ZPHpbQ_U-A_R6ES';
@@ -5590,6 +5678,7 @@ function reloadAllFromStorage(){
   if(!Array.isArray(assets.etfs))assets.etfs=[];
   dayPlans=load('lm-dayplans',{});
   if(!dayPlans||typeof dayPlans!=='object'||Array.isArray(dayPlans))dayPlans={};
+  var _pp=load('lm-plan-palette',null);if(Array.isArray(_pp)&&_pp.length)planPalette=_pp;
   renderHome();renderBooks();renderExercise();renderMedHistory();renderCases();renderReview();
   if(currentPage==='journal')renderJournal();
   if(currentPage==='growth')renderGrowth();
