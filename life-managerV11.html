@@ -5667,6 +5667,59 @@ function _getNightPlan(t){
   if(!nightPlans[t])nightPlans[t]={baseItems:morningBase.map(function(x){return {name:x,enabled:true};}),extras:[],sleepTime:null};
   return nightPlans[t];
 }
+// 當日回顧：閱讀／運動／冥想統計 + 當日日誌列表
+function _reflectStatsHTML(dt){
+  var rSess=readSessions.filter(function(s){return s.date===dt;});
+  var rSec=rSess.reduce(function(a,s){return a+(s.sec||0);},0);
+  var rPages=rSess.reduce(function(a,s){return a+(s.pagesRead||0);},0);
+  var exs=exercises.filter(function(e){return e.date===dt;});
+  var exMin=exs.reduce(function(a,e){return a+(e.min||0);},0);
+  var mSec=medSessions.filter(function(s){return s.date===dt;}).reduce(function(a,s){return a+(s.sec||0);},0);
+  function stat(label,val,on){
+    return '<div style="flex:1;min-width:0;text-align:center;padding:8px 4px;background:'+(on?'var(--teal-light)':'transparent')+';border-radius:8px">'
+      +'<div style="font-size:11px;color:var(--text-3)">'+label+'</div>'
+      +'<div style="font-size:13px;font-weight:600;color:'+(on?'var(--text)':'var(--text-3)')+';margin-top:2px">'+val+'</div></div>';
+  }
+  var stats='<div style="display:flex;gap:8px;margin-bottom:12px">'
+    +stat('閱讀',rSec>0?Math.round(rSec/60)+'分 · '+rPages+'頁':'—',rSec>0)
+    +stat('運動',exMin>0?exMin+'分':'—',exMin>0)
+    +stat('冥想',mSec>0?Math.round(mSec/60)+'分':'—',mSec>0)
+    +'</div>';
+  // 當日日誌：自動項目（已預先 esc）+ 手動 workItems
+  var auto=collectAutoItems(dt).map(function(it){return {start:it.start,titleHtml:it.title||'',subHtml:it.sub||''};});
+  var wi=(journalDayObj(dt).workItems||[]).map(function(w){
+    var nm=(w.className?w.className+'-':'')+(w.code||'');if(!nm)nm=w.quickType||'紀錄';
+    return {start:hmToMin(w.startTime),titleHtml:esc(nm),subHtml:esc(w.event||'')};
+  });
+  var all=auto.concat(wi).filter(function(x){return x.start!=null;}).sort(function(a,b){return a.start-b.start;});
+  var logHTML;
+  if(!all.length){logHTML='<div style="font-size:12px;color:var(--text-3);padding:4px 0">這天還沒有活動紀錄</div>';}
+  else{
+    logHTML=all.map(function(x){
+      return '<div style="display:flex;gap:8px;padding:5px 0;border-bottom:0.5px solid var(--border);font-size:12.5px">'
+        +'<span style="color:var(--text-3);flex-shrink:0;width:40px">'+minToHM(x.start)+'</span>'
+        +'<span style="color:var(--text);flex:1;min-width:0">'+x.titleHtml+(x.subHtml?' <span style="color:var(--text-3)">· '+x.subHtml+'</span>':'')+'</span></div>';
+    }).join('');
+  }
+  return stats
+    +'<div style="font-size:12px;color:var(--text-2);margin-bottom:4px">當日日誌</div>'
+    +'<div>'+logHTML+'</div>';
+}
+// 4F 反思（事實／感受／發現／未來）
+function _reflect4FHTML(plan,canEdit){
+  var r=plan.reflect||{};
+  var fields=[['facts','事實','今天發生了哪些事？'],['feelings','感受','當下的心情與感受？'],['findings','發現','我察覺或學到了什麼？'],['future','未來','接下來我想怎麼做？']];
+  return '<div style="font-size:12px;font-weight:600;color:var(--teal);margin:16px 0 10px">4F 反思</div>'
+    +fields.map(function(f){
+      var v=r[f[0]]||'';
+      return '<div style="margin-bottom:10px">'
+        +'<div style="font-size:12.5px;font-weight:600;color:var(--text);margin-bottom:4px">'+f[1]+' <span style="font-weight:400;color:var(--text-3);font-size:11px">'+f[2]+'</span></div>'
+        +(canEdit
+          ?'<textarea data-reflect="'+f[0]+'" oninput="_saveReflect()" style="width:100%;min-height:46px;resize:vertical;font-size:13px;line-height:1.5;padding:8px 10px;border:0.5px solid var(--border-med);border-radius:8px;background:var(--surface);color:var(--text);font-family:inherit;box-sizing:border-box">'+esc(v)+'</textarea>'
+          :'<div style="font-size:13px;color:'+(v?'var(--text)':'var(--text-3)')+';white-space:pre-wrap;line-height:1.5;padding:4px 0">'+(v?esc(v):'—')+'</div>')
+        +'</div>';
+    }).join('');
+}
 function renderNightCard(){
   var el=document.getElementById('routine-night-card');if(!el)return;
   var dt=_routineViewDate,t=today(),h=new Date().getHours();
@@ -5706,14 +5759,26 @@ function renderNightCard(){
     }).join(''):'')
     +(canEdit?'<div style="display:flex;gap:8px;margin-top:10px"><input type="text" id="night-extra-input" placeholder="" style="flex:1"><button class="btn btn-ghost btn-sm" onclick="addNightExtra()">新增</button></div>':'');
   var sleepBtn=canEdit&&!plan.sleepTime?'<button class="btn btn-primary btn-full" style="margin-top:14px" onclick="recordSleepTime()">記錄上床時間</button>':'';
+  var reflectSection='<div style="border-top:0.5px solid var(--border);margin:16px 0"></div>'
+    +'<div style="font-size:11px;font-weight:600;color:var(--text-2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:12px">當日回顧</div>'
+    +_reflectStatsHTML(dt)
+    +_reflect4FHTML(plan,canEdit);
   el.innerHTML='<div class="routine-card" style="'+(urgent?'border:1.5px solid var(--teal);':'')+'">'
-    +header+urgentBanner+sleepLine+extrasSection+sleepBtn+'</div>';
+    +header+urgentBanner+sleepLine+extrasSection+reflectSection+sleepBtn+'</div>';
 }
 function addNightExtra(){
   var v=document.getElementById('night-extra-input').value.trim();if(!v)return;
   var plan=_getNightPlan(today());
   plan.extras.push(v);save('lm-night-plans',nightPlans);
   renderNightCard();
+}
+function _saveReflect(){
+  var plan=_getNightPlan(today());
+  if(!plan.reflect)plan.reflect={};
+  document.querySelectorAll('#routine-night-card textarea[data-reflect]').forEach(function(ta){
+    plan.reflect[ta.getAttribute('data-reflect')]=ta.value;
+  });
+  save('lm-night-plans',nightPlans);
 }
 function toggleNightBase(idx,checked){
   var plan=_getNightPlan(today());
