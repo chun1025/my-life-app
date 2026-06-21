@@ -1,4 +1,4 @@
-var CACHE = 'lm-v15';
+var CACHE = 'lm-v16';
 var SHELL = [
   './life-managerV11.html',
   'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js'

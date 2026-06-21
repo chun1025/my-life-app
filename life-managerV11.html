@@ -213,6 +213,7 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
 .tb-quick{background:#F1E2D0;color:#8B4E28;border:0.5px solid #C99A6A}
 .tb-note{background:var(--bg);color:var(--text-2);border:0.5px solid var(--border-med)}
 .tb-timer{background:var(--teal-light);color:var(--teal);border:0.5px solid var(--teal)}
+.tb-course{background:var(--blue-light);color:var(--blue);border:0.5px solid var(--blue)}
 .tb-unconfirmed{opacity:0.55;border-style:dashed}
 .home-timer-card{background:var(--surface);border-radius:var(--radius);border:0.5px solid var(--border);padding:12px 14px;margin-top:14px;margin-bottom:10px;transition:border-color .15s}
 .home-timer-card.running{border:1.5px solid var(--teal)}
@@ -266,6 +267,7 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
 .jweek-block{position:absolute;border-radius:3px;box-sizing:border-box;min-height:3px;overflow:hidden}
 .jweek-block-txt{font-size:9px;line-height:1.15;color:inherit;padding:2px 3px;word-break:break-word;overflow:hidden;font-weight:600}
 .jweek-block.tb-note .jweek-block-txt{color:var(--text)}
+.jweek-block.tb-course .jweek-block-txt{color:#fff}
 .jweek-block.tb-unconfirmed{opacity:0.5}
 .jweek-now{position:absolute;left:26px;right:0;height:0;border-top:1.5px solid var(--red);z-index:4;pointer-events:none}
 /* V12.8：日計畫（拖拉排程）*/
@@ -717,12 +719,38 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
 </div>
 <div class="plan-trash" id="plan-trash"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg><span>拖到這裡刪除</span></div>
 
+<!-- 研究所 -->
+<div class="page" id="page-grad">
+  <div class="period-tabs" style="display:flex;gap:8px;margin-bottom:16px">
+    <button class="rtab active" id="grad-tab-courses" onclick="setGradSub('courses')">課表</button>
+    <button class="rtab" id="grad-tab-work" onclick="setGradSub('work')">作業待辦</button>
+  </div>
+  <div id="grad-courses-view">
+    <div class="plan-hint" style="margin-bottom:12px">登記選修課程，上課時間會自動出現在日誌；可編輯每週是否上課（放假／隔週）。</div>
+    <div id="grad-course-list"></div>
+    <div style="display:flex;gap:16px;padding-top:2px;flex-wrap:wrap">
+      <button class="add-row" data-action="course-add">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>新增課程
+      </button>
+    </div>
+  </div>
+  <div id="grad-work-view" style="display:none">
+    <div id="grad-work-list"></div>
+    <div style="display:flex;gap:16px;padding-top:2px;flex-wrap:wrap">
+      <button class="add-row" data-action="coursework-add">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>新增作業
+      </button>
+    </div>
+  </div>
+</div>
+
 </div>
 <nav class="nav">
   <button class="nav-btn active" id="nav-home" onclick="switchPage('home',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>首頁</button>
   <button class="nav-btn" id="nav-growth" onclick="switchPage('growth',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg>成長</button>
   <button class="nav-btn" id="nav-journal" onclick="switchPage('journal',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><line x1="8" y1="9" x2="16" y2="9"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></svg>日誌</button>
   <button class="nav-btn" id="nav-plan" onclick="switchPage('plan',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><rect x="6" y="13" width="5" height="3" rx="1" fill="currentColor" stroke="none"/><rect x="13" y="13" width="5" height="5" rx="1" fill="currentColor" stroke="none"/></svg>日計畫</button>
+  <button class="nav-btn" id="nav-grad" onclick="switchPage('grad',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M22 10L12 5 2 10l10 5 10-5z"/><path d="M6 12v5c0 1 2.5 2.5 6 2.5s6-1.5 6-2.5v-5"/></svg>研究所</button>
   <button class="nav-btn" id="nav-cases" onclick="switchPage('cases',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>個案</button>
   <button class="nav-btn" id="nav-review" onclick="switchPage('review',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>回顧</button>
   <button class="nav-btn" id="nav-money" onclick="switchPage('money',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>記帳</button>
@@ -1439,6 +1467,51 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
   </div>
 </div>
 
+<div class="modal-overlay" id="modal-course">
+  <div class="modal">
+    <div class="modal-title"><span id="course-modal-title">新增課程</span> <button class="modal-close" onclick="closeModal('course')">x</button></div>
+    <div class="field"><label>課程名稱</label><input type="text" id="course-name" placeholder="" autocomplete="off"></div>
+    <div class="field"><label>顏色</label><div class="chip-row" id="course-colors"></div></div>
+    <div style="display:flex;gap:12px">
+      <div class="field" style="flex:1"><label>星期</label>
+        <select id="course-day"><option value="1">週一</option><option value="2">週二</option><option value="3">週三</option><option value="4">週四</option><option value="5">週五</option><option value="6">週六</option><option value="0">週日</option></select>
+      </div>
+      <div class="field" style="flex:1"><label>頻率</label>
+        <select id="course-freq"><option value="weekly">每週</option><option value="biweekly">隔週</option></select>
+      </div>
+    </div>
+    <div style="display:flex;gap:12px">
+      <div class="field" style="flex:1"><label>開始時間</label><input type="time" id="course-start"></div>
+      <div class="field" style="flex:1"><label>結束時間</label><input type="time" id="course-end"></div>
+    </div>
+    <div class="field"><label>地點（可省略）</label><input type="text" id="course-loc" placeholder="" autocomplete="off"></div>
+    <div class="field"><label>開課日期（首堂課，影響隔週與起始）</label><input type="date" id="course-startdate"></div>
+    <button class="btn btn-ghost btn-full" id="course-weeks-btn" style="margin-bottom:8px;display:none" data-action="course-weeks">編輯每週是否上課（放假／隔週）</button>
+    <button class="btn btn-primary btn-full" onclick="saveCourse()">儲存</button>
+    <button class="btn btn-danger btn-full" id="course-delete-btn" style="margin-top:8px;display:none" onclick="deleteCourse()">刪除這門課</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-course-weeks">
+  <div class="modal">
+    <div class="modal-title">每週是否上課 <button class="modal-close" onclick="closeModal('course-weeks')">x</button></div>
+    <div style="font-size:12px;color:var(--text-2);margin-bottom:10px">關閉某週＝該週放假停課；隔週課程已自動隔週停。變更會即時反映在日誌。</div>
+    <div id="course-weeks-list"></div>
+    <button class="btn btn-ghost btn-full" style="margin-top:12px" onclick="closeModal('course-weeks')">完成</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-coursework">
+  <div class="modal">
+    <div class="modal-title"><span id="coursework-modal-title">新增作業</span> <button class="modal-close" onclick="closeModal('coursework')">x</button></div>
+    <div class="field"><label>課程</label><select id="coursework-course"></select></div>
+    <div class="field"><label>作業內容</label><input type="text" id="coursework-title" placeholder="" autocomplete="off"></div>
+    <div class="field"><label>截止日期（可省略）</label><input type="date" id="coursework-due"></div>
+    <button class="btn btn-primary btn-full" onclick="saveCoursework()">儲存</button>
+    <button class="btn btn-danger btn-full" id="coursework-delete-btn" style="margin-top:8px;display:none" onclick="deleteCoursework()">刪除這筆</button>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -1486,6 +1559,12 @@ if(!Array.isArray(planPalette)||!planPalette.length){
 }
 planPalette.forEach(function(p,i){if(!p.id)p.id='pp'+i+''+Date.now().toString(36);});
 function savePlanPalette(){save('lm-plan-palette',planPalette);}
+// 研究所：選修課程與作業待辦
+var courses=load('lm-courses',[]);if(!Array.isArray(courses))courses=[];
+var coursework=load('lm-coursework',[]);if(!Array.isArray(coursework))coursework=[];
+var COURSE_COLORS=['#7FA8C9','#8E9C7C','#C49A6C','#B5A0B0','#6E9B8A','#C9A87F','#8FA3B8','#CDA0A0','#9DA873','#A8A08C'];
+function saveCourses(){save('lm-courses',courses);}
+function saveCoursework(){save('lm-coursework',coursework);}
 var reviews=load('lm-reviews',{});
 var readSessions=load('lm-sessions',[]);
 // 補欄位：每筆閱讀紀錄需有 id 與起訖時間（舊資料 time 視為開始時間）
@@ -1513,7 +1592,7 @@ var appSettings=load('lm-settings',{pages:{growth:true,journal:true,cases:true,r
 // migrate: ensure all keys exist
 if(!appSettings.pages)appSettings.pages={growth:true,journal:true,cases:true,review:true,money:true};
 if(!appSettings.growth)appSettings.growth={reading:true,exercise:true,meditation:true};
-['growth','journal','plan','cases','review','money'].forEach(function(k){if(appSettings.pages[k]===undefined)appSettings.pages[k]=true;});
+['growth','journal','plan','grad','cases','review','money'].forEach(function(k){if(appSettings.pages[k]===undefined)appSettings.pages[k]=true;});
 ['reading','exercise','meditation'].forEach(function(k){if(appSettings.growth[k]===undefined)appSettings.growth[k]=true;});
 if(appSettings.workMode===undefined)appSettings.workMode=false;
 // 工作模式：專注工作功能並保護隱私，連動關閉運動、冥想、回顧、記帳
@@ -1606,6 +1685,7 @@ function renderSettingsModal(){
     +'</div>'
     +row('日誌',appSettings.pages.journal,"togglePageSetting('journal',this.checked)",false,false)
     +row('日計畫',appSettings.pages.plan,"togglePageSetting('plan',this.checked)",false,false)
+    +row('研究所',appSettings.pages.grad,"togglePageSetting('grad',this.checked)",false,false)
     +row('個案',appSettings.pages.cases,"togglePageSetting('cases',this.checked)",false,false)
     +row('回顧',appSettings.pages.review,"togglePageSetting('review',this.checked)",false,wm)
     +row('記帳',appSettings.pages.money,"togglePageSetting('money',this.checked)",false,wm);
@@ -1629,7 +1709,7 @@ function toggleGrowthSetting(key,checked){
   applySettings();
 }
 function applySettings(){
-  ['growth','journal','plan','cases','review','money'].forEach(function(p){
+  ['growth','journal','plan','grad','cases','review','money'].forEach(function(p){
     var btn=document.getElementById('nav-'+p);
     if(btn)btn.style.display=effPageOn(p)?'':'none';
   });
@@ -1643,7 +1723,7 @@ function applySettings(){
 }
 
 var currentPage='home';
-var pageTitles={home:'今天',growth:'成長',journal:'日誌',plan:'日計畫',cases:'個案紀錄',review:'回顧',money:'記帳'};
+var pageTitles={home:'今天',growth:'成長',journal:'日誌',plan:'日計畫',grad:'研究所',cases:'個案紀錄',review:'回顧',money:'記帳'};
 function switchPage(name,btn){
   if(name!=='home'){var ftEl=document.getElementById('fullscreen-timer');if(ftEl)ftEl.classList.remove('open');}
   document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});
@@ -1660,6 +1740,7 @@ function switchPage(name,btn){
   if(name==='review')renderReview();
   if(name==='money')setMoneySub(moneySub);
   if(name==='plan')renderPlan();
+  if(name==='grad')renderGrad();
 }
 
 // ── 成長頁（容器）──────────────────────────────────────
@@ -2339,6 +2420,196 @@ function doApplyPlan(mode){
   saveJournalDay(j);closeModal('plan-apply');showToast('已加入日誌');
 }
 
+// ── 研究所（選修課程＋作業）────────────────────────────
+var DOW_LABEL=['日','一','二','三','四','五','六'];
+function _weeksBetween(a,b){return Math.round((new Date(b+'T00:00:00')-new Date(a+'T00:00:00'))/(7*86400000));}
+function _weekClassDate(wk,day){var base=new Date(wk+'T00:00:00');for(var i=0;i<7;i++){var d=new Date(base);d.setDate(base.getDate()+i);if(d.getDay()===day)return fmtLocalDate(d);}return wk;}
+function courseBaseOn(c,wk){if(c.freq!=='biweekly')return true;var anchor=c.anchorWeek||wk;return ((_weeksBetween(anchor,wk)%2)+2)%2===0;}
+function courseEffectiveOn(c,wk){if((c.onWeeks||[]).indexOf(wk)>=0)return true;if((c.offWeeks||[]).indexOf(wk)>=0)return false;return courseBaseOn(c,wk);}
+function courseOccursOn(c,date){var d=new Date(date+'T00:00:00');if(d.getDay()!==c.day)return false;if(c.startDate&&date<c.startDate)return false;if(c.endDate&&date>c.endDate)return false;return courseEffectiveOn(c,getWeekKey(date));}
+function _findCourse(id){return courses.find(function(x){return String(x.id)===String(id);});}
+function courseColorAt(i){return COURSE_COLORS[i%COURSE_COLORS.length];}
+var gradSub='courses';
+function setGradSub(sub){
+  gradSub=sub;
+  var tc=document.getElementById('grad-tab-courses'),tw=document.getElementById('grad-tab-work');
+  if(tc)tc.classList.toggle('active',sub==='courses');
+  if(tw)tw.classList.toggle('active',sub==='work');
+  var vc=document.getElementById('grad-courses-view'),vw=document.getElementById('grad-work-view');
+  if(vc)vc.style.display=sub==='courses'?'':'none';
+  if(vw)vw.style.display=sub==='work'?'':'none';
+  renderGrad();
+}
+function renderGrad(){renderCourseList();renderCourseworkList();}
+function renderCourseList(){
+  var el=document.getElementById('grad-course-list');if(!el)return;
+  if(!courses.length){el.innerHTML='<div class="empty">尚未登記任何課程</div>';return;}
+  var sorted=courses.slice().sort(function(a,b){var da=(a.day+6)%7,db=(b.day+6)%7;return da-db||((a.start||'')<(b.start||'')?-1:1);});
+  el.innerHTML=sorted.map(function(c){
+    return '<div class="card" style="margin-bottom:10px;cursor:pointer;border-left:4px solid '+c.color+'" data-action="open-course" data-cid="'+esc(c.id)+'">'
+      +'<div style="display:flex;align-items:center;gap:10px">'
+      +'<div class="row-main"><div class="row-title">'+esc(c.name)+'</div>'
+      +'<div class="row-sub">週'+DOW_LABEL[c.day]+' '+esc(c.start||'')+(c.end?'–'+esc(c.end):'')+(c.location?' · '+esc(c.location):'')+(c.freq==='biweekly'?' · 隔週':'')+'</div></div>'
+      +'<span style="font-size:12px;color:var(--text-3)">›</span>'
+      +'</div></div>';
+  }).join('');
+}
+function renderCourseworkList(){
+  var el=document.getElementById('grad-work-list');if(!el)return;
+  if(!coursework.length){el.innerHTML='<div class="empty">尚無作業待辦</div>';return;}
+  var sorted=coursework.slice().sort(function(a,b){
+    if(!!a.done!==!!b.done)return a.done?1:-1;
+    var da=a.due||'9999',db=b.due||'9999';return da<db?-1:da>db?1:0;
+  });
+  var t=today();
+  el.innerHTML='<div class="card">'+sorted.map(function(w){
+    var c=_findCourse(w.courseId),col=c?c.color:'var(--text-3)';
+    var dueTxt='',dueColor='var(--text-3)';
+    if(w.due){dueTxt=(w.due).slice(5).replace('-','/');if(!w.done&&w.due<t){dueColor='var(--red)';dueTxt+=' 逾期';}else if(!w.done&&w.due===t){dueColor='var(--amber)';dueTxt+=' 今天';}}
+    return '<div class="row-item" style="align-items:center">'
+      +'<span data-action="coursework-toggle" data-wid="'+esc(w.id)+'" style="width:22px;height:22px;border-radius:6px;border:1.5px solid '+(w.done?'var(--teal)':'var(--border-med)')+';background:'+(w.done?'var(--teal)':'transparent')+';display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff;cursor:pointer">'+(w.done?'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>':'')+'</span>'
+      +'<div class="row-main" style="margin-left:12px;cursor:pointer" data-action="coursework-edit" data-wid="'+esc(w.id)+'"><div class="row-title" style="'+(w.done?'text-decoration:line-through;color:var(--text-3)':'')+'">'+esc(w.title)+'</div>'
+      +'<div class="row-sub"><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:'+col+';margin-right:5px;vertical-align:middle"></span>'+esc(c?c.name:'（已刪課程）')+'</div></div>'
+      +(dueTxt?'<div style="font-size:12px;font-weight:500;color:'+dueColor+'">'+dueTxt+'</div>':'')
+      +'</div>';
+  }).join('')+'</div>';
+}
+// 課程增刪改
+var _courseEditId=null,_courseColor=null;
+function _renderCourseColors(){
+  document.getElementById('course-colors').innerHTML=COURSE_COLORS.map(function(c){
+    return '<button type="button" class="plan-color-chip" data-color="'+c+'" onclick="_coursePickColor(this)" style="width:28px;height:28px;border-radius:50%;background:'+c+';border:2px solid '+(c===_courseColor?'var(--text)':'transparent')+';cursor:pointer;padding:0"></button>';
+  }).join('');
+}
+function _coursePickColor(btn){_courseColor=btn.dataset.color;[].forEach.call(document.querySelectorAll('#course-colors .plan-color-chip'),function(b){b.style.border='2px solid '+(b.dataset.color===_courseColor?'var(--text)':'transparent');});}
+function openCourseModal(){
+  _courseEditId=null;_courseColor=courseColorAt(courses.length);
+  document.getElementById('course-modal-title').textContent='新增課程';
+  document.getElementById('course-name').value='';
+  document.getElementById('course-day').value='1';
+  document.getElementById('course-freq').value='weekly';
+  document.getElementById('course-start').value='';
+  document.getElementById('course-end').value='';
+  document.getElementById('course-loc').value='';
+  document.getElementById('course-startdate').value=today();
+  document.getElementById('course-delete-btn').style.display='none';
+  document.getElementById('course-weeks-btn').style.display='none';
+  _renderCourseColors();openModal('course');
+}
+function openCourseEdit(id){
+  var c=_findCourse(id);if(!c)return;_courseEditId=id;_courseColor=c.color;
+  document.getElementById('course-modal-title').textContent='編輯課程';
+  document.getElementById('course-name').value=c.name||'';
+  document.getElementById('course-day').value=String(c.day);
+  document.getElementById('course-freq').value=c.freq||'weekly';
+  document.getElementById('course-start').value=c.start||'';
+  document.getElementById('course-end').value=c.end||'';
+  document.getElementById('course-loc').value=c.location||'';
+  document.getElementById('course-startdate').value=c.startDate||'';
+  document.getElementById('course-delete-btn').style.display='';
+  document.getElementById('course-weeks-btn').style.display='';
+  _renderCourseColors();openModal('course');
+}
+function saveCourse(){
+  var name=document.getElementById('course-name').value.trim();
+  if(!name){showToast('請輸入課程名稱');return;}
+  var day=parseInt(document.getElementById('course-day').value,10);
+  var freq=document.getElementById('course-freq').value;
+  var start=document.getElementById('course-start').value;
+  var end=document.getElementById('course-end').value;
+  var loc=document.getElementById('course-loc').value.trim();
+  var sd=document.getElementById('course-startdate').value;
+  var anchorWeek=getWeekKey(sd||today());
+  if(_courseEditId){
+    var c=_findCourse(_courseEditId);
+    if(c){c.name=name;c.color=_courseColor;c.day=day;c.freq=freq;c.start=start;c.end=end;c.location=loc;c.startDate=sd;if(freq==='biweekly'&&!c.anchorWeek)c.anchorWeek=anchorWeek;if(freq!=='biweekly')c.anchorWeek=anchorWeek;}
+  }else{
+    courses.push({id:'c'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),name:name,color:_courseColor,day:day,freq:freq,start:start,end:end,location:loc,startDate:sd,anchorWeek:anchorWeek,onWeeks:[],offWeeks:[]});
+  }
+  saveCourses();closeModal('course');renderGrad();if(currentPage==='journal')renderJournal();showToast('已儲存');
+}
+function deleteCourse(){
+  if(!_courseEditId)return;
+  courses=courses.filter(function(x){return String(x.id)!==String(_courseEditId);});
+  saveCourses();closeModal('course');renderGrad();if(currentPage==='journal')renderJournal();showToast('已刪除');
+}
+// 每週是否上課
+function openCourseWeeks(){
+  if(!_courseEditId){showToast('請先儲存課程');return;}
+  renderCourseWeeks();openModal('course-weeks');
+}
+function renderCourseWeeks(){
+  var c=_findCourse(_courseEditId);if(!c)return;
+  var base=getWeekKey(c.startDate&&c.startDate>today()?c.startDate:today());
+  var rows='';
+  for(var i=0;i<16;i++){
+    var mon=new Date(base+'T00:00:00');mon.setDate(mon.getDate()+i*7);
+    var wk=fmtLocalDate(mon);
+    var cd=_weekClassDate(wk,c.day);
+    var cdd=new Date(cd+'T00:00:00');
+    var on=courseEffectiveOn(c,wk);
+    var biwkOff=(c.freq==='biweekly'&&!courseBaseOn(c,wk)&&(c.onWeeks||[]).indexOf(wk)<0);
+    rows+='<div class="row-item" style="align-items:center">'
+      +'<div class="row-main"><div class="row-title">'+(cdd.getMonth()+1)+'/'+cdd.getDate()+'（週'+DOW_LABEL[c.day]+'）</div>'
+      +'<div class="row-sub">'+(on?'上課':(biwkOff?'隔週停課':'放假停課'))+'</div></div>'
+      +'<label class="ios-toggle"><input type="checkbox"'+(on?' checked':'')+' onchange="toggleCourseWeek(\''+wk+'\')"><span class="ios-track"></span></label>'
+      +'</div>';
+  }
+  document.getElementById('course-weeks-list').innerHTML=rows;
+}
+function toggleCourseWeek(wk){
+  var c=_findCourse(_courseEditId);if(!c)return;
+  if(!c.onWeeks)c.onWeeks=[];if(!c.offWeeks)c.offWeeks=[];
+  var cur=courseEffectiveOn(c,wk),next=!cur,base=courseBaseOn(c,wk);
+  c.onWeeks=c.onWeeks.filter(function(w){return w!==wk;});
+  c.offWeeks=c.offWeeks.filter(function(w){return w!==wk;});
+  if(next!==base){if(next)c.onWeeks.push(wk);else c.offWeeks.push(wk);}
+  saveCourses();renderCourseWeeks();renderGrad();if(currentPage==='journal')renderJournal();
+}
+// 作業待辦增刪改
+var _cwEditId=null;
+function _fillCourseworkCourseSelect(sel){
+  var s=document.getElementById('coursework-course');
+  s.innerHTML=courses.map(function(c){return '<option value="'+esc(c.id)+'"'+(String(sel)===String(c.id)?' selected':'')+'>'+esc(c.name)+'</option>';}).join('')||'<option value="">（請先新增課程）</option>';
+}
+function openCourseworkModal(){
+  if(!courses.length){showToast('請先新增課程');setGradSub('courses');return;}
+  _cwEditId=null;
+  document.getElementById('coursework-modal-title').textContent='新增作業';
+  _fillCourseworkCourseSelect(courses[0].id);
+  document.getElementById('coursework-title').value='';
+  document.getElementById('coursework-due').value='';
+  document.getElementById('coursework-delete-btn').style.display='none';
+  openModal('coursework');
+}
+function openCourseworkEdit(id){
+  var w=coursework.find(function(x){return String(x.id)===String(id);});if(!w)return;_cwEditId=id;
+  document.getElementById('coursework-modal-title').textContent='編輯作業';
+  _fillCourseworkCourseSelect(w.courseId);
+  document.getElementById('coursework-title').value=w.title||'';
+  document.getElementById('coursework-due').value=w.due||'';
+  document.getElementById('coursework-delete-btn').style.display='';
+  openModal('coursework');
+}
+function saveCoursework(){
+  var courseId=document.getElementById('coursework-course').value;
+  var title=document.getElementById('coursework-title').value.trim();
+  var due=document.getElementById('coursework-due').value;
+  if(!title){showToast('請輸入作業內容');return;}
+  if(_cwEditId){var w=coursework.find(function(x){return String(x.id)===String(_cwEditId);});if(w){w.courseId=courseId;w.title=title;w.due=due;}}
+  else{coursework.push({id:'w'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),courseId:courseId,title:title,due:due,done:false});}
+  saveCoursework();closeModal('coursework');renderCourseworkList();showToast('已儲存');
+}
+function deleteCoursework(){
+  if(!_cwEditId)return;
+  coursework=coursework.filter(function(x){return String(x.id)!==String(_cwEditId);});
+  saveCoursework();closeModal('coursework');renderCourseworkList();showToast('已刪除');
+}
+function toggleCoursework(id){
+  var w=coursework.find(function(x){return String(x.id)===String(id);});if(!w)return;
+  w.done=!w.done;saveCoursework();renderCourseworkList();
+}
+
 // ── 首頁 ──────────────────────────────────────────────
 var homePeriod='today';
 function setPeriod(p,btn){
@@ -2855,10 +3126,13 @@ function filterBooks(f,btn){
   btn.classList.add('active');renderBooks();
 }
 // 起床 / 就寢時間折線圖（本週 / 本月統計用）
-function wakeSleepChart(dates,xLabels){
-  var W=300,H=130,padL=30,padR=10,padT=12,padB=22;
-  var minR=4*60,maxR=26*60;
-  function toMin(str,isSleep){
+// 單一時間序列折線圖（起床或就寢各一張）
+function _wsOneChart(dates,xLabels,kind){
+  var W=300,H=120,padL=30,padR=10,padT=12,padB=22;
+  var isSleep=(kind==='sleep');
+  var minR=isSleep?20*60:4*60, maxR=isSleep?28*60:12*60;
+  var gridHours=isSleep?[21,23,25,27]:[5,7,9,11];
+  function toMin(str){
     if(!str)return null;var p=(''+str).split(':');if(p.length<2)return null;
     var m=parseInt(p[0])*60+parseInt(p[1]);if(isNaN(m))return null;
     if(isSleep&&m<12*60)m+=24*60;
@@ -2867,39 +3141,31 @@ function wakeSleepChart(dates,xLabels){
   var n=dates.length,plotW=W-padL-padR,plotH=H-padT-padB;
   function X(i){return n<=1?padL+plotW/2:padL+i/(n-1)*plotW;}
   function Y(m){return padT+(m-minR)/(maxR-minR)*plotH;}
-  var grid='';[6,12,18,24].forEach(function(h){
+  var grid='';gridHours.forEach(function(h){
     var yy=Y(h*60);
     grid+='<line x1="'+padL+'" y1="'+yy.toFixed(1)+'" x2="'+(W-padR)+'" y2="'+yy.toFixed(1)+'" stroke="var(--border)" stroke-width="0.5"/>';
-    grid+='<text x="'+(padL-4)+'" y="'+(yy+3).toFixed(1)+'" text-anchor="end" font-size="8" fill="var(--text-3)">'+h+'</text>';
+    grid+='<text x="'+(padL-4)+'" y="'+(yy+3).toFixed(1)+'" text-anchor="end" font-size="8" fill="var(--text-3)">'+(h%24)+'</text>';
   });
-  var wakePts=[],sleepPts=[],hitRects='';
-  var cw=n>0?plotW/n:plotW;
+  var pts=[],hitRects='',cw=n>0?plotW/n:plotW,color=isSleep?'var(--blue)':'var(--amber)';
   dates.forEach(function(d,i){
-    var w=toMin((morningLogs[d]||{}).wakeTime,false);
-    var s=toMin((nightPlans[d]||{}).sleepTime,true);
-    if(w!=null)wakePts.push([X(i),Y(w)]);
-    if(s!=null)sleepPts.push([X(i),Y(s)]);
-    // 有紀錄的日期 → 整欄可點擊編輯
-    if((morningLogs[d]||{}).wakeTime||(nightPlans[d]||{}).sleepTime){
+    var v=toMin(isSleep?(nightPlans[d]||{}).sleepTime:(morningLogs[d]||{}).wakeTime);
+    if(v!=null){
+      pts.push([X(i),Y(v)]);
       hitRects+='<rect x="'+(X(i)-cw/2).toFixed(1)+'" y="'+padT+'" width="'+cw.toFixed(1)+'" height="'+plotH+'" fill="#000" fill-opacity="0" style="pointer-events:all;cursor:pointer" data-action="edit-wakesleep" data-date="'+d+'"></rect>';
     }
   });
-  function lineEls(pts,color){
-    if(!pts.length)return '';
-    var pl=pts.length>1?'<polyline points="'+pts.map(function(p){return p[0].toFixed(1)+','+p[1].toFixed(1);}).join(' ')+'" fill="none" stroke="'+color+'" stroke-width="1.5" stroke-linejoin="round"/>':'';
-    var dots=pts.map(function(p){return '<circle cx="'+p[0].toFixed(1)+'" cy="'+p[1].toFixed(1)+'" r="2.5" fill="'+color+'"/>';}).join('');
-    return pl+dots;
-  }
+  if(!pts.length)return '<div class="empty" style="padding:12px 0">尚無'+(isSleep?'就寢':'起床')+'紀錄</div>';
+  var pl=pts.length>1?'<polyline points="'+pts.map(function(p){return p[0].toFixed(1)+','+p[1].toFixed(1);}).join(' ')+'" fill="none" stroke="'+color+'" stroke-width="1.5" stroke-linejoin="round"/>':'';
+  var dots=pts.map(function(p){return '<circle cx="'+p[0].toFixed(1)+'" cy="'+p[1].toFixed(1)+'" r="2.5" fill="'+color+'"/>';}).join('');
   var xlab=xLabels?xLabels.map(function(l,i){return l?'<text x="'+X(i).toFixed(1)+'" y="'+(H-6)+'" text-anchor="middle" font-size="8" fill="var(--text-3)">'+l+'</text>':'';}).join(''):'';
-  var hasData=wakePts.length||sleepPts.length;
-  var svg='<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;height:auto;display:block">'+grid
-    +lineEls(wakePts,'var(--amber)')+lineEls(sleepPts,'var(--blue)')+xlab+hitRects+'</svg>';
-  var legend='<div style="display:flex;gap:14px;justify-content:center;margin-top:2px">'
-    +'<span style="font-size:11px;color:var(--text-2);display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:50%;background:var(--amber)"></span>起床</span>'
-    +'<span style="font-size:11px;color:var(--text-2);display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:50%;background:var(--blue)"></span>就寢</span></div>'
-    +'<div style="font-size:11px;color:var(--text-3);text-align:center;margin-top:6px">點圖表上有紀錄的日期即可編輯或刪除</div>';
-  return '<div class="home-section" style="margin-top:14px"><div class="home-section-title">起床 / 就寢時間</div>'
-    +(hasData?svg+legend:'<div class="empty" style="padding:14px 0">尚無起床 / 就寢紀錄</div>')+'</div>';
+  return '<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;height:auto;display:block">'+grid+pl+dots+xlab+hitRects+'</svg>';
+}
+function wakeSleepChart(dates,xLabels){
+  var hint='<div style="font-size:11px;color:var(--text-3);text-align:center;margin-top:4px">點有紀錄的日期可編輯或刪除</div>';
+  return '<div class="home-section" style="margin-top:14px"><div class="home-section-title"><span style="display:inline-flex;align-items:center;gap:5px"><span style="width:8px;height:8px;border-radius:50%;background:var(--amber)"></span>起床時間</span></div>'
+      +_wsOneChart(dates,xLabels,'wake')+'</div>'
+    +'<div class="home-section" style="margin-top:14px"><div class="home-section-title"><span style="display:inline-flex;align-items:center;gap:5px"><span style="width:8px;height:8px;border-radius:50%;background:var(--blue)"></span>就寢時間</span></div>'
+      +_wsOneChart(dates,xLabels,'sleep')+hint+'</div>';
 }
 // 進度條：今日新增的頁數以較淺的顏色顯示在末端
 function bookProgBar(b){
@@ -2934,6 +3200,20 @@ function renderBooks(){
     var sessions=readSessions.filter(function(s){return s.bookId===b.id;});
     var lastSess=null;for(var i=sessions.length-1;i>=0;i--){if(sessions[i].rate){lastSess=sessions[i];break;}}
     var lastRate=lastSess?lastSess.rate:0;
+    // 已完成書籍：總時長 + 平均速率（以有登記的資料計算）
+    var doneStats='';
+    if(b.status==='done'){
+      var totSec=sessions.reduce(function(a,s){return a+(s.sec||0);},0);
+      var pagesTimed=0,secTimed=0;
+      sessions.forEach(function(s){if((s.pagesRead||0)>0&&(s.sec||0)>0){pagesTimed+=s.pagesRead;secTimed+=s.sec;}});
+      var avgRate=secTimed>0?Math.round(pagesTimed/(secTimed/3600)):0;
+      var totMin=Math.round(totSec/60);
+      var totLabel=totMin>=60?(Math.floor(totMin/60)+'時'+(totMin%60?totMin%60+'分':'')):(totMin+'分');
+      doneStats='<div style="background:var(--bg);border-radius:var(--radius-sm);padding:10px;margin-top:8px;display:grid;grid-template-columns:1fr 1fr;gap:6px;text-align:center">'
+        +'<div><div style="font-size:10px;color:var(--text-2);margin-bottom:2px">總閱讀時長</div><div style="font-size:15px;font-weight:600;color:var(--text)">'+(totSec>0?totLabel:'—')+'</div><div style="font-size:10px;color:var(--text-3)">'+sessions.length+' 次紀錄</div></div>'
+        +'<div><div style="font-size:10px;color:var(--text-2);margin-bottom:2px">平均速率</div><div style="font-size:15px;font-weight:600;color:var(--text)">'+(avgRate||'—')+'</div><div style="font-size:10px;color:var(--text-3)">'+(avgRate?'頁/小時':'尚無速率資料')+'</div></div>'
+        +'</div>';
+    }
     var eta='';
     if(lastRate&&b.pages&&(b.currentPage||0)<b.pages){var rm=Math.round((b.pages-b.currentPage)/lastRate*60);eta=rm<60?rm+'分':Math.floor(rm/60)+'時'+(rm%60?rm%60+'分':'');}
     var bCls=b.status==='reading'?'badge-reading':b.status==='done'?'badge-done':'badge-want';
@@ -2945,6 +3225,7 @@ function renderBooks(){
       +'<div class="row-main"><div class="row-title">'+esc(b.title)+'</div><div class="row-sub">'+esc(b.author)+'</div></div>'
       +'<button class="icon-btn" data-action="open-book-edit" data-idx="'+idx+'">···</button>'
       +'<span class="badge '+bCls+'">'+bTxt+'</span></div>'
+      +doneStats
       +(b.status==='reading'?
         '<div style="background:var(--bg);border-radius:var(--radius-sm);padding:10px;margin-bottom:10px">'
         +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;text-align:center">'
@@ -4186,6 +4467,13 @@ function collectAutoItems(date){
     items.push({key:'med-'+s.id,cls:'tb-med',start:hmToMin(s.time),dur:Math.max(1,s.min||1),
       title:'冥想',sub:(s.min||0)+'分',noCheck:true,medId:String(s.id)});
   });
+  // 研究所課程（依星期、隔週、放假判斷自動出現）
+  courses.forEach(function(c){
+    if(!courseOccursOn(c,date))return;
+    var st=hmToMin(c.start);if(st===null)return;
+    var en=hmToMin(c.end);var dur=(en!==null&&en>st)?en-st:60;
+    items.push({key:'course-'+c.id,cls:'tb-course',start:st,dur:dur,title:esc(c.name),sub:(c.location?esc(c.location):'課程')+(c.freq==='biweekly'?' · 隔週':''),noCheck:true,color:c.color,courseId:String(c.id)});
+  });
   // 固定個案諮商（投影至本週與未來任一日期）
   collectCaseItems(date).forEach(function(it){items.push(it);});
   // 萬用計時器紀錄
@@ -4245,6 +4533,8 @@ function renderJournalWork(){
       cls=it.cls+(it.isLive?' tb-unconfirmed':'');
       if(it.medId){attrs='data-action="view-med" data-sid="'+it.medId+'"';extraStyle='cursor:pointer;';}
       else if(it.readId){attrs='data-action="edit-read" data-rid="'+esc(it.readId)+'"';extraStyle='cursor:pointer;';}
+      else if(it.courseId){attrs='data-action="open-course" data-cid="'+esc(it.courseId)+'"';extraStyle='cursor:pointer;';}
+      if(it.color){extraStyle+='background:'+it.color+';border-color:'+it.color+';color:#fff;';}
       inner='<div class="tb-title">'+it.title+(it.isLive?' ●':'')+'</div>'+(h>34?'<div class="tb-sub">'+it.sub+'</div>':'');
     } else {
       var conf=it.confirmedDefault||confirmed.indexOf(it.key)>=0;
@@ -4344,7 +4634,7 @@ function collectDayBlocks(date){
   var COL={'tb-read':'var(--purple)','tb-ex':'var(--green)','tb-med':'var(--amber)','tb-case':'var(--blue)','tb-quick':'#B5712E','tb-note':'var(--text-3)','tb-timer':'var(--teal)'};
   collectAutoItems(date).forEach(function(it){
     if(it.start===null||it.start<TL_START)return;
-    blocks.push({start:it.start,realDur:Math.max(1,it.dur),cls:it.cls,color:COL[it.cls]||'var(--text-3)',title:it.title,projected:!!it.projected});
+    blocks.push({start:it.start,realDur:Math.max(1,it.dur),cls:it.cls,color:COL[it.cls]||'var(--text-3)',title:it.title,projected:!!it.projected,noteColor:it.cls==='tb-course'?it.color:undefined});
   });
   (journalDayObj(date).workItems||[]).forEach(function(w){
     var start=hmToMin(w.startTime);if(start===null||start<TL_START)return;
@@ -4420,7 +4710,7 @@ function renderJournalWeek(){
       var w=100/b.numCols,left=b.col*w;
       var pos='top:'+b.top.toFixed(1)+'px;height:'+b.h.toFixed(1)+'px;left:calc('+left+'% + 1px);width:calc('+w+'% - 2px)';
       // 備註若有自訂顏色，沿用該柔和色當底（深色文字）；其餘類別用 tb-* 淺底＋同色文字
-      if(b.cls==='tb-note'&&b.noteColor)pos+=';background:'+b.noteColor+';border-color:'+b.noteColor;
+      if((b.cls==='tb-note'||b.cls==='tb-course')&&b.noteColor)pos+=';background:'+b.noteColor+';border-color:'+b.noteColor;
       var txt=b.h>=15?'<div class="jweek-block-txt">'+b.title+'</div>':'';
       return '<div class="jweek-block '+b.cls+(b.projected?' tb-unconfirmed':'')+'" title="'+b.title+'" style="'+pos+'">'+txt+'</div>';
     }).join('');
@@ -5029,6 +5319,12 @@ document.body.addEventListener('click',function(e){
   else if(action==='money-an-toggle'){toggleMoneyAnMonth(el.dataset.m);}
   else if(action==='money-an-all'){setMoneyAnSel('all');}
   else if(action==='money-an-none'){setMoneyAnSel('none');}
+  else if(action==='course-add'){openCourseModal();}
+  else if(action==='open-course'){openCourseEdit(el.dataset.cid);}
+  else if(action==='course-weeks'){openCourseWeeks();}
+  else if(action==='coursework-add'){openCourseworkModal();}
+  else if(action==='coursework-edit'){openCourseworkEdit(el.dataset.wid);}
+  else if(action==='coursework-toggle'){toggleCoursework(el.dataset.wid);}
   else if(action==='journal-confirm'){toggleJournalConfirm(el.dataset.key);}
   else if(action==='add-journal-quick'){openJournalQuickModal(null);}
   else if(action==='open-journal-quick'){openJournalQuickModal(el.dataset.id);}
@@ -5570,6 +5866,17 @@ function renderCheckinReview(){
     shiftJournalDate(dx<0?(journalView==='week'?7:1):(journalView==='week'?-7:-1));
   },{passive:true});
 })();
+// ── 記帳圓餅圖左右滑動切換月份 ─────────────────────────
+(function(){
+  var mc=document.getElementById('money-chart');if(!mc)return;
+  var _mx=0,_my=0;
+  mc.addEventListener('touchstart',function(e){_mx=e.changedTouches[0].clientX;_my=e.changedTouches[0].clientY;},{passive:true});
+  mc.addEventListener('touchend',function(e){
+    var dx=e.changedTouches[0].clientX-_mx,dy=e.changedTouches[0].clientY-_my;
+    if(Math.abs(dx)<45||Math.abs(dx)<Math.abs(dy)*1.5)return;
+    shiftMoneyMonth(dx<0?1:-1);
+  },{passive:true});
+})();
 // ── 計時器在背景凍結後回來時重算 ──────────────────────
 document.addEventListener('visibilitychange',function(){
   if(document.visibilityState==='visible'){
@@ -5600,7 +5907,7 @@ document.body.addEventListener('focusin',function(e){
 
 // ── 雲端同步（Supabase）──────────────────────────────
 var sbClient=null,sbUser=null,syncTimer=null,_syncPending=false;
-var DATA_KEYS=['lm-books','lm-exercises','lm-reviews','lm-sessions','lm-med','lm-cases','lm-wmenus','lm-ex-goal','lm-journal','lm-timer-logs','lm-quotes','lm-checkins','lm-morning-base','lm-morning-logs','lm-morning-fs','lm-night-plans','lm-notes','lm-note-tags','lm-expenses','lm-assets','lm-dayplans','lm-plan-palette'];
+var DATA_KEYS=['lm-books','lm-exercises','lm-reviews','lm-sessions','lm-med','lm-cases','lm-wmenus','lm-ex-goal','lm-journal','lm-timer-logs','lm-quotes','lm-checkins','lm-morning-base','lm-morning-logs','lm-morning-fs','lm-night-plans','lm-notes','lm-note-tags','lm-expenses','lm-assets','lm-dayplans','lm-plan-palette','lm-courses','lm-coursework'];
 
 var SB_URL='https://gsjljwupeyvqdsrzbadf.supabase.co';
 var SB_KEY='sb_publishable_2jglYptRkedrlZe-ZPHpbQ_U-A_R6ES';
@@ -5773,11 +6080,14 @@ function reloadAllFromStorage(){
   dayPlans=load('lm-dayplans',{});
   if(!dayPlans||typeof dayPlans!=='object'||Array.isArray(dayPlans))dayPlans={};
   var _pp=load('lm-plan-palette',null);if(Array.isArray(_pp)&&_pp.length)planPalette=_pp;
+  courses=load('lm-courses',[]);if(!Array.isArray(courses))courses=[];
+  coursework=load('lm-coursework',[]);if(!Array.isArray(coursework))coursework=[];
   renderHome();renderBooks();renderExercise();renderMedHistory();renderCases();renderReview();
   if(currentPage==='journal')renderJournal();
   if(currentPage==='growth')renderGrowth();
   if(currentPage==='money')setMoneySub(moneySub);
   if(currentPage==='plan')renderPlan();
+  if(currentPage==='grad')renderGrad();
 }
 </script>
 </body>
