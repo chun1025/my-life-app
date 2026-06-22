@@ -918,6 +918,19 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
   </div>
 </div>
 
+<!-- V12.15：本週個案時間調整 -->
+<div class="modal-overlay" id="modal-case-week">
+  <div class="modal">
+    <div class="modal-title">本週諮商時間 <button class="modal-close" onclick="closeModal('case-week')">×</button></div>
+    <input type="hidden" id="cw-id">
+    <div style="font-size:12px;color:var(--text-2);margin-bottom:14px;line-height:1.5">只調整<strong>本週</strong>的諮商日與節次，下週會自動恢復原本固定設定。待寫提醒與日誌會同步顯示調整後的時間。</div>
+    <div class="field"><label>星期</label><select id="cw-day"></select></div>
+    <div class="field"><label>節次</label><select id="cw-period"></select></div>
+    <button class="btn btn-primary btn-full" onclick="saveCaseWeek()">儲存本週調整</button>
+    <button class="btn btn-ghost btn-full" style="margin-top:8px" onclick="restoreCaseWeek()">恢復原本時間</button>
+  </div>
+</div>
+
 <!-- 臨時紀錄（整合臨時個案＋臨時處理）-->
 <div class="modal-overlay" id="modal-jquick">
   <div class="modal">
@@ -955,6 +968,9 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
         <button class="chip" data-action="jq-follow" data-follow="done">已追蹤</button>
       </div>
     </div>
+    <label id="jq-needrec-wrap" style="display:flex;align-items:center;gap:10px;margin:4px 0 12px;font-size:14px;color:var(--text);cursor:pointer">
+      <input type="checkbox" id="jq-needrec" style="width:18px;height:18px;flex-shrink:0"><span>此次需要撰寫紀錄（加入待寫個案紀錄）</span>
+    </label>
     <div id="jq-linked-info" style="display:none;font-size:12px;color:var(--teal);margin-bottom:10px"></div>
     <button class="btn btn-primary btn-full" onclick="saveJournalQuick()">儲存</button>
     <button class="btn btn-ghost btn-full" id="jq-tocase-btn" style="margin-top:8px" onclick="openJqMergePick()">歸入已存在的個案</button>
@@ -2767,7 +2783,7 @@ function renderHome(){
     var pending=todayCases.filter(function(c){
       var s=(c.sessions||[]).find(function(x){return x.date===t2;});
       if(s&&s.written)return false;
-      if(!c.isQuick&&c.sessionTime){var sm=hmToMin(c.sessionTime);if(sm!==null&&nowMin2<sm)return false;}
+      if(!c.isQuick){var st=caseWeekSched(c,currentWeekKey()).time;if(st){var sm=hmToMin(st);if(sm!==null&&nowMin2<sm)return false;}}
       return true;
     });
     if(!todayCases.length){sec.style.display='none';cl.innerHTML='';}
@@ -2777,9 +2793,10 @@ function renderHome(){
         cl.innerHTML='<div class="card card-sm"><div class="empty" style="padding:14px 0;color:var(--teal)">個案紀錄都完成囉</div></div>';
       } else {
         cl.innerHTML='<div class="card card-sm">'+pending.map(function(c){
+          var hsched=caseWeekSched(c,currentWeekKey());
           return '<div class="row-item"><div class="case-check" data-action="toggle-case" data-id="'+c.id+'"></div>'
             +'<div class="row-main"><div class="row-title">'+esc(caseDisplayName(c))+'</div>'
-            +'<div class="row-sub">'+esc(c.sessionTime||'時間未設定')+(c.isQuick?' · '+esc(c.quickType||'臨時'):'')+'</div></div>'
+            +'<div class="row-sub">'+esc((c.isQuick?c.sessionTime:hsched.time)||'時間未設定')+(hsched.overridden?' · 本週調整':'')+(c.isQuick?' · '+esc(c.quickType||'臨時'):'')+'</div></div>'
             +'<button class="btn btn-ghost btn-sm" data-action="open-draft-today" data-id="'+esc(c.id)+'">草稿</button></div>';
         }).join('')+'</div>';
       }
@@ -3805,6 +3822,19 @@ function pruneSkippedWeeks(c){
 function isSkippedThisWeek(c){
   return (c.skippedWeeks||[]).indexOf(currentWeekKey())>=0;
 }
+// V12.15：本週個案時間調整（只改當週，週鍵過期自動清除）
+function pruneWeekOverrides(c){
+  if(!c.weekOverrides)return;
+  var cutoff=new Date();cutoff.setDate(cutoff.getDate()-56);
+  var cutoffStr=cutoff.toISOString().slice(0,10);
+  Object.keys(c.weekOverrides).forEach(function(k){if(k<cutoffStr)delete c.weekOverrides[k];});
+}
+// 回傳某案在某週的「有效」諮商日與時間（有本週調整則用調整值，否則用固定值）
+function caseWeekSched(c,wk){
+  var ov=c.weekOverrides&&c.weekOverrides[wk];
+  if(ov&&ov.day)return {day:ov.day,time:ov.sessionTime||c.sessionTime,period:ov.period||'',overridden:true};
+  return {day:c.day,time:c.sessionTime,period:'',overridden:false};
+}
 function getWeekSessions(c){
   var wd=weekDates();
   return (c.sessions||[]).filter(function(s){return wd.indexOf(s.date)>=0;});
@@ -3856,7 +3886,8 @@ function caseWeeklyBadge(c){
   }
   if(ws.length===1 && !ws[0].written){
     var dow=new Date().getDay().toString();
-    var duePassed=c.day && (parseInt(c.day)<=parseInt(dow) || dow==='0');
+    var schedDay=caseWeekSched(c,currentWeekKey()).day;
+    var duePassed=schedDay && (parseInt(schedDay)<=parseInt(dow) || dow==='0');
     if(duePassed){
       return '<span style="font-size:12px;color:var(--red);font-weight:500">待寫</span>';
     }
@@ -3878,6 +3909,44 @@ function toggleWeeklySchedule(id){
   save('lm-cases',cases);renderCases();renderHome();
   showToast(idx>=0?'已標記本週有排':'已標記本週未安排');
 }
+// V12.15：本週個案時間調整（週幾 + 節次下拉）
+function schedPeriods(){return PERIODS.filter(function(p){return p.name==='早自修'||/^第.節$/.test(p.name);});}
+function openCaseWeek(id){
+  var c=cases.find(function(x){return x.id===id;});if(!c)return;
+  var SP=schedPeriods();
+  document.getElementById('cw-id').value=id;
+  var sched=caseWeekSched(c,currentWeekKey());
+  var dayCh=['週日','週一','週二','週三','週四','週五','週六'];
+  document.getElementById('cw-day').innerHTML=dayCh.map(function(lbl,i){return '<option value="'+i+'">'+lbl+'</option>';}).join('');
+  document.getElementById('cw-day').value=sched.day||c.day||'1';
+  document.getElementById('cw-period').innerHTML=SP.map(function(p){return '<option value="'+esc(p.name)+'">'+esc(p.name)+'（'+p.s+'）</option>';}).join('');
+  var match=SP.find(function(p){return p.s===sched.time;});
+  document.getElementById('cw-period').value=match?match.name:(sched.period||SP[0].name);
+  openModal('case-week');
+}
+function saveCaseWeek(){
+  var id=document.getElementById('cw-id').value;
+  var c=cases.find(function(x){return x.id===id;});if(!c)return;
+  var day=document.getElementById('cw-day').value;
+  var pname=document.getElementById('cw-period').value;
+  var p=schedPeriods().find(function(x){return x.name===pname;});
+  if(!c.weekOverrides)c.weekOverrides={};
+  c.weekOverrides[currentWeekKey()]={day:day,sessionTime:p?p.s:c.sessionTime,period:pname};
+  pruneWeekOverrides(c);
+  save('lm-cases',cases);
+  closeModal('case-week');renderCases();renderHome();
+  if(currentPage==='journal')renderJournal();
+  showToast('已調整本週為 '+['週日','週一','週二','週三','週四','週五','週六'][parseInt(day)]+' '+pname);
+}
+function restoreCaseWeek(){
+  var id=document.getElementById('cw-id').value;
+  var c=cases.find(function(x){return x.id===id;});if(!c)return;
+  if(c.weekOverrides)delete c.weekOverrides[currentWeekKey()];
+  save('lm-cases',cases);
+  closeModal('case-week');renderCases();renderHome();
+  if(currentPage==='journal')renderJournal();
+  showToast('已恢復原本時間');
+}
 function getPendingCases(){
   var t=today(),dow=new Date().getDay().toString();
   var nowMin=hmToMin(nowTime());
@@ -3888,8 +3957,9 @@ function getPendingCases(){
     var todayDone=sessions.some(function(s){return s.date===t&&s.written;});
     if(todayDone)return false;
     if(c.isQuick)return sessions.some(function(s){return s.date===t;});
-    if(!c.day||c.day!==dow)return false;
-    if(c.sessionTime){var sm=hmToMin(c.sessionTime);if(sm!==null&&nowMin<sm)return false;}
+    var sched=caseWeekSched(c,currentWeekKey());
+    if(!sched.day||sched.day!==dow)return false;
+    if(sched.time){var sm=hmToMin(sched.time);if(sm!==null&&nowMin<sm)return false;}
     return true;
   });
 }
@@ -3900,7 +3970,8 @@ function getTodayCases(){
     if(isSkippedThisWeek(c))return false;
     var sessions=c.sessions||[];
     if(c.isQuick)return sessions.some(function(s){return s.date===t;});
-    return c.day&&c.day===dow;
+    var sched=caseWeekSched(c,currentWeekKey());
+    return sched.day&&sched.day===dow;
   });
 }
 function filterCases(f,btn){
@@ -3958,6 +4029,7 @@ function renderCases(){
     var weeklyBadge=showAll?caseWeeklyBadge(c):'';
     var showWeeklyToggle=showAll&&!c.isQuick&&c.status==='active'&&c.day;
     var skipped=isSkippedThisWeek(c);
+    var rsched=c.isQuick?null:caseWeekSched(c,currentWeekKey());
     return '<div class="card card-sm" style="margin-bottom:8px">'
       +'<div style="display:flex;align-items:center;gap:10px">'
       +(showCheck?'<div class="case-check '+(isWritten?'done':'')+'" data-action="toggle-case" data-id="'+c.id+'">'
@@ -3965,8 +4037,9 @@ function renderCases(){
       +'<div style="flex:1'+(showAll?';cursor:pointer" data-action="open-case-detail" data-id="'+esc(c.id)+'"':'"')+'><div style="font-size:14px;font-weight:500;color:var(--text)">'+esc(caseDisplayName(c))
         +(c.isQuick?' <span style="font-size:11px;color:var(--red);background:var(--red-light);padding:2px 6px;border-radius:99px">'+esc(c.quickType||'臨時')+'</span>':'')
         +statusBadge+(weeklyBadge?' '+weeklyBadge:'')+'</div>'
-      +'<div style="font-size:12px;color:var(--text-2)">'+esc(c.sessionTime||'時間未設定')
-        +(c.day?' · 週'+['','一','二','三','四','五'][parseInt(c.day)]:'')
+      +'<div style="font-size:12px;color:var(--text-2)">'+esc((rsched?rsched.time:c.sessionTime)||'時間未設定')
+        +((rsched?rsched.day:c.day)?' · 週'+['日','一','二','三','四','五','六'][parseInt(rsched?rsched.day:c.day)]:'')
+        +(rsched&&rsched.overridden?' · <span style="color:var(--amber)">本週調整</span>':'')
         +(c.note?' · '+esc(c.note):'')+'</div></div>'
       +'<button class="icon-btn" data-action="open-case-edit" data-id="'+esc(c.id)+'">···</button>'
       +'</div>'
@@ -3976,6 +4049,8 @@ function renderCases(){
         +'</div>':'')
       +(showWeeklyToggle?
         '<div style="margin-top:8px;padding-top:8px;border-top:0.5px solid var(--border);display:flex;justify-content:flex-end;align-items:center;gap:8px">'
+        +'<button class="btn btn-ghost btn-sm" data-action="open-case-week" data-id="'+esc(c.id)+'">本週時間</button>'
+        +'<span style="flex:1"></span>'
         +'<span style="font-size:12px;color:var(--text-2)">本週有排</span>'
         +'<label class="ios-toggle"><input type="checkbox" data-action="toggle-weekly-schedule" data-id="'+esc(c.id)+'" '+(skipped?'':'checked')+'><span class="ios-track"></span></label>'
         +'</div>':'')
@@ -4432,19 +4507,20 @@ function collectCaseItems(date){
   var dow=d.getDay().toString(); // 0=日 ... 6=六
   cases.forEach(function(c){
     if(c.isQuick)return;
+    var sched=caseWeekSched(c,weekKeyOf(date));
     var rec=caseRecordOnDate(c,date);
     if(rec){
       // 已有實際紀錄：永遠顯示（不因狀態/排程變動而消失），以實際紀錄為準
-      items.push({key:'case-'+c.id,cls:'tb-case',start:hmToMin(c.sessionTime),dur:40,
+      items.push({key:'case-'+c.id,cls:'tb-case',start:hmToMin(sched.time),dur:40,
         title:esc(caseDisplayName(c)),sub:(rec.written?'已完成':'已登記'),projected:false,confirmedDefault:true});
       return;
     }
-    // 沒有實際紀錄 → 是否投影一筆預定諮商
+    // 沒有實際紀錄 → 是否投影一筆預定諮商（依本週有效諮商日/時間）
     if(c.status!=='active')return;          // 只有進行中才投影
-    if(!c.day||c.day!==dow)return;          // 固定諮商日對應
+    if(!sched.day||sched.day!==dow)return;  // 本週有效諮商日對應
     if(caseSkippedOnDate(c,date))return;    // 該週未安排則不投影
-    items.push({key:'case-'+c.id,cls:'tb-case',start:hmToMin(c.sessionTime),dur:40,
-      title:esc(caseDisplayName(c)),sub:'固定諮商',projected:true});
+    items.push({key:'case-'+c.id,cls:'tb-case',start:hmToMin(sched.time),dur:40,
+      title:esc(caseDisplayName(c)),sub:'固定諮商'+(sched.overridden?'（本週調整）':''),projected:true});
   });
   return items;
 }
@@ -4754,6 +4830,8 @@ function setJqType(type){
   var caseRelated=CASE_TYPES.indexOf(type)>=0;
   document.getElementById('jq-case-fields').style.display=caseRelated?'block':'none';
   document.getElementById('jq-tocase-btn').style.display=caseRelated?'block':'none';
+  // 切換類型時，個案相關類型預設「需要撰寫紀錄」，其餘預設不需要
+  var nr=document.getElementById('jq-needrec');if(nr)nr.checked=caseRelated;
 }
 function openJournalQuickModal(id,fromDate){
   var baseDate=fromDate||(currentPage==='journal'?journalDate:today());
@@ -4773,6 +4851,7 @@ function openJournalQuickModal(id,fromDate){
       document.getElementById('jq-dur').value=w.durationMin||15;
       document.getElementById('jq-event').value=w.event||'';
       setJqFollow(w.followUp||'none',null);
+      document.getElementById('jq-needrec').checked=!!w.needRecord;
       delBtn.style.display='block';
       if(w.linkedCaseId){
         var lc=cases.find(function(x){return x.id===w.linkedCaseId;});
@@ -4803,6 +4882,7 @@ function _persistQuick(){
   if(FIXED_TYPES.indexOf(type)<0){type=document.getElementById('jq-type-other').value.trim()||'其他';}
   var caseRelated=CASE_TYPES.indexOf(jqType)>=0;
   var newDate=document.getElementById('jq-date').value||today();
+  var needRec=document.getElementById('jq-needrec').checked;
   var data={
     quickType:type,
     className:caseRelated?document.getElementById('jq-class').value.trim():'',
@@ -4810,7 +4890,8 @@ function _persistQuick(){
     startTime:document.getElementById('jq-time').value||nowTime(),
     durationMin:parseInt(document.getElementById('jq-dur').value)||15,
     event:document.getElementById('jq-event').value.trim(),
-    followUp:jqFollow
+    followUp:jqFollow,
+    needRecord:needRec
   };
   var id=document.getElementById('jq-id').value;
   var srcDate=document.getElementById('jq-srcdate').value;
@@ -4823,6 +4904,7 @@ function _persistQuick(){
         saveJournalDay(jo);
       } else {
         od.workItems=od.workItems.filter(function(x){return x.id!==id;});
+        _syncQuickRecordCase(srcDate,id,false,data); // 移日：先清掉原日期的自動待寫
         saveJournalDay(jo);
         Object.keys(data).forEach(function(k){w[k]=data[k];});
         var jn=getJournalDay(newDate);jn[newDate].workItems.push(w);
@@ -4830,6 +4912,7 @@ function _persistQuick(){
         document.getElementById('jq-srcdate').value=newDate;
       }
     }
+    _syncQuickRecordCase(newDate,id,needRec,data);
     return {id:id,date:newDate};
   }
   data.id=String(Date.now());data.kind='quick';data.linkedCaseId=null;
@@ -4837,7 +4920,42 @@ function _persistQuick(){
   saveJournalDay(j2);
   document.getElementById('jq-id').value=data.id;
   document.getElementById('jq-srcdate').value=newDate;
+  _syncQuickRecordCase(newDate,data.id,needRec,data);
   return {id:data.id,date:newDate};
+}
+// V12.15：依「需要撰寫紀錄」勾選，建立／移除對應的待寫臨時個案
+function _syncQuickRecordCase(date,wiId,needRec,info){
+  var j=getJournalDay(date),day=j[date];
+  var w=(day.workItems||[]).find(function(x){return x.id===wiId;});
+  if(!w)return;
+  var linked=w.linkedCaseId?cases.find(function(c){return c.id===w.linkedCaseId;}):null;
+  // 已手動歸入正式個案者，不自動處理
+  if(linked&&!linked.isQuick)return;
+  if(needRec){
+    if(linked&&linked.isQuick){
+      var s=(linked.sessions||[]).find(function(x){return x.date===date;});
+      if(!s){linked.sessions.push({date:date,kind:quickTypeToKind(info.quickType||'其他'),written:false,event:info.event||''});}
+      else{s.event=info.event||s.event;}
+      linked.className=info.className||linked.className;
+      linked.code=info.code||linked.code;linked.quickType=info.quickType||linked.quickType;
+    } else {
+      var qc={id:'q'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),
+        code:info.code||info.quickType||'臨時',className:info.className||'',quickType:info.quickType||'臨時',
+        isQuick:true,status:'active',startCount:0,skippedWeeks:[],
+        sessions:[{date:date,kind:quickTypeToKind(info.quickType||'其他'),written:false,event:info.event||''}]};
+      cases.push(qc);w.linkedCaseId=qc.id;w.recordCaseAuto=true;
+    }
+    save('lm-cases',cases);saveJournalDay(j);
+  } else if(linked&&linked.isQuick&&w.recordCaseAuto){
+    // 取消勾選：移除自動建立的待寫臨時個案（僅限當日未撰寫者）
+    var rs=(linked.sessions||[]).find(function(x){return x.date===date;});
+    if(!rs||!rs.written){
+      linked.sessions=(linked.sessions||[]).filter(function(x){return x.date!==date;});
+      if(linked.sessions.length===0)cases=cases.filter(function(c){return c.id!==linked.id;});
+      w.linkedCaseId=null;w.recordCaseAuto=false;
+      save('lm-cases',cases);saveJournalDay(j);
+    }
+  }
 }
 function saveJournalQuick(){
   var r=_persistQuick();
@@ -4870,6 +4988,15 @@ function mergeWorkItemIntoCase(date,wiId,targetId){
   var w=(day.workItems||[]).find(function(x){return x.id===wiId;});
   var target=cases.find(function(x){return x.id===targetId;});
   if(!w||!target)return;
+  // 若先前因「需要撰寫」自動建立了臨時待寫個案，歸入正式個案時先清掉它
+  if(w.recordCaseAuto&&w.linkedCaseId){
+    var auto=cases.find(function(c){return c.id===w.linkedCaseId;});
+    if(auto&&auto.isQuick){
+      auto.sessions=(auto.sessions||[]).filter(function(x){return x.date!==date;});
+      if((auto.sessions||[]).length===0)cases=cases.filter(function(c){return c.id!==auto.id;});
+    }
+    w.recordCaseAuto=false;
+  }
   if(!target.sessions)target.sessions=[];
   target.sessions.push({date:date,kind:quickTypeToKind(w.quickType||'其他'),written:(w.followUp==='done'),event:w.event||''});
   w.linkedCaseId=targetId;
@@ -5299,6 +5426,7 @@ document.body.addEventListener('click',function(e){
     editingMoveRows.splice(midx,1);renderMoveRows();
   }
   else if(action==='toggle-weekly-schedule'){toggleWeeklySchedule(el.dataset.id);}
+  else if(action==='open-case-week'){openCaseWeek(el.dataset.id);}
   else if(action==='case-sort'){setCaseSort(el.dataset.mode);}
   else if(action==='case-mgmt'){setCaseMgmt(el.dataset.sub);}
   else if(action==='case-record'){setCaseRecord(el.dataset.sub);}
@@ -5400,8 +5528,7 @@ document.body.addEventListener('click',function(e){
     morningBase.splice(parseInt(el.dataset.idx),1);
     save('lm-morning-base',morningBase);renderMorningBaseList();showToast('已刪除');
   }
-  else if(action==='note-sel-tag'){_noteTagSel=el.dataset.tag;renderNotesSection();}
-  else if(action==='note-filter'){_noteFilterSel=el.dataset.tag;renderNotesSection();}
+  else if(action==='note-sel-color'){_noteColor=el.dataset.color||null;renderNotesSection();}
   else if(action==='del-note'){
     var nid=el.dataset.nid;
     notes=notes.filter(function(n){return String(n.id)!==String(nid);});
@@ -5839,45 +5966,34 @@ function deleteWakeSleep(){
 }
 
 // ── 靈感筆記 ───────────────────────────────────────────
-var _noteTagSel='點子',_noteFilterSel='全部';
+var _noteColor=null;
 function renderNotesSection(){
   var el=document.getElementById('notes-section');if(!el)return;
   var saved=document.getElementById('note-input')?document.getElementById('note-input').value:'';
-  var tagBtns=noteTags.map(function(tg){
-    return '<button class="chip '+(tg===_noteTagSel?'active':'')+'" data-action="note-sel-tag" data-tag="'+esc(tg)+'">'+esc(tg)+'</button>';
-  }).join('')+'<button class="chip" onclick="addNoteTagPrompt()">+ 標籤</button>';
-  var filterBtns=['全部'].concat(noteTags).map(function(tg){
-    return '<button class="note-filter-tag '+(tg===_noteFilterSel?'active':'')+'" data-action="note-filter" data-tag="'+esc(tg)+'">'+esc(tg)+'</button>';
-  }).join('');
-  var filtered=_noteFilterSel==='全部'?notes:notes.filter(function(n){return n.tag===_noteFilterSel;});
-  var listHTML=filtered.slice().reverse().map(function(n){
-    return '<div class="note-entry"><div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">'
-      +'<span class="note-entry-tag">'+esc(n.tag)+'</span>'
+  var colorBtns='<button class="jn-cat-btn'+(!_noteColor?' selected':'')+'" data-action="note-sel-color" data-color="" style="background:var(--bg);border-color:'+(!_noteColor?'rgba(0,0,0,.35)':'transparent')+'">無</button>'
+    +JNOTE_COLORS.map(function(c){
+      return '<button class="jn-cat-btn'+(_noteColor===c.bg?' selected':'')+'" data-action="note-sel-color" data-color="'+c.bg+'" style="background:'+c.bg+';border-color:'+(_noteColor===c.bg?'rgba(0,0,0,.35)':'transparent')+'">'+esc(c.label)+'</button>';
+    }).join('');
+  var listHTML=notes.slice().reverse().map(function(n){
+    var col=n.color||'';
+    return '<div class="note-entry"'+(col?' style="border-left:3px solid '+col+'"':'')+'><div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">'
+      +'<div class="note-entry-text" style="margin-top:0;flex:1">'+esc(n.text)+'</div>'
       +'<button class="icon-btn" style="color:var(--red);padding:0 2px;flex-shrink:0" data-action="del-note" data-nid="'+esc(String(n.id))+'">刪</button></div>'
-      +'<div class="note-entry-text">'+esc(n.text)+'</div>'
       +'<div class="note-entry-time">'+esc(n.date)+' '+esc(n.time)+'</div></div>';
   }).join('')||'<div class="empty">還沒有筆記</div>';
   el.innerHTML='<div class="card" style="margin-bottom:10px">'
     +'<div class="field"><textarea id="note-input" rows="3" placeholder="寫下任何想法…">'+esc(saved)+'</textarea></div>'
-    +'<div class="chip-row" style="margin-bottom:10px">'+tagBtns+'</div>'
+    +'<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:10px"><span style="font-size:12px;color:var(--text-3);flex-shrink:0">顏色</span>'+colorBtns+'</div>'
     +'<button class="btn btn-primary btn-full" onclick="saveNote()">新增筆記</button></div>'
-    +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">'+filterBtns+'</div>'
     +listHTML;
 }
 function saveNote(){
   var v=document.getElementById('note-input').value.trim();
   if(!v){showToast('請輸入內容');return;}
-  notes.push({id:String(Date.now()),date:today(),time:nowTime(),tag:_noteTagSel,text:v});
+  notes.push({id:String(Date.now()),date:today(),time:nowTime(),color:_noteColor||undefined,text:v});
   save('lm-notes',notes);
   document.getElementById('note-input').value='';
   renderNotesSection();showToast('已新增筆記');
-}
-function addNoteTagPrompt(){
-  var v=window.prompt('新標籤名稱');
-  if(!v||!v.trim())return;
-  v=v.trim();
-  if(noteTags.indexOf(v)<0){noteTags.push(v);save('lm-note-tags',noteTags);}
-  _noteTagSel=v;renderNotesSection();
 }
 
 // ── Routine 回顧 ───────────────────────────────────────
