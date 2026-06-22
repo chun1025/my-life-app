@@ -5525,8 +5525,13 @@ document.body.addEventListener('click',function(e){
     save('lm-quotes',quotes);renderQuoteList();showToast('已刪除');
   }
   else if(action==='del-morning-base'){
+    var _dn=morningBase[parseInt(el.dataset.idx)];
     morningBase.splice(parseInt(el.dataset.idx),1);
-    save('lm-morning-base',morningBase);renderMorningBaseList();showToast('已刪除');
+    save('lm-morning-base',morningBase);
+    // 同步從今天的晨間項目移除（保留「起床」固定項）
+    var _dt=today();
+    if(morningLogs[_dt]){morningLogs[_dt].items=morningLogs[_dt].items.filter(function(it){return it.wake||it.name!==_dn;});save('lm-morning-logs',morningLogs);}
+    renderMorningBaseList();renderMorningCard();showToast('已刪除');
   }
   else if(action==='note-sel-color'){_noteColor=el.dataset.color||null;renderNotesSection();}
   else if(action==='del-note'){
@@ -5649,6 +5654,12 @@ function renderMorningCard(){
   var allDone=log&&log.items.length&&log.items.every(function(it){return it.done;});
   var urgent=isToday&&h>=5&&h<10&&!allDone;
   var canEdit=isToday;
+  // 早上 10 點後仍未完成者，自動登記為未完成（持久化）
+  if(isToday&&h>=10&&log&&log.items.length){
+    var _mc=false;
+    log.items.forEach(function(it){if(!it.done&&!it.missed){it.missed=true;_mc=true;}});
+    if(_mc)save('lm-morning-logs',morningLogs);
+  }
   if(!_routineOpen.morning||morningFsEnabled){
     var mst,msc;
     if(!log||!log.items.length){mst='尚無項目';msc='var(--text-3)';}
@@ -5666,7 +5677,7 @@ function renderMorningCard(){
     +'<div style="font-size:11px;font-weight:600;color:var(--text-2);text-transform:uppercase;letter-spacing:.6px">晨間 Routine</div>'
     +'<div style="font-size:11px;color:var(--text-3);margin-top:1px">'+esc(isToday?'今天 · '+dt:dt)+'</div></div>'
     +'<div style="display:flex;align-items:center;gap:2px">'
-    +(isToday?'<button style="background:none;border:none;font-size:12px;color:var(--text-3);cursor:pointer;padding:0 4px" onclick="openModal(\'morning-edit\');renderMorningBaseList()">設定</button>':'')
+    +(isToday?'<button class="icon-btn" style="color:var(--text-3);font-size:18px;line-height:1;padding:0 6px" onclick="openModal(\'morning-edit\');renderMorningBaseList()" title="編輯晨間項目">···</button>':'')
     +'<button style="'+navStyle+(disabledNext?';opacity:.25;pointer-events:none':'')+'" data-action="routine-next">›</button>'
     +'<button style="background:none;border:none;font-size:15px;color:var(--text-3);cursor:pointer;padding:0 4px" data-action="routine-collapse" data-which="morning" title="收合">✕</button>'
     +'</div></div>';
@@ -5676,12 +5687,15 @@ function renderMorningCard(){
     itemsHTML='<div style="font-size:13px;color:var(--text-3);padding:8px 0">此天無晨間項目</div>';
   } else {
     itemsHTML=log.items.map(function(it,idx){
+      var missed=!it.done&&(isToday?h>=10:true);
       var check='<div class="routine-check '+(it.done?'done':'')+(canEdit?' '+'" data-action="toggle-morning" data-idx="'+idx+'"':'" style="cursor:default"')+'>'
         +(it.done?'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>':'')+'</div>';
       var _tm=it.wake?it.wakeTime:it.doneTime;
       var wakeTag=(it.done&&_tm)?' <span style="color:var(--amber);font-size:12px;font-weight:500;text-decoration:none">'+esc(_tm)+'</span>':'';
+      var missedTag=missed?' <span style="color:var(--red);font-size:11px;font-weight:500;text-decoration:none">未完成</span>':'';
+      var nameStyle=(it.done||missed)?'color:var(--text-3);text-decoration:line-through':'color:var(--text)';
       return '<div class="routine-item">'+check+'<div style="font-size:14px;flex:1">'
-        +'<span style="'+(it.done?'color:var(--text-3);text-decoration:line-through':'color:var(--text)')+'">'+esc(it.name)+'</span>'+wakeTag+'</div></div>';
+        +'<span style="'+nameStyle+'">'+esc(it.name)+'</span>'+wakeTag+missedTag+'</div></div>';
     }).join('');
   }
   var completionNote=(log&&log.completedAt)?'<div style="font-size:12px;color:var(--teal);margin-top:8px">✓ 完成於 '+esc(log.completedAt)+'</div>':'';
@@ -5694,7 +5708,7 @@ function toggleMorningItem(idx){
   var log=morningLogs[t];if(!log)return;
   var it=log.items[idx];
   it.done=!it.done;
-  if(it.done)it.doneTime=nowTime();else it.doneTime=null;
+  if(it.done){it.doneTime=nowTime();it.missed=false;}else it.doneTime=null;
   if(it.wake){
     if(it.done){it.wakeTime=it.doneTime;log.wakeTime=it.wakeTime;showToast('已記錄起床時間 '+it.wakeTime);}
     else{it.wakeTime=null;log.wakeTime=null;}
@@ -5722,8 +5736,13 @@ function renderMorningBaseList(){
 function addMorningBaseItem(){
   var v=document.getElementById('morning-new-item').value.trim();if(!v)return;
   morningBase.push(v);save('lm-morning-base',morningBase);
+  // 同步加入今天的晨間項目，讓編輯即時反映
+  var t=today();
+  if(morningLogs[t]&&!morningLogs[t].items.some(function(it){return !it.wake&&it.name===v;})){
+    morningLogs[t].items.push({name:v,done:false});save('lm-morning-logs',morningLogs);
+  }
   document.getElementById('morning-new-item').value='';
-  renderMorningBaseList();showToast('已新增');
+  renderMorningBaseList();renderMorningCard();showToast('已新增');
 }
 // ── 晨間 Routine 全螢幕專注模式 ──────────────────────────
 function renderMorningFs(){
@@ -5815,8 +5834,10 @@ function _reflectStatsHTML(dt){
   // 當日日誌：自動項目（已預先 esc）+ 手動 workItems
   var auto=collectAutoItems(dt).map(function(it){return {start:it.start,titleHtml:it.title||'',subHtml:it.sub||''};});
   var wi=(journalDayObj(dt).workItems||[]).map(function(w){
-    var nm=(w.className?w.className+'-':'')+(w.code||'');if(!nm)nm=w.quickType||'紀錄';
-    return {start:hmToMin(w.startTime),titleHtml:esc(nm),subHtml:esc(w.event||'')};
+    // 記一筆/雜事/計時用 text；臨時紀錄用 班級-代號 或 類別；最後才退回事件或「紀錄」
+    var nm=w.text||((w.className?w.className+'-':'')+(w.code||''))||w.quickType||w.event||'紀錄';
+    var sub=(w.event&&w.event!==nm)?w.event:'';
+    return {start:hmToMin(w.startTime),titleHtml:esc(nm),subHtml:esc(sub)};
   });
   var all=auto.concat(wi).filter(function(x){return x.start!=null;}).sort(function(a,b){return a.start-b.start;});
   var logHTML;
