@@ -1601,7 +1601,7 @@ function effGrowthOn(g){if(appSettings.workMode&&(g==='exercise'||g==='meditatio
 
 // ── 萬用計時器狀態 ────────────────────────────────────
 var uTimerRunning=false,uTimerPaused=false;
-var uTimerTitle='',uTimerStartTimeStr='';
+var uTimerTitle='',uTimerStartTimeStr='',uTimerStartDateStr='';
 var uTimerAccumSec=0,uTimerStartTs=null,uTimerSec=0;
 var uTimerInterval=null;
 function getUTimerSec(){return uTimerAccumSec+(uTimerStartTs?Math.floor((Date.now()-uTimerStartTs)/1000):0);}
@@ -4482,7 +4482,7 @@ function collectAutoItems(date){
       title:esc(s.title||'任務'),sub:(s.durationMin||0)+'分',noCheck:true});
   });
   // 萬用計時器進行中（實時投影）
-  if(uTimerRunning&&date===today()&&uTimerStartTimeStr){
+  if(uTimerRunning&&date===(uTimerStartDateStr||today())&&uTimerStartTimeStr){
     var liveSec=getUTimerSec();
     var liveMin=Math.max(1,Math.round(liveSec/60));
     items.push({key:'timer-live',cls:'tb-timer',start:hmToMin(uTimerStartTimeStr),dur:liveMin,
@@ -5088,7 +5088,7 @@ function startUTimerHome(){
   if(uTimerRunning&&!uTimerPaused)return;
   var input=document.getElementById('home-timer-input');
   if(input)uTimerTitle=input.value.trim();
-  if(!uTimerRunning){uTimerAccumSec=0;uTimerStartTimeStr=nowTime();}
+  if(!uTimerRunning){uTimerAccumSec=0;uTimerStartTimeStr=nowTime();uTimerStartDateStr=today();}
   uTimerStartTs=Date.now();uTimerPaused=false;uTimerRunning=true;
   clearInterval(uTimerInterval);uTimerInterval=setInterval(tickUTimer,1000);
   var ftInput=document.getElementById('ft-title-input');if(ftInput)ftInput.value=uTimerTitle||'';
@@ -5126,7 +5126,7 @@ function toggleUTimerFull(){
 function discardUTimer(){
   clearInterval(uTimerInterval);uTimerInterval=null;
   uTimerStartTs=null;uTimerRunning=false;uTimerPaused=false;
-  uTimerTitle='';uTimerStartTimeStr='';uTimerAccumSec=0;uTimerSec=0;
+  uTimerTitle='';uTimerStartTimeStr='';uTimerStartDateStr='';uTimerAccumSec=0;uTimerSec=0;
   var ftInput=document.getElementById('ft-title-input');if(ftInput)ftInput.value='';
   document.getElementById('fullscreen-timer').classList.remove('open');
   updateUTimerModal();renderTimerWidget();
@@ -5136,7 +5136,7 @@ function startUTimer(){
   if(uTimerRunning&&!uTimerPaused)return;
   var titleEl=document.getElementById('ut-title');
   if(titleEl)uTimerTitle=titleEl.value.trim()||uTimerTitle;
-  if(!uTimerRunning){uTimerAccumSec=0;uTimerStartTimeStr=nowTime();}
+  if(!uTimerRunning){uTimerAccumSec=0;uTimerStartTimeStr=nowTime();uTimerStartDateStr=today();}
   uTimerStartTs=Date.now();uTimerPaused=false;uTimerRunning=true;
   clearInterval(uTimerInterval);uTimerInterval=setInterval(tickUTimer,1000);
   updateUTimerModal();renderTimerWidget();
@@ -5164,13 +5164,13 @@ function stopUTimer(){
   var min=Math.max(1,Math.round(sec/60));
   var titleEl=document.getElementById('ut-title');
   if(titleEl)uTimerTitle=titleEl.value.trim()||uTimerTitle;
-  var entryDate=today();
+  var entryDate=uTimerStartDateStr||today();
   var entry={id:String(Date.now()),kind:'note',text:uTimerTitle||'計時任務',startTime:uTimerStartTimeStr,durationMin:min};
   var jj=getJournalDay(entryDate);
   jj[entryDate].workItems.push(entry);
   saveJournalDay(jj);
   var savedTitle=uTimerTitle;
-  uTimerTitle='';uTimerStartTimeStr='';uTimerAccumSec=0;uTimerSec=0;
+  uTimerTitle='';uTimerStartTimeStr='';uTimerStartDateStr='';uTimerAccumSec=0;uTimerSec=0;
   var tEl=document.getElementById('ut-title');if(tEl)tEl.value='';
   updateUTimerModal();renderTimerWidget();
   if(currentPage==='journal')renderJournal();
