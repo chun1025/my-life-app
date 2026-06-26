@@ -575,10 +575,11 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
 <!-- 個案 -->
 <div class="page" id="page-cases">
   <div class="chip-row" id="case-filter-row">
-    <button class="chip active" onclick="filterCases('record',this)">個案紀錄</button>
-    <button class="chip" onclick="filterCases('manage',this)">個案管理</button>
+    <button class="chip active" data-filter="dashboard" onclick="filterCases('dashboard',this)">儀表板</button>
+    <button class="chip" data-filter="record" onclick="filterCases('record',this)">個案紀錄</button>
+    <button class="chip" data-filter="manage" onclick="filterCases('manage',this)">個案管理</button>
   </div>
-  <div class="chip-row" id="case-record-row">
+  <div class="chip-row" id="case-record-row" style="display:none">
     <button class="chip active" data-action="case-record" data-sub="pending">待撰寫</button>
     <button class="chip" data-action="case-record" data-sub="done">今日完成</button>
   </div>
@@ -1704,7 +1705,11 @@ function renderSettingsModal(){
     +row('研究所',appSettings.pages.grad,"togglePageSetting('grad',this.checked)",false,false)
     +row('個案',appSettings.pages.cases,"togglePageSetting('cases',this.checked)",false,false)
     +row('回顧',appSettings.pages.review,"togglePageSetting('review',this.checked)",false,wm)
-    +row('記帳',appSettings.pages.money,"togglePageSetting('money',this.checked)",false,wm);
+    +row('記帳',appSettings.pages.money,"togglePageSetting('money',this.checked)",false,wm)
+    +'<div style="margin-top:14px;border-top:0.5px solid var(--border);padding-top:12px">'
+    +'<div style="font-size:11px;font-weight:600;color:var(--text-2);letter-spacing:.6px;text-transform:uppercase;margin-bottom:8px">本機通知提醒</div>'
+    +_notifUI()
+    +'</div>';
 }
 function toggleWorkMode(on){
   appSettings.workMode=on;
@@ -3787,7 +3792,7 @@ function renderMedHistory(){
 }
 
 // ── 個案 ──────────────────────────────────────────────
-var caseFilter='pending';
+var caseFilter='dashboard';
 // 只把「正式諮商」(kind==="consult" 或無 kind 的舊資料)納入計次
 function isConsultSession(s){return !s.kind||s.kind==='consult';}
 function nextSessionCount(c){
@@ -3933,10 +3938,24 @@ function saveCaseWeek(){
   if(!c.weekOverrides)c.weekOverrides={};
   c.weekOverrides[currentWeekKey()]={day:day,sessionTime:p?p.s:c.sessionTime,period:pname};
   pruneWeekOverrides(c);
+  // 若調整後的日期已過（回溯調整），且該日尚無 session，自動建立待寫紀錄
+  var wd=weekDates();
+  var dayIdx=parseInt(day)===0?6:parseInt(day)-1;
+  var adjDate=wd[dayIdx];
+  var t=today();
+  var retroMsg='';
+  if(adjDate&&adjDate<t){
+    var exists=(c.sessions||[]).some(function(s){return s.date===adjDate;});
+    if(!exists){
+      if(!c.sessions)c.sessions=[];
+      c.sessions.push({id:Date.now().toString(36),date:adjDate,written:false,autoAdded:true});
+      retroMsg='，已追加 '+adjDate+' 待寫紀錄';
+    }
+  }
   save('lm-cases',cases);
   closeModal('case-week');renderCases();renderHome();
   if(currentPage==='journal')renderJournal();
-  showToast('已調整本週為 '+['週日','週一','週二','週三','週四','週五','週六'][parseInt(day)]+' '+pname);
+  showToast('已調整本週為 '+['週日','週一','週二','週三','週四','週五','週六'][parseInt(day)]+' '+pname+retroMsg);
 }
 function restoreCaseWeek(){
   var id=document.getElementById('cw-id').value;
@@ -3950,13 +3969,18 @@ function restoreCaseWeek(){
 function getPendingCases(){
   var t=today(),dow=new Date().getDay().toString();
   var nowMin=hmToMin(nowTime());
+  var wd=weekDates();
   return cases.filter(function(c){
     if(c.status==='paused'||c.status==='closed')return false;
-    if(isSkippedThisWeek(c))return false;
     var sessions=c.sessions||[];
     var todayDone=sessions.some(function(s){return s.date===t&&s.written;});
     if(todayDone)return false;
     if(c.isQuick)return sessions.some(function(s){return s.date===t;});
+    if(isSkippedThisWeek(c))return false;
+    // 本週任何已過去日期有未寫 session（含回溯新增的）→ 待寫
+    var hasUnwrittenPast=sessions.some(function(s){return wd.indexOf(s.date)>=0&&s.date<t&&!s.written;});
+    if(hasUnwrittenPast)return true;
+    // 今天是排定日且時間已到
     var sched=caseWeekSched(c,currentWeekKey());
     if(!sched.day||sched.day!==dow)return false;
     if(sched.time){var sm=hmToMin(sched.time);if(sm!==null&&nowMin<sm)return false;}
@@ -3974,13 +3998,20 @@ function getTodayCases(){
     return sched.day&&sched.day===dow;
   });
 }
+function filterCasesTo(f){
+  var btn=document.querySelector('#case-filter-row [data-filter="'+f+'"]');
+  if(btn)filterCases(f,btn);
+}
 function filterCases(f,btn){
   document.querySelectorAll('#case-filter-row .chip').forEach(function(c){c.classList.remove('active');});
   btn.classList.add('active');
   var recRow=document.getElementById('case-record-row');
   var mgmtRow=document.getElementById('case-mgmt-row');
   var sortRow=document.getElementById('case-sort-row');
-  if(f==='manage'){
+  if(f==='dashboard'){
+    caseFilter='dashboard';
+    recRow.style.display='none';mgmtRow.style.display='none';sortRow.style.display='none';
+  } else if(f==='manage'){
     // 個案管理：進行中／暫停中／結案 收納於此
     if(['active','paused','closed'].indexOf(caseFilter)<0)caseFilter='active';
     recRow.style.display='none';
@@ -4009,6 +4040,7 @@ function setCaseMgmt(sub){
   renderCases();
 }
 function renderCases(){
+  if(caseFilter==='dashboard'){renderCaseDashboard();return;}
   var list=document.getElementById('case-list'),t=today(),dow=new Date().getDay().toString();
   var filtered=
     caseFilter==='pending'?getPendingCases()
@@ -4064,6 +4096,74 @@ function renderCases(){
         +'</div>':'')
       +'</div>';
   }).join('');
+}
+function renderCaseDashboard(){
+  var list=document.getElementById('case-list');if(!list)return;
+  var t=today(),wd=weekDates();
+  var activeCases=cases.filter(function(c){return !c.isQuick&&(c.status==='active'||!c.status);});
+  var pausedCnt=cases.filter(function(c){return !c.isQuick&&c.status==='paused';}).length;
+  // 本週實際有session或已過排定日的個案數
+  var weekSessionCnt=0;
+  activeCases.forEach(function(c){
+    var ws=(c.sessions||[]).filter(function(s){return wd.indexOf(s.date)>=0;});
+    if(ws.length){weekSessionCnt++;return;}
+    if(isSkippedThisWeek(c))return;
+    var sched=caseWeekSched(c,currentWeekKey());
+    if(!sched.day)return;
+    var sdIdx=parseInt(sched.day)===0?6:parseInt(sched.day)-1;
+    var schedDate=wd[sdIdx];
+    if(schedDate&&schedDate<=t)weekSessionCnt++;
+  });
+  var pending=getPendingCases();
+  // 本週日曆（週一到週日）
+  var dayNames=['一','二','三','四','五','六','日'];
+  var calHTML=wd.map(function(d,i){
+    var dayNum=i===6?0:i+1; // Mon=1...Sun=0
+    var hasCases=activeCases.some(function(c){
+      if((c.sessions||[]).some(function(s){return s.date===d;}))return true;
+      if(isSkippedThisWeek(c))return false;
+      var sched=caseWeekSched(c,currentWeekKey());
+      return sched.day&&parseInt(sched.day)===dayNum;
+    });
+    var isToday=d===t;
+    var past=d<t;
+    return '<div style="flex:1;text-align:center;padding:6px 2px;border-radius:8px'+(isToday?';background:var(--purple-light)':'')+'">'
+      +'<div style="font-size:10px;color:var(--text-3);margin-bottom:3px">'+dayNames[i]+'</div>'
+      +'<div style="font-size:12px;font-weight:'+(isToday?'600':'400')+';color:'+(isToday?'var(--purple)':past?'var(--text-3)':'var(--text-2)')+'">'+d.slice(8)+'</div>'
+      +(hasCases?'<div style="width:5px;height:5px;background:var(--teal);border-radius:50%;margin:3px auto 0"></div>':'<div style="height:8px;margin-top:3px"></div>')
+      +'</div>';
+  }).join('');
+  // 待寫提醒列表
+  var pendingRows=pending.length?pending.map(function(c){
+    return '<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:0.5px solid var(--border)">'
+      +'<div style="width:6px;height:6px;border-radius:50%;background:var(--red);flex-shrink:0"></div>'
+      +'<div style="flex:1;font-size:13px;color:var(--text)">'+esc(caseDisplayName(c))+'</div>'
+      +'<button class="btn btn-ghost btn-sm" data-action="open-draft-today" data-id="'+esc(c.id)+'">填寫</button>'
+      +'</div>';
+  }).join(''):'<div style="font-size:13px;color:var(--text-3);padding:8px 0">今日無待寫紀錄</div>';
+  list.innerHTML='<div class="card" style="margin-bottom:10px">'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">'
+    +'<div style="background:var(--purple-light);border-radius:10px;padding:14px 12px;cursor:pointer" onclick="filterCasesTo(\'manage\')">'
+      +'<div style="font-size:30px;font-weight:700;color:var(--purple-dark)">'+activeCases.length+'</div>'
+      +'<div style="font-size:12px;color:var(--text-2);margin-top:2px">進行中個案 ›</div>'
+    +'</div>'
+    +'<div style="background:var(--teal-light);border-radius:10px;padding:14px 12px">'
+      +'<div style="font-size:30px;font-weight:700;color:var(--teal)">'+weekSessionCnt+'</div>'
+      +'<div style="font-size:12px;color:var(--text-2);margin-top:2px">本週諮商</div>'
+    +'</div>'
+    +'<div style="background:var(--red-light);border-radius:10px;padding:14px 12px;cursor:pointer" onclick="filterCasesTo(\'record\')">'
+      +'<div style="font-size:30px;font-weight:700;color:var(--red)">'+pending.length+'</div>'
+      +'<div style="font-size:12px;color:var(--text-2);margin-top:2px">待寫紀錄 ›</div>'
+    +'</div>'
+    +'<div style="background:var(--amber-light);border-radius:10px;padding:14px 12px">'
+      +'<div style="font-size:30px;font-weight:700;color:var(--amber)">'+pausedCnt+'</div>'
+      +'<div style="font-size:12px;color:var(--text-2);margin-top:2px">暫停追蹤</div>'
+    +'</div>'
+    +'</div>'
+    +'<div style="font-size:11px;font-weight:600;color:var(--text-3);letter-spacing:.5px;text-transform:uppercase;margin-bottom:6px">本週排程</div>'
+    +'<div style="display:flex;gap:0;margin-bottom:14px">'+calHTML+'</div>'
+    +(pending.length?'<div style="font-size:11px;font-weight:600;color:var(--text-3);letter-spacing:.5px;text-transform:uppercase;margin-bottom:4px">今日待寫</div>'+pendingRows:'')
+    +'</div>';
 }
 function toggleCaseWritten(id){
   var t=today(),c=cases.find(function(x){return x.id===id;});
@@ -5628,6 +5728,7 @@ function _routineCollapsedBtn(which,label,statusText,statusColor,urgent){
 }
 function initMorningRoutine(){
   var t=today();
+  var changed=false;
   if(!morningLogs[t]){
     var prev=_prevDay(t);
     var plan=nightPlans[prev]||{};
@@ -5637,13 +5738,15 @@ function initMorningRoutine(){
     var extras=plan.extras||[];
     var items=baseItems.concat(extras).map(function(name){return {name:name,done:false};});
     morningLogs[t]={items:items,completedAt:null};
+    changed=true;
   }
   // 「起床」為固定每日項目，永遠排第一，勾選即記錄起床時間
   var log=morningLogs[t];
   if(!log.items.some(function(it){return it.wake;})){
     log.items.unshift({name:'起床',done:false,wake:true});
+    changed=true;
   }
-  save('lm-morning-logs',morningLogs);
+  if(changed)save('lm-morning-logs',morningLogs);
 }
 function renderMorningCard(){
   var el=document.getElementById('routine-morning-card');if(!el)return;
@@ -6168,7 +6271,29 @@ function collectAllData(){
 }
 function applyAllData(obj){
   DATA_KEYS.forEach(function(k){
-    if(obj[k]!==undefined&&obj[k]!==null)localStorage.setItem(k,JSON.stringify(obj[k]));
+    if(obj[k]===undefined||obj[k]===null)return;
+    // 晨間日誌：合併今天的勾選狀態，避免 cloud pull 覆蓋本地剛點選的 done=true
+    if(k==='lm-morning-logs'){
+      var localLogs=load(k,{});
+      var cloudLogs=obj[k];
+      var t=today();
+      if(localLogs[t]&&localLogs[t].items&&localLogs[t].items.some(function(it){return it.done;})){
+        if(!cloudLogs[t]){
+          cloudLogs[t]=localLogs[t]; // 雲端沒有今天的 log，保留本地
+        } else {
+          // 雙向合併：任一裝置 done=true 就保留 true
+          cloudLogs[t].items=cloudLogs[t].items.map(function(ci){
+            var li=(localLogs[t].items||[]).find(function(x){return x.name===ci.name&&!!x.wake===!!ci.wake;});
+            if(li&&li.done&&!ci.done){ci.done=true;ci.doneTime=li.doneTime;if(li.wakeTime)ci.wakeTime=li.wakeTime;ci.missed=false;}
+            return ci;
+          });
+          if(!cloudLogs[t].completedAt&&localLogs[t].completedAt)cloudLogs[t].completedAt=localLogs[t].completedAt;
+        }
+      }
+      localStorage.setItem(k,JSON.stringify(cloudLogs));
+      return;
+    }
+    localStorage.setItem(k,JSON.stringify(obj[k]));
   });
 }
 function pushToCloud(){
@@ -6239,12 +6364,75 @@ function flushSyncNow(){
   clearTimeout(syncTimer);
   pushToCloud();
 }
-document.addEventListener('visibilitychange',function(){if(document.visibilityState==='hidden')flushSyncNow();});
+document.addEventListener('visibilitychange',function(){
+  if(document.visibilityState==='hidden'){flushSyncNow();}
+  else{scheduleLocalNotifications();}
+});
 window.addEventListener('pagehide',flushSyncNow);
 // 包裝 save，自動觸發雲端同步
 var _origSave=save;
 save=function(k,v){_origSave(k,v);if(DATA_KEYS.indexOf(k)>=0)queueSync();};
 
+
+// ── 本機通知 ──────────────────────────────────────────────
+var notifSettings=JSON.parse(localStorage.getItem('lm-notif-settings')||'{"morning":true,"night":true,"caseRec":true}');
+var _notifTimers=[];
+function _msUntil(h,m){
+  var now=new Date(),target=new Date(now.getFullYear(),now.getMonth(),now.getDate(),h,m,0,0);
+  var ms=target-now;
+  if(ms<=0)ms+=86400000;
+  return ms;
+}
+function scheduleLocalNotifications(){
+  _notifTimers.forEach(function(t){clearTimeout(t);});
+  _notifTimers=[];
+  if(!('Notification' in window)||Notification.permission!=='granted')return;
+  function schedAt(h,m,msgFn,tag){
+    var tid=setTimeout(function(){
+      var msg=msgFn();
+      if(msg&&Notification.permission==='granted'){
+        try{new Notification(msg.title,{body:msg.body||'',tag:tag,icon:'/my-life-app/icon-192.png'});}catch(e){}
+      }
+      schedAt(h,m,msgFn,tag);
+    },_msUntil(h,m));
+    _notifTimers.push(tid);
+  }
+  if(notifSettings.morning){
+    schedAt(5,0,function(){return {title:'晨間 Routine',body:'早安！記得完成今天的晨間計畫'};}, 'lm-morning');
+  }
+  if(notifSettings.night){
+    schedAt(21,0,function(){return {title:'夜間 Routine',body:'今天辛苦了，來做個夜間反思吧'};}, 'lm-night');
+  }
+  if(notifSettings.caseRec){
+    schedAt(15,30,function(){
+      var pending=getPendingCases();
+      if(!pending.length)return null;
+      return {title:'待寫個案紀錄（'+pending.length+'份）',body:pending.map(function(c){return caseDisplayName(c);}).join('、')};
+    },'lm-case-rec');
+  }
+}
+function requestNotificationPermission(){
+  if(!('Notification' in window)){showToast('此裝置不支援通知');return;}
+  Notification.requestPermission().then(function(perm){
+    if(perm==='granted'){scheduleLocalNotifications();showToast('通知已開啟');}
+    else{showToast('已拒絕通知授權，請到系統設定開啟');}
+    renderSettingsModal();
+  });
+}
+function toggleNotif(key,on){
+  notifSettings[key]=on;
+  localStorage.setItem('lm-notif-settings',JSON.stringify(notifSettings));
+  scheduleLocalNotifications();
+}
+function _notifUI(){
+  if(!('Notification' in window))return '<div style="font-size:13px;color:var(--text-3);padding:8px 0">此裝置不支援通知</div>';
+  if(Notification.permission==='denied')return '<div style="font-size:13px;color:var(--red);padding:8px 0">通知已被系統封鎖，請到「系統設定 → 通知」手動開啟</div>';
+  if(Notification.permission==='default')return '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0"><span style="font-size:14px;color:var(--text)">開啟本機通知提醒</span><button class="btn btn-primary btn-sm" onclick="requestNotificationPermission()">授權</button></div>';
+  function nr(label,key){
+    return '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:0.5px solid var(--border);padding-left:10px"><span style="font-size:14px;color:var(--text)">'+label+'</span><label class="ios-toggle"><input type="checkbox"'+(notifSettings[key]?' checked':'')+' onchange="toggleNotif(\''+key+'\',this.checked)"><span class="ios-track"></span></label></div>';
+  }
+  return nr('晨間 Routine（05:00）','morning')+nr('夜間 Routine（21:00）','night')+nr('待寫個案紀錄（15:30）','caseRec');
+}
 
 if('serviceWorker' in navigator){
   window.addEventListener('load',function(){
@@ -6256,6 +6444,7 @@ document.getElementById('header-sub').textContent=todayLabel();
 if(isDark){document.body.classList.add('dark');document.getElementById('dark-chk').checked=true;}
 (function(){var pp=document.getElementById('page-plan');if(pp)pp.addEventListener('pointerdown',planPointerDown);})();
 applySettings();
+scheduleLocalNotifications();
 renderHome();renderReview();
 setMedDuration(15,document.querySelectorAll('#med-presets .chip')[2]);
 if(initSupabase()){
