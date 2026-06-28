@@ -424,16 +424,16 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
   /* 滑鼠 hover 微回饋 */
   .card:hover,.home-section:hover{border-color:var(--border-med)}
 }
-/* 甘特圖 */
+/* 時間軸 */
 .gantt-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 -16px;padding:0 16px}
 .gantt-inner{display:inline-block;min-width:100%;vertical-align:top}
 .gantt-head{display:flex;border-bottom:1px solid var(--border)}
-.gantt-lbl-col{width:80px;flex-shrink:0;font-size:10px;color:var(--text-3);padding:4px 6px 4px 0;border-right:0.5px solid var(--border)}
-.gantt-wk-hd{width:52px;flex-shrink:0;font-size:9px;color:var(--text-3);text-align:center;padding:4px 0;border-left:0.5px solid var(--border);line-height:1.3}
-.gantt-row{display:flex;border-bottom:0.5px solid var(--border);min-height:34px;position:relative}
-.gantt-row-lbl{width:80px;flex-shrink:0;font-size:11px;color:var(--text);padding:6px 6px 6px 0;border-right:0.5px solid var(--border);word-break:break-all;display:flex;align-items:center}
-.gantt-row-area{flex:1;position:relative;min-height:34px}
-.gantt-bar{position:absolute;height:22px;top:6px;border-radius:5px;padding:0 5px;font-size:10px;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;display:flex;align-items:center;box-shadow:0 1px 3px rgba(0,0,0,.15)}
+.gantt-lbl-col{width:90px;flex-shrink:0;font-size:10px;color:var(--text-3);padding:4px 6px 4px 0;border-right:0.5px solid var(--border)}
+.gantt-wk-hd{width:70px;flex-shrink:0;font-size:10px;color:var(--text-3);text-align:center;padding:4px 0;border-left:0.5px solid var(--border);line-height:1.4}
+.gantt-row{display:flex;border-bottom:0.5px solid var(--border);min-height:48px;position:relative}
+.gantt-row-lbl{width:90px;flex-shrink:0;font-size:12px;color:var(--text);padding:6px 6px 6px 0;border-right:0.5px solid var(--border);word-break:break-all;display:flex;align-items:center}
+.gantt-row-area{flex:1;position:relative;min-height:48px}
+.gantt-bar{position:absolute;height:30px;top:9px;border-radius:6px;padding:0 6px;font-size:11px;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;display:flex;align-items:center;box-shadow:0 1px 4px rgba(0,0,0,.18)}
 .gantt-today-line{position:absolute;top:0;bottom:0;width:1.5px;background:var(--red);opacity:.6;pointer-events:none}
 .gantt-wk-stripe{position:absolute;top:0;bottom:0;pointer-events:none}
 </style>
@@ -737,7 +737,7 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
   <div class="period-tabs" style="display:flex;gap:8px;margin-bottom:16px">
     <button class="rtab active" id="grad-tab-courses" onclick="setGradSub('courses')">課表</button>
     <button class="rtab" id="grad-tab-work" onclick="setGradSub('work')">作業待辦</button>
-    <button class="rtab" id="grad-tab-gantt" onclick="setGradSub('gantt')">甘特圖</button>
+    <button class="rtab" id="grad-tab-gantt" onclick="setGradSub('gantt')">時間軸</button>
   </div>
   <div id="grad-courses-view">
     <div class="plan-hint" style="margin-bottom:12px">登記選修課程，上課時間會自動出現在日誌；可編輯每週是否上課（放假／隔週）。</div>
@@ -1545,7 +1545,7 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
   </div>
 </div>
 
-<!-- 甘特圖：新增／編輯事件 -->
+<!-- 時間軸：新增／編輯事件 -->
 <div class="modal-overlay" id="modal-gantt-event">
   <div class="modal">
     <div class="modal-title"><span id="ge-modal-title">新增事件</span> <button class="modal-close" onclick="closeModal('gantt-event')">✕</button></div>
@@ -1569,7 +1569,7 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
   </div>
 </div>
 
-<!-- 甘特圖：學期設定 -->
+<!-- 時間軸：學期設定 -->
 <div class="modal-overlay" id="modal-semester">
   <div class="modal">
     <div class="modal-title">學期設定 <button class="modal-close" onclick="closeModal('semester')">✕</button></div>
@@ -2523,8 +2523,8 @@ function setGradSub(sub){
 }
 function renderGrad(){renderCourseList();renderCourseworkList();if(gradSub==='gantt')renderGantt();}
 
-// ── 甘特圖 ────────────────────────────────────────────────
-var GANTT_COL=52; // px per week column
+// ── 時間軸 ────────────────────────────────────────────────
+var GANTT_COL=70; // px per week column
 
 function _ganttMonday(d){
   var r=new Date(d);var dw=r.getDay();r.setDate(r.getDate()-(dw===0?6:dw-1));return r;
@@ -2541,7 +2541,7 @@ function renderGantt(){
     el.innerHTML='<div class="card" style="text-align:center;padding:28px 16px">'
       +'<div style="width:44px;height:44px;margin:0 auto 12px;display:flex;align-items:center;justify-content:center;background:var(--purple-light);border-radius:12px"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--purple-dark)" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/></svg></div>'
       +'<div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:6px">請先設定學期範圍</div>'
-      +'<div style="font-size:13px;color:var(--text-2);margin-bottom:16px">設定後即可在甘特圖上新增考試、報告與自訂計畫</div>'
+      +'<div style="font-size:13px;color:var(--text-2);margin-bottom:16px">設定後即可在時間軸上新增考試、報告與自訂計畫</div>'
       +'<button class="btn btn-primary" onclick="openSemesterModal()">設定學期</button>'
       +'</div>';
     return;
@@ -2582,12 +2582,12 @@ function renderGantt(){
       var leftDay=Math.floor((es-semStart)/86400000);
       var spanDays=Math.max(1,Math.floor((ee-es)/86400000)+1);
       var left=(leftDay*(GANTT_COL/7)).toFixed(1);
-      var width=Math.max(GANTT_COL/7*spanDays-3,12).toFixed(1);
+      var width=Math.max(GANTT_COL/7*spanDays-3,24).toFixed(1);
       var col=GANTT_TYPE_COLOR[e.type]||GANTT_TYPE_COLOR.other;
       var lbl=GANTT_TYPE_LABEL[e.type]||'';
       return '<div class="gantt-bar" style="left:'+left+'px;width:'+width+'px;background:'+col+'" '
         +'data-action="gantt-event-edit" data-geid="'+esc(e.id)+'" title="'+esc(e.title)+'">'
-        +(parseFloat(width)>30?esc(e.title):lbl)+'</div>';
+        +(parseFloat(width)>40?esc(e.title):lbl)+'</div>';
     }).join('');
   }
 
@@ -2616,7 +2616,7 @@ function renderGantt(){
   el.innerHTML=
     '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">'
       +'<div>'
-        +'<span style="font-size:14px;font-weight:600;color:var(--text)">'+(gradSemester.name?esc(gradSemester.name):'學期甘特圖')+'</span>'
+        +'<span style="font-size:14px;font-weight:600;color:var(--text)">'+(gradSemester.name?esc(gradSemester.name):'學期時間軸')+'</span>'
         +'<span style="font-size:11px;color:var(--text-3);margin-left:6px">'+esc(gradSemester.start)+'～'+esc(gradSemester.end)+'</span>'
       +'</div>'
       +'<div style="display:flex;gap:8px">'
@@ -2657,7 +2657,7 @@ function saveSemester(){
   showToast('學期設定已儲存');
 }
 
-// ── 甘特圖事件 CRUD ──────────────────────────────────────
+// ── 時間軸事件 CRUD ──────────────────────────────────────
 var _geEditId=null;
 function _populateGeCourseSelect(){
   var sel=document.getElementById('ge-course');
