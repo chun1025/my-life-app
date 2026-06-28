@@ -424,6 +424,18 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
   /* 滑鼠 hover 微回饋 */
   .card:hover,.home-section:hover{border-color:var(--border-med)}
 }
+/* 甘特圖 */
+.gantt-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 -16px;padding:0 16px}
+.gantt-inner{display:inline-block;min-width:100%;vertical-align:top}
+.gantt-head{display:flex;border-bottom:1px solid var(--border)}
+.gantt-lbl-col{width:80px;flex-shrink:0;font-size:10px;color:var(--text-3);padding:4px 6px 4px 0;border-right:0.5px solid var(--border)}
+.gantt-wk-hd{width:52px;flex-shrink:0;font-size:9px;color:var(--text-3);text-align:center;padding:4px 0;border-left:0.5px solid var(--border);line-height:1.3}
+.gantt-row{display:flex;border-bottom:0.5px solid var(--border);min-height:34px;position:relative}
+.gantt-row-lbl{width:80px;flex-shrink:0;font-size:11px;color:var(--text);padding:6px 6px 6px 0;border-right:0.5px solid var(--border);word-break:break-all;display:flex;align-items:center}
+.gantt-row-area{flex:1;position:relative;min-height:34px}
+.gantt-bar{position:absolute;height:22px;top:6px;border-radius:5px;padding:0 5px;font-size:10px;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;display:flex;align-items:center;box-shadow:0 1px 3px rgba(0,0,0,.15)}
+.gantt-today-line{position:absolute;top:0;bottom:0;width:1.5px;background:var(--red);opacity:.6;pointer-events:none}
+.gantt-wk-stripe{position:absolute;top:0;bottom:0;pointer-events:none}
 </style>
 </head>
 <body>
@@ -725,6 +737,7 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
   <div class="period-tabs" style="display:flex;gap:8px;margin-bottom:16px">
     <button class="rtab active" id="grad-tab-courses" onclick="setGradSub('courses')">課表</button>
     <button class="rtab" id="grad-tab-work" onclick="setGradSub('work')">作業待辦</button>
+    <button class="rtab" id="grad-tab-gantt" onclick="setGradSub('gantt')">甘特圖</button>
   </div>
   <div id="grad-courses-view">
     <div class="plan-hint" style="margin-bottom:12px">登記選修課程，上課時間會自動出現在日誌；可編輯每週是否上課（放假／隔週）。</div>
@@ -742,6 +755,9 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>新增作業
       </button>
     </div>
+  </div>
+  <div id="grad-gantt-view" style="display:none">
+    <div id="gantt-content"></div>
   </div>
 </div>
 
@@ -1529,6 +1545,41 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
   </div>
 </div>
 
+<!-- 甘特圖：新增／編輯事件 -->
+<div class="modal-overlay" id="modal-gantt-event">
+  <div class="modal">
+    <div class="modal-title"><span id="ge-modal-title">新增事件</span> <button class="modal-close" onclick="closeModal('gantt-event')">✕</button></div>
+    <input type="hidden" id="ge-id">
+    <div class="field"><label>標題</label><input type="text" id="ge-title" placeholder="例：統計學期中考" autocomplete="off"></div>
+    <div class="field"><label>類型</label>
+      <select id="ge-type">
+        <option value="midterm">期中考</option>
+        <option value="final">期末考</option>
+        <option value="exam">小考／測驗</option>
+        <option value="report">報告／作業</option>
+        <option value="plan">自訂計畫</option>
+        <option value="other">其他</option>
+      </select>
+    </div>
+    <div class="field"><label>課程（可不選）</label><select id="ge-course"><option value="">── 不綁課程 ──</option></select></div>
+    <div class="field"><label>開始日期</label><input type="date" id="ge-start"></div>
+    <div class="field"><label>結束日期</label><input type="date" id="ge-end"></div>
+    <button class="btn btn-primary btn-full" onclick="saveGanttEvent()">儲存</button>
+    <button class="btn btn-danger btn-full" id="ge-delete-btn" style="margin-top:8px;display:none" onclick="deleteGanttEvent()">刪除這筆</button>
+  </div>
+</div>
+
+<!-- 甘特圖：學期設定 -->
+<div class="modal-overlay" id="modal-semester">
+  <div class="modal">
+    <div class="modal-title">學期設定 <button class="modal-close" onclick="closeModal('semester')">✕</button></div>
+    <div class="field"><label>學期名稱</label><input type="text" id="sem-name" placeholder="例：114上學期" autocomplete="off"></div>
+    <div class="field"><label>開始日期</label><input type="date" id="sem-start"></div>
+    <div class="field"><label>結束日期</label><input type="date" id="sem-end"></div>
+    <button class="btn btn-primary btn-full" onclick="saveSemester()">儲存</button>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -1579,9 +1630,16 @@ function savePlanPalette(){save('lm-plan-palette',planPalette);}
 // 研究所：選修課程與作業待辦
 var courses=load('lm-courses',[]);if(!Array.isArray(courses))courses=[];
 var coursework=load('lm-coursework',[]);if(!Array.isArray(coursework))coursework=[];
+var gradEvents=load('lm-grad-events',[]);if(!Array.isArray(gradEvents))gradEvents=[];
+var gradSemester=load('lm-grad-semester',{name:'',start:'',end:''});
+if(!gradSemester||typeof gradSemester!=='object')gradSemester={name:'',start:'',end:''};
 var COURSE_COLORS=['#7FA8C9','#8E9C7C','#C49A6C','#B5A0B0','#6E9B8A','#C9A87F','#8FA3B8','#CDA0A0','#9DA873','#A8A08C'];
+var GANTT_TYPE_COLOR={midterm:'#C49A6C',final:'#CDA0A0',exam:'#C9A87F',report:'#8FA3B8',plan:'#8E9C7C',other:'#A8A08C'};
+var GANTT_TYPE_LABEL={midterm:'期中考',final:'期末考',exam:'小考',report:'報告',plan:'計畫',other:'其他'};
 function saveCourses(){save('lm-courses',courses);}
 function saveCoursework(){save('lm-coursework',coursework);}
+function saveGradEvents(){save('lm-grad-events',gradEvents);}
+function saveGradSemester(){save('lm-grad-semester',gradSemester);}
 var reviews=load('lm-reviews',{});
 var readSessions=load('lm-sessions',[]);
 // 補欄位：每筆閱讀紀錄需有 id 與起訖時間（舊資料 time 視為開始時間）
@@ -2453,15 +2511,212 @@ function courseColorAt(i){return COURSE_COLORS[i%COURSE_COLORS.length];}
 var gradSub='courses';
 function setGradSub(sub){
   gradSub=sub;
-  var tc=document.getElementById('grad-tab-courses'),tw=document.getElementById('grad-tab-work');
+  var tc=document.getElementById('grad-tab-courses'),tw=document.getElementById('grad-tab-work'),tg=document.getElementById('grad-tab-gantt');
   if(tc)tc.classList.toggle('active',sub==='courses');
   if(tw)tw.classList.toggle('active',sub==='work');
-  var vc=document.getElementById('grad-courses-view'),vw=document.getElementById('grad-work-view');
+  if(tg)tg.classList.toggle('active',sub==='gantt');
+  var vc=document.getElementById('grad-courses-view'),vw=document.getElementById('grad-work-view'),vg=document.getElementById('grad-gantt-view');
   if(vc)vc.style.display=sub==='courses'?'':'none';
   if(vw)vw.style.display=sub==='work'?'':'none';
+  if(vg)vg.style.display=sub==='gantt'?'':'none';
   renderGrad();
 }
-function renderGrad(){renderCourseList();renderCourseworkList();}
+function renderGrad(){renderCourseList();renderCourseworkList();if(gradSub==='gantt')renderGantt();}
+
+// ── 甘特圖 ────────────────────────────────────────────────
+var GANTT_COL=52; // px per week column
+
+function _ganttMonday(d){
+  var r=new Date(d);var dw=r.getDay();r.setDate(r.getDate()-(dw===0?6:dw-1));return r;
+}
+function _dateAddDays(d,n){var r=new Date(d);r.setDate(r.getDate()+n);return r;}
+function _dateToISO(d){return d.toISOString().slice(0,10);}
+function _isoToDate(s){return new Date(s+'T00:00:00');}
+function _weeksBetween(a,b){return Math.floor((b-a)/(7*86400000));}
+
+function renderGantt(){
+  var el=document.getElementById('gantt-content');if(!el)return;
+  // 未設學期 → 引導畫面
+  if(!gradSemester.start||!gradSemester.end){
+    el.innerHTML='<div class="card" style="text-align:center;padding:28px 16px">'
+      +'<div style="width:44px;height:44px;margin:0 auto 12px;display:flex;align-items:center;justify-content:center;background:var(--purple-light);border-radius:12px"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--purple-dark)" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/></svg></div>'
+      +'<div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:6px">請先設定學期範圍</div>'
+      +'<div style="font-size:13px;color:var(--text-2);margin-bottom:16px">設定後即可在甘特圖上新增考試、報告與自訂計畫</div>'
+      +'<button class="btn btn-primary" onclick="openSemesterModal()">設定學期</button>'
+      +'</div>';
+    return;
+  }
+  var semStart=_ganttMonday(_isoToDate(gradSemester.start));
+  var semEnd=_isoToDate(gradSemester.end);
+  // 收集所有週
+  var weeks=[];var cur=new Date(semStart);
+  while(cur<=semEnd){weeks.push(new Date(cur));cur.setDate(cur.getDate()+7);}
+  if(!weeks.length){el.innerHTML='<div class="empty">學期日期範圍有誤</div>';return;}
+  var totalW=weeks.length*GANTT_COL;
+  var todayStr=today();
+
+  // 週標題 HTML
+  var MON=['一','二','三','四','五','六','日'];
+  var wkHeads=weeks.map(function(w,i){
+    var m=w.getMonth()+1,d=w.getDate();
+    return '<div class="gantt-wk-hd" style="width:'+GANTT_COL+'px">'
+      +'<div>W'+(i+1)+'</div>'
+      +'<div style="font-size:8px;color:var(--text-3)">'+m+'/'+d+'</div>'
+      +'</div>';
+  }).join('');
+
+  // 今天線位置
+  var todayDate=_isoToDate(todayStr);
+  var dayOffset=Math.floor((todayDate-semStart)/(86400000));
+  var todayPx=dayOffset*(GANTT_COL/7);
+  var todayLine=(todayDate>=semStart&&todayDate<=_dateAddDays(semEnd,7))
+    ?'<div class="gantt-today-line" style="left:'+todayPx.toFixed(1)+'px"></div>':'' ;
+
+  // 每列事件條
+  function barsForRow(rowId){
+    var evts=gradEvents.filter(function(e){
+      return rowId==='__plan__'?(!e.courseId||e.courseId===''):e.courseId===rowId;
+    });
+    return evts.map(function(e){
+      var es=_isoToDate(e.startDate),ee=_isoToDate(e.endDate||e.startDate);
+      var leftDay=Math.floor((es-semStart)/86400000);
+      var spanDays=Math.max(1,Math.floor((ee-es)/86400000)+1);
+      var left=(leftDay*(GANTT_COL/7)).toFixed(1);
+      var width=Math.max(GANTT_COL/7*spanDays-3,12).toFixed(1);
+      var col=GANTT_TYPE_COLOR[e.type]||GANTT_TYPE_COLOR.other;
+      var lbl=GANTT_TYPE_LABEL[e.type]||'';
+      return '<div class="gantt-bar" style="left:'+left+'px;width:'+width+'px;background:'+col+'" '
+        +'data-action="gantt-event-edit" data-geid="'+esc(e.id)+'" title="'+esc(e.title)+'">'
+        +(parseFloat(width)>30?esc(e.title):lbl)+'</div>';
+    }).join('');
+  }
+
+  // 課程列
+  var rows=courses.map(function(c){
+    var bars=barsForRow(c.id);
+    return '<div class="gantt-row">'
+      +'<div class="gantt-row-lbl">'+esc(c.name)+'</div>'
+      +'<div class="gantt-row-area" style="width:'+totalW+'px">'+todayLine+bars+'</div>'
+      +'</div>';
+  });
+  // 自訂計畫列
+  rows.push('<div class="gantt-row">'
+    +'<div class="gantt-row-lbl" style="color:var(--text-2);font-style:italic">自訂計畫</div>'
+    +'<div class="gantt-row-area" style="width:'+totalW+'px">'+todayLine+barsForRow('__plan__')+'</div>'
+    +'</div>');
+
+  // 圖例
+  var legend=Object.keys(GANTT_TYPE_COLOR).map(function(k){
+    return '<span style="display:inline-flex;align-items:center;gap:4px;margin-right:10px">'
+      +'<span style="width:10px;height:10px;border-radius:3px;background:'+GANTT_TYPE_COLOR[k]+';display:inline-block"></span>'
+      +'<span style="font-size:10px;color:var(--text-2)">'+GANTT_TYPE_LABEL[k]+'</span>'
+      +'</span>';
+  }).join('');
+
+  el.innerHTML=
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">'
+      +'<div>'
+        +'<span style="font-size:14px;font-weight:600;color:var(--text)">'+(gradSemester.name?esc(gradSemester.name):'學期甘特圖')+'</span>'
+        +'<span style="font-size:11px;color:var(--text-3);margin-left:6px">'+esc(gradSemester.start)+'～'+esc(gradSemester.end)+'</span>'
+      +'</div>'
+      +'<div style="display:flex;gap:8px">'
+        +'<button class="btn btn-ghost btn-sm" onclick="openSemesterModal()">設定學期</button>'
+        +'<button class="btn btn-primary btn-sm" onclick="openGanttEventModal()">＋新增</button>'
+      +'</div>'
+    +'</div>'
+    +'<div style="margin-bottom:10px;flex-wrap:wrap;display:flex">'+legend+'</div>'
+    +'<div class="gantt-wrap">'
+      +'<div class="gantt-inner">'
+        +'<div class="gantt-head">'
+          +'<div class="gantt-lbl-col"></div>'
+          +'<div style="display:flex">'+wkHeads+'</div>'
+        +'</div>'
+        +rows.join('')
+      +'</div>'
+    +'</div>'
+    +(gradEvents.length===0?'<div class="plan-hint" style="margin-top:12px">點「＋新增」加入考試、報告或計畫</div>':'');
+}
+
+// ── 學期設定 modal ────────────────────────────────────────
+function openSemesterModal(){
+  document.getElementById('sem-name').value=gradSemester.name||'';
+  document.getElementById('sem-start').value=gradSemester.start||'';
+  document.getElementById('sem-end').value=gradSemester.end||'';
+  openModal('semester');
+}
+function saveSemester(){
+  var n=document.getElementById('sem-name').value.trim();
+  var s=document.getElementById('sem-start').value;
+  var e=document.getElementById('sem-end').value;
+  if(!s||!e){showToast('請填入開始與結束日期');return;}
+  if(s>e){showToast('開始日期不能晚於結束日期');return;}
+  gradSemester={name:n,start:s,end:e};
+  saveGradSemester();
+  closeModal('semester');
+  renderGantt();
+  showToast('學期設定已儲存');
+}
+
+// ── 甘特圖事件 CRUD ──────────────────────────────────────
+var _geEditId=null;
+function _populateGeCourseSelect(){
+  var sel=document.getElementById('ge-course');
+  sel.innerHTML='<option value="">── 不綁課程 ──</option>'
+    +courses.map(function(c){return '<option value="'+esc(c.id)+'">'+esc(c.name)+'</option>';}).join('');
+}
+function openGanttEventModal(id){
+  _geEditId=id||null;
+  _populateGeCourseSelect();
+  if(id){
+    var e=gradEvents.find(function(x){return x.id===id;});if(!e)return;
+    document.getElementById('ge-modal-title').textContent='編輯事件';
+    document.getElementById('ge-id').value=e.id;
+    document.getElementById('ge-title').value=e.title||'';
+    document.getElementById('ge-type').value=e.type||'other';
+    document.getElementById('ge-course').value=e.courseId||'';
+    document.getElementById('ge-start').value=e.startDate||'';
+    document.getElementById('ge-end').value=e.endDate||e.startDate||'';
+    document.getElementById('ge-delete-btn').style.display='';
+  } else {
+    document.getElementById('ge-modal-title').textContent='新增事件';
+    document.getElementById('ge-id').value='';
+    document.getElementById('ge-title').value='';
+    document.getElementById('ge-type').value='report';
+    document.getElementById('ge-course').value='';
+    document.getElementById('ge-start').value='';
+    document.getElementById('ge-end').value='';
+    document.getElementById('ge-delete-btn').style.display='none';
+  }
+  openModal('gantt-event');
+}
+function saveGanttEvent(){
+  var title=document.getElementById('ge-title').value.trim();
+  var type=document.getElementById('ge-type').value;
+  var courseId=document.getElementById('ge-course').value;
+  var startDate=document.getElementById('ge-start').value;
+  var endDate=document.getElementById('ge-end').value||startDate;
+  if(!title){showToast('請填入標題');return;}
+  if(!startDate){showToast('請填入開始日期');return;}
+  if(startDate>endDate)endDate=startDate;
+  if(_geEditId){
+    var e=gradEvents.find(function(x){return x.id===_geEditId;});
+    if(e){e.title=title;e.type=type;e.courseId=courseId;e.startDate=startDate;e.endDate=endDate;}
+  } else {
+    gradEvents.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,5),title:title,type:type,courseId:courseId,startDate:startDate,endDate:endDate});
+  }
+  saveGradEvents();
+  closeModal('gantt-event');
+  renderGantt();
+  showToast('已儲存');
+}
+function deleteGanttEvent(){
+  if(!_geEditId)return;
+  gradEvents=gradEvents.filter(function(e){return e.id!==_geEditId;});
+  saveGradEvents();
+  closeModal('gantt-event');
+  renderGantt();
+  showToast('已刪除');
+}
 function renderCourseList(){
   var el=document.getElementById('grad-course-list');if(!el)return;
   if(!courses.length){el.innerHTML='<div class="empty">尚未登記任何課程</div>';return;}
@@ -5560,6 +5815,7 @@ document.body.addEventListener('click',function(e){
   else if(action==='coursework-add'){openCourseworkModal();}
   else if(action==='coursework-edit'){openCourseworkEdit(el.dataset.wid);}
   else if(action==='coursework-toggle'){toggleCoursework(el.dataset.wid);}
+  else if(action==='gantt-event-edit'){openGanttEventModal(el.dataset.geid);}
   else if(action==='journal-confirm'){toggleJournalConfirm(el.dataset.key);}
   else if(action==='add-journal-quick'){openJournalQuickModal(null);}
   else if(action==='open-journal-quick'){openJournalQuickModal(el.dataset.id);}
@@ -6219,7 +6475,7 @@ document.body.addEventListener('focusin',function(e){
 
 // ── 雲端同步（Supabase）──────────────────────────────
 var sbClient=null,sbUser=null,syncTimer=null,_syncPending=false;
-var DATA_KEYS=['lm-books','lm-exercises','lm-reviews','lm-sessions','lm-med','lm-cases','lm-wmenus','lm-ex-goal','lm-journal','lm-timer-logs','lm-quotes','lm-checkins','lm-morning-base','lm-morning-logs','lm-morning-fs','lm-night-plans','lm-notes','lm-note-tags','lm-expenses','lm-assets','lm-dayplans','lm-plan-palette','lm-courses','lm-coursework'];
+var DATA_KEYS=['lm-books','lm-exercises','lm-reviews','lm-sessions','lm-med','lm-cases','lm-wmenus','lm-ex-goal','lm-journal','lm-timer-logs','lm-quotes','lm-checkins','lm-morning-base','lm-morning-logs','lm-morning-fs','lm-night-plans','lm-notes','lm-note-tags','lm-expenses','lm-assets','lm-dayplans','lm-plan-palette','lm-courses','lm-coursework','lm-grad-events','lm-grad-semester'];
 
 var SB_URL='https://gsjljwupeyvqdsrzbadf.supabase.co';
 var SB_KEY='sb_publishable_2jglYptRkedrlZe-ZPHpbQ_U-A_R6ES';
@@ -6519,6 +6775,9 @@ function reloadAllFromStorage(){
   var _pp=load('lm-plan-palette',null);if(Array.isArray(_pp)&&_pp.length)planPalette=_pp;
   courses=load('lm-courses',[]);if(!Array.isArray(courses))courses=[];
   coursework=load('lm-coursework',[]);if(!Array.isArray(coursework))coursework=[];
+  gradEvents=load('lm-grad-events',[]);if(!Array.isArray(gradEvents))gradEvents=[];
+  gradSemester=load('lm-grad-semester',{name:'',start:'',end:''});
+  if(!gradSemester||typeof gradSemester!=='object')gradSemester={name:'',start:'',end:''};
   renderHome();renderBooks();renderExercise();renderMedHistory();renderCases();renderReview();
   if(currentPage==='journal')renderJournal();
   if(currentPage==='growth')renderGrowth();
