@@ -3980,10 +3980,17 @@ function getPendingCases(){
     // 本週任何已過去日期有未寫 session（含回溯新增的）→ 待寫
     var hasUnwrittenPast=sessions.some(function(s){return wd.indexOf(s.date)>=0&&s.date<t&&!s.written;});
     if(hasUnwrittenPast)return true;
-    // 今天是排定日且時間已到
+    // 今天是排定日且節次已結束
     var sched=caseWeekSched(c,currentWeekKey());
     if(!sched.day||sched.day!==dow)return false;
-    if(sched.time){var sm=hmToMin(sched.time);if(sm!==null&&nowMin<sm)return false;}
+    if(sched.time){
+      var per=PERIODS.find(function(p){return p.s===sched.time;});
+      var endMin=per?hmToMin(per.e):null;
+      var startMin=hmToMin(sched.time);
+      // 用結束時間判斷（找不到節次定義時 fallback 到開始時間）
+      var threshMin=endMin!==null?endMin:startMin;
+      if(threshMin!==null&&nowMin<threshMin)return false;
+    }
     return true;
   });
 }
@@ -6364,15 +6371,53 @@ function flushSyncNow(){
   clearTimeout(syncTimer);
   pushToCloud();
 }
+var _lastVisiblePull=0;
 document.addEventListener('visibilitychange',function(){
   if(document.visibilityState==='hidden'){flushSyncNow();}
-  else{scheduleLocalNotifications();}
+  else{
+    scheduleLocalNotifications();scheduleSessionEndRefreshes();
+    // 重新取得雲端最新資料（距離上次拉取超過 30 秒才重拉，避免頻繁切換）
+    var now=Date.now();
+    if(sbClient&&sbUser&&now-_lastVisiblePull>30000){
+      _lastVisiblePull=now;
+      pullFromCloud(false,reloadAllFromStorage);
+    }
+  }
 });
 window.addEventListener('pagehide',flushSyncNow);
 // 包裝 save，自動觸發雲端同步
 var _origSave=save;
 save=function(k,v){_origSave(k,v);if(DATA_KEYS.indexOf(k)>=0)queueSync();};
 
+
+// ── 個案 session 結束後自動刷新待撰寫清單 ─────────────────
+var _sessionEndTimers=[];
+function scheduleSessionEndRefreshes(){
+  _sessionEndTimers.forEach(function(id){clearTimeout(id);});
+  _sessionEndTimers=[];
+  var t=today(),dow=new Date().getDay().toString();
+  var nowMs=Date.now();
+  cases.forEach(function(c){
+    if(c.status==='paused'||c.status==='closed'||c.isQuick)return;
+    if(isSkippedThisWeek(c))return;
+    var sessions=c.sessions||[];
+    if(sessions.some(function(s){return s.date===t&&s.written;}))return;
+    var sched=caseWeekSched(c,currentWeekKey());
+    if(!sched.day||sched.day!==dow||!sched.time)return;
+    var per=PERIODS.find(function(p){return p.s===sched.time;});
+    var endStr=per?per.e:null;
+    if(!endStr)return;
+    var ep=endStr.split(':');
+    var endMs=new Date(new Date().setHours(parseInt(ep[0]),parseInt(ep[1]),0,0)).getTime();
+    var delay=endMs-nowMs;
+    if(delay<=0)return; // 已過了就不設（當次渲染時已包含）
+    var tid=setTimeout(function(){
+      renderHome();
+      if(currentPage==='cases')renderCases();
+    },delay);
+    _sessionEndTimers.push(tid);
+  });
+}
 
 // ── 本機通知 ──────────────────────────────────────────────
 var notifSettings=JSON.parse(localStorage.getItem('lm-notif-settings')||'{"morning":true,"night":true,"caseRec":true}');
@@ -6445,6 +6490,7 @@ if(isDark){document.body.classList.add('dark');document.getElementById('dark-chk
 (function(){var pp=document.getElementById('page-plan');if(pp)pp.addEventListener('pointerdown',planPointerDown);})();
 applySettings();
 scheduleLocalNotifications();
+scheduleSessionEndRefreshes();
 renderHome();renderReview();
 setMedDuration(15,document.querySelectorAll('#med-presets .chip')[2]);
 if(initSupabase()){
