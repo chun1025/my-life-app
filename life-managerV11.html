@@ -503,10 +503,10 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
       </div>
     </div>
     <div class="chip-row" id="book-filter">
-      <button class="chip active" onclick="filterBooks('all',this)">全部</button>
       <button class="chip" onclick="filterBooks('reading',this)">閱讀中</button>
       <button class="chip" onclick="filterBooks('want',this)">待看</button>
       <button class="chip" onclick="filterBooks('done',this)">已完成</button>
+      <button class="chip active" onclick="filterBooks('all',this)">全部</button>
     </div>
     <div id="book-list"></div>
     <button class="add-row" onclick="openModal('book')">
@@ -605,20 +605,7 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
     <button class="chip" data-action="case-sort" data-mode="class">按班級排序</button>
   </div>
   <div id="case-list"></div>
-  <div style="display:flex;gap:16px;padding-top:4px;flex-wrap:wrap">
-    <button class="add-row" onclick="openModal('case')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>新增個案
-    </button>
-    <button class="add-row" style="color:var(--red)" onclick="openJournalQuickModal(null)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>臨時紀錄
-    </button>
-    <button class="add-row" style="color:var(--teal)" onclick="openDraftQuick()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>撰寫草稿
-    </button>
-    <button class="add-row" style="color:var(--purple)" onclick="openCaseExport()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>匯出紀錄
-    </button>
-  </div>
+  <div id="case-action-row"></div>
 </div>
 
 <!-- 回顧 -->
@@ -1802,7 +1789,7 @@ function applySettings(){
 }
 
 var currentPage='home';
-var pageTitles={home:'今天',growth:'成長',journal:'日誌',plan:'日計畫',grad:'研究所',cases:'個案紀錄',review:'回顧',money:'記帳'};
+var pageTitles={home:'今天',growth:'成長',journal:'日誌',plan:'日計畫',grad:'研究所',cases:'個案管理',review:'回顧',money:'記帳'};
 function switchPage(name,btn){
   if(name!=='home'){var ftEl=document.getElementById('fullscreen-timer');if(ftEl)ftEl.classList.remove('open');}
   document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});
@@ -4289,6 +4276,24 @@ function filterCases(f,btn){
     mgmtRow.style.display='none';
     sortRow.style.display='none';
   }
+  var ar=document.getElementById('case-action-row');
+  if(ar){
+    if(f==='manage'){
+      ar.innerHTML='<div style="display:flex;gap:16px;padding-top:4px;flex-wrap:wrap"><button class="add-row" onclick="openModal(\'case\')">'
+        +'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>新增個案</button></div>';
+    } else if(f==='record'){
+      ar.innerHTML='<div style="display:flex;gap:16px;padding-top:4px;flex-wrap:wrap">'
+        +'<button class="add-row" style="color:var(--red)" onclick="openJournalQuickModal(null)">'
+        +'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>臨時紀錄</button>'
+        +'<button class="add-row" style="color:var(--teal)" onclick="openDraftQuick()">'
+        +'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>撰寫草稿</button>'
+        +'<button class="add-row" style="color:var(--purple)" onclick="openCaseExport()">'
+        +'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>匯出紀錄</button>'
+        +'</div>';
+    } else {
+      ar.innerHTML='';
+    }
+  }
   renderCases();
 }
 function setCaseRecord(sub){
@@ -4381,46 +4386,48 @@ function renderCaseDashboard(){
   var dayNames=['一','二','三','四','五','六','日'];
   var calHTML=wd.map(function(d,i){
     var dayNum=i===6?0:i+1; // Mon=1...Sun=0
-    var hasCases=activeCases.some(function(c){
-      if((c.sessions||[]).some(function(s){return s.date===d;}))return true;
-      if(isSkippedThisWeek(c))return false;
+    var dayCnt=activeCases.reduce(function(n,c){
+      if((c.sessions||[]).some(function(s){return s.date===d;}))return n+1;
+      if(isSkippedThisWeek(c))return n;
       var sched=caseWeekSched(c,currentWeekKey());
-      return sched.day&&parseInt(sched.day)===dayNum;
-    });
+      return (sched.day&&parseInt(sched.day)===dayNum)?n+1:n;
+    },0);
     var isToday=d===t;
     var past=d<t;
     return '<div style="flex:1;text-align:center;padding:6px 2px;border-radius:8px'+(isToday?';background:var(--purple-light)':'')+'">'
       +'<div style="font-size:10px;color:var(--text-3);margin-bottom:3px">'+dayNames[i]+'</div>'
       +'<div style="font-size:12px;font-weight:'+(isToday?'600':'400')+';color:'+(isToday?'var(--purple)':past?'var(--text-3)':'var(--text-2)')+'">'+d.slice(8)+'</div>'
-      +(hasCases?'<div style="width:5px;height:5px;background:var(--teal);border-radius:50%;margin:3px auto 0"></div>':'<div style="height:8px;margin-top:3px"></div>')
+      +'<div style="font-size:13px;font-weight:600;margin-top:3px;color:'+(dayCnt>0?'var(--teal)':'var(--text-3)')+'">'+dayCnt+'</div>'
       +'</div>';
   }).join('');
-  // 待寫提醒列表
+  // 待寫提醒列表（含已過天數）
   var pendingRows=pending.length?pending.map(function(c){
+    var unwrittenPast=(c.sessions||[]).filter(function(s){return wd.indexOf(s.date)>=0&&s.date<t&&!s.written;});
+    unwrittenPast.sort();
+    var sessDate=unwrittenPast.length?unwrittenPast[0].date:t;
+    var daysDiff=Math.round((new Date(t+'T00:00:00')-new Date(sessDate+'T00:00:00'))/86400000);
+    var daysTag=daysDiff>0?'<span style="font-size:11px;color:var(--red);background:var(--red-light);border-radius:4px;padding:1px 6px;flex-shrink:0">已過'+daysDiff+'日</span>':'';
     return '<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:0.5px solid var(--border)">'
       +'<div style="width:6px;height:6px;border-radius:50%;background:var(--red);flex-shrink:0"></div>'
       +'<div style="flex:1;font-size:13px;color:var(--text)">'+esc(caseDisplayName(c))+'</div>'
+      +daysTag
       +'<button class="btn btn-ghost btn-sm" data-action="open-draft-today" data-id="'+esc(c.id)+'">填寫</button>'
       +'</div>';
   }).join(''):'<div style="font-size:13px;color:var(--text-3);padding:8px 0">今日無待寫紀錄</div>';
   list.innerHTML='<div class="card" style="margin-bottom:10px">'
-    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">'
-    +'<div style="background:var(--purple-light);border-radius:10px;padding:14px 12px;cursor:pointer" onclick="filterCasesTo(\'manage\')">'
-      +'<div style="font-size:30px;font-weight:700;color:var(--purple-dark)">'+activeCases.length+'</div>'
-      +'<div style="font-size:12px;color:var(--text-2);margin-top:2px">進行中個案 ›</div>'
-    +'</div>'
-    +'<div style="background:var(--teal-light);border-radius:10px;padding:14px 12px">'
-      +'<div style="font-size:30px;font-weight:700;color:var(--teal)">'+weekSessionCnt+'</div>'
-      +'<div style="font-size:12px;color:var(--text-2);margin-top:2px">本週諮商</div>'
-    +'</div>'
-    +'<div style="background:var(--red-light);border-radius:10px;padding:14px 12px;cursor:pointer" onclick="filterCasesTo(\'record\')">'
-      +'<div style="font-size:30px;font-weight:700;color:var(--red)">'+pending.length+'</div>'
-      +'<div style="font-size:12px;color:var(--text-2);margin-top:2px">待寫紀錄 ›</div>'
-    +'</div>'
-    +'<div style="background:var(--amber-light);border-radius:10px;padding:14px 12px">'
-      +'<div style="font-size:30px;font-weight:700;color:var(--amber)">'+pausedCnt+'</div>'
-      +'<div style="font-size:12px;color:var(--text-2);margin-top:2px">暫停追蹤</div>'
-    +'</div>'
+    +'<div style="margin-bottom:14px">'
+      +'<div class="home-stat-row" style="cursor:pointer" onclick="filterCasesTo(\'manage\')">'
+        +'<span class="home-stat-label">進行中個案</span>'
+        +'<span class="home-stat-val" style="color:var(--purple-dark)">'+activeCases.length+' <span style="font-size:12px;color:var(--text-3)">›</span></span>'
+      +'</div>'
+      +'<div class="home-stat-row">'
+        +'<span class="home-stat-label">本週諮商</span>'
+        +'<span class="home-stat-val" style="color:var(--teal)">'+weekSessionCnt+'</span>'
+      +'</div>'
+      +'<div class="home-stat-row" style="cursor:pointer" onclick="filterCasesTo(\'record\')">'
+        +'<span class="home-stat-label">待寫紀錄</span>'
+        +'<span class="home-stat-val" style="color:var(--red)">'+pending.length+' <span style="font-size:12px;color:var(--text-3)">›</span></span>'
+      +'</div>'
     +'</div>'
     +'<div style="font-size:11px;font-weight:600;color:var(--text-3);letter-spacing:.5px;text-transform:uppercase;margin-bottom:6px">本週排程</div>'
     +'<div style="display:flex;gap:0;margin-bottom:14px">'+calHTML+'</div>'
