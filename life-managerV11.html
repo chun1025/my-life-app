@@ -748,6 +748,19 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
   </div>
 </div>
 
+<!-- 專案 -->
+<div class="page" id="page-projects">
+  <div class="chip-row" id="proj-filter-row">
+    <button class="chip active" data-action="proj-filter" data-f="active">進行中</button>
+    <button class="chip" data-action="proj-filter" data-f="paused">暫停</button>
+    <button class="chip" data-action="proj-filter" data-f="done">已完成</button>
+  </div>
+  <div id="project-list"></div>
+  <button class="add-row" onclick="openProjectModal(null)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>新增專案
+  </button>
+</div>
+
 </div>
 <nav class="nav">
   <button class="nav-btn active" id="nav-home" onclick="switchPage('home',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>首頁</button>
@@ -755,6 +768,7 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
   <button class="nav-btn" id="nav-journal" onclick="switchPage('journal',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><line x1="8" y1="9" x2="16" y2="9"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></svg>日誌</button>
   <button class="nav-btn" id="nav-plan" onclick="switchPage('plan',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><rect x="6" y="13" width="5" height="3" rx="1" fill="currentColor" stroke="none"/><rect x="13" y="13" width="5" height="5" rx="1" fill="currentColor" stroke="none"/></svg>日計畫</button>
   <button class="nav-btn" id="nav-grad" onclick="switchPage('grad',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M22 10L12 5 2 10l10 5 10-5z"/><path d="M6 12v5c0 1 2.5 2.5 6 2.5s6-1.5 6-2.5v-5"/></svg>研究所</button>
+  <button class="nav-btn" id="nav-projects" onclick="switchPage('projects',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>專案</button>
   <button class="nav-btn" id="nav-cases" onclick="switchPage('cases',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>個案</button>
   <button class="nav-btn" id="nav-review" onclick="switchPage('review',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>回顧</button>
   <button class="nav-btn" id="nav-money" onclick="switchPage('money',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>記帳</button>
@@ -1567,6 +1581,26 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
   </div>
 </div>
 
+<!-- 專案：新增／編輯 -->
+<div class="modal-overlay" id="modal-project">
+  <div class="modal">
+    <div class="modal-title"><span id="proj-modal-title">新增專案</span> <button class="modal-close" onclick="closeModal('project')">✕</button></div>
+    <input type="hidden" id="proj-id">
+    <div class="field"><label>專案名稱</label><input type="text" id="proj-name" placeholder="例：碩士論文、五年級輔導方案" autocomplete="off"></div>
+    <div class="field"><label>類別</label><select id="proj-cat"></select></div>
+    <div style="display:flex;gap:10px">
+      <div class="field" style="flex:1"><label>截止日（選填）</label><input type="date" id="proj-due"></div>
+      <div class="field" style="flex:1"><label>狀態</label><select id="proj-status"><option value="active">進行中</option><option value="paused">暫停</option><option value="done">已完成</option></select></div>
+    </div>
+    <div class="sec" style="margin-top:4px">步驟（由上到下依序，第一個未完成即為下一步）</div>
+    <div id="proj-steps-editor"></div>
+    <div style="display:flex;gap:8px;margin-top:16px">
+      <button class="btn btn-danger" id="proj-delete-btn" style="flex:1;justify-content:center" onclick="deleteProject()">刪除</button>
+      <button class="btn btn-primary" style="flex:2;justify-content:center" onclick="saveProject()">儲存</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -1627,6 +1661,7 @@ function saveCourses(){save('lm-courses',courses);}
 function saveCoursework(){save('lm-coursework',coursework);}
 function saveGradEvents(){save('lm-grad-events',gradEvents);}
 function saveGradSemester(){save('lm-grad-semester',gradSemester);}
+var projects=load('lm-projects',[]);if(!Array.isArray(projects))projects=[];
 var reviews=load('lm-reviews',{});
 var readSessions=load('lm-sessions',[]);
 // 補欄位：每筆閱讀紀錄需有 id 與起訖時間（舊資料 time 視為開始時間）
@@ -1654,7 +1689,7 @@ var appSettings=load('lm-settings',{pages:{growth:true,journal:true,cases:true,r
 // migrate: ensure all keys exist
 if(!appSettings.pages)appSettings.pages={growth:true,journal:true,cases:true,review:true,money:true};
 if(!appSettings.growth)appSettings.growth={reading:true,exercise:true,meditation:true};
-['growth','journal','plan','grad','cases','review','money'].forEach(function(k){if(appSettings.pages[k]===undefined)appSettings.pages[k]=true;});
+['growth','journal','plan','grad','projects','cases','review','money'].forEach(function(k){if(appSettings.pages[k]===undefined)appSettings.pages[k]=true;});
 ['reading','exercise','meditation'].forEach(function(k){if(appSettings.growth[k]===undefined)appSettings.growth[k]=true;});
 if(appSettings.workMode===undefined)appSettings.workMode=false;
 // 工作模式：專注工作功能並保護隱私，連動關閉運動、冥想、回顧、記帳
@@ -1748,6 +1783,7 @@ function renderSettingsModal(){
     +row('日誌',appSettings.pages.journal,"togglePageSetting('journal',this.checked)",false,false)
     +row('日計畫',appSettings.pages.plan,"togglePageSetting('plan',this.checked)",false,false)
     +row('研究所',appSettings.pages.grad,"togglePageSetting('grad',this.checked)",false,false)
+    +row('專案',appSettings.pages.projects,"togglePageSetting('projects',this.checked)",false,false)
     +row('個案',appSettings.pages.cases,"togglePageSetting('cases',this.checked)",false,false)
     +row('回顧',appSettings.pages.review,"togglePageSetting('review',this.checked)",false,wm)
     +row('記帳',appSettings.pages.money,"togglePageSetting('money',this.checked)",false,wm)
@@ -1775,7 +1811,7 @@ function toggleGrowthSetting(key,checked){
   applySettings();
 }
 function applySettings(){
-  ['growth','journal','plan','grad','cases','review','money'].forEach(function(p){
+  ['growth','journal','plan','grad','projects','cases','review','money'].forEach(function(p){
     var btn=document.getElementById('nav-'+p);
     if(btn)btn.style.display=effPageOn(p)?'':'none';
   });
@@ -1789,7 +1825,7 @@ function applySettings(){
 }
 
 var currentPage='home';
-var pageTitles={home:'今天',growth:'成長',journal:'日誌',plan:'日計畫',grad:'研究所',cases:'個案管理',review:'回顧',money:'記帳'};
+var pageTitles={home:'今天',growth:'成長',journal:'日誌',plan:'日計畫',grad:'研究所',projects:'專案',cases:'個案管理',review:'回顧',money:'記帳'};
 function switchPage(name,btn){
   if(name!=='home'){var ftEl=document.getElementById('fullscreen-timer');if(ftEl)ftEl.classList.remove('open');}
   document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});
@@ -1807,6 +1843,7 @@ function switchPage(name,btn){
   if(name==='money')setMoneySub(moneySub);
   if(name==='plan')renderPlan();
   if(name==='grad')renderGrad();
+  if(name==='projects')renderProjects();
 }
 
 // ── 成長頁（容器）──────────────────────────────────────
@@ -2704,6 +2741,148 @@ function deleteGanttEvent(){
   renderGantt();
   showToast('已刪除');
 }
+
+// ── 專案（下一步行動）──────────────────────────────────────
+var PROJ_CATS=[
+  {k:'work',label:'工作',color:'#8FA3B8'},
+  {k:'thesis',label:'論文',color:'#B5A0B0'},
+  {k:'course',label:'課程',color:'#8E9C7C'},
+  {k:'reading',label:'讀書',color:'#C49A6C'},
+  {k:'personal',label:'個人',color:'#6E9B8A'}
+];
+var _PCHK='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>';
+var projFilter='active';
+var _projDraft=null;
+function saveProjects(){save('lm-projects',projects);}
+function projCat(k){for(var i=0;i<PROJ_CATS.length;i++){if(PROJ_CATS[i].k===k)return PROJ_CATS[i];}return {k:k,label:k||'其他',color:'#A8A08C'};}
+function projNextStep(p){return (p.steps||[]).filter(function(s){return !s.done;})[0]||null;}
+function _projDaysTo(due){return Math.round((new Date(due+'T00:00:00')-new Date(today()+'T00:00:00'))/86400000);}
+function _projDueInfo(due){
+  if(!due)return null;
+  var d=_projDaysTo(due);
+  if(d<0)return {txt:'逾期 '+(-d)+' 天',col:'var(--red)',bg:'var(--red-light)'};
+  if(d===0)return {txt:'今天到期',col:'var(--amber)',bg:'var(--amber-light)'};
+  if(d<=3)return {txt:'剩 '+d+' 天',col:'var(--amber)',bg:'var(--amber-light)'};
+  return {txt:esc(due.slice(5)),col:'var(--text-3)',bg:'var(--bg)'};
+}
+function setProjFilter(f){
+  projFilter=f;
+  document.querySelectorAll('#proj-filter-row .chip').forEach(function(c){c.classList.toggle('active',c.dataset.f===f);});
+  renderProjects();
+}
+function renderProjects(){
+  var el=document.getElementById('project-list');if(!el)return;
+  var list=projects.filter(function(p){return (p.status||'active')===projFilter;});
+  // 進行中：截止日近者優先，無截止日在後（僅視覺排序，不改動資料）
+  if(projFilter==='active'){
+    list=list.slice().sort(function(a,b){
+      var an=projNextStep(a),bn=projNextStep(b);
+      var ad=(an&&an.due)||a.due||'',bd=(bn&&bn.due)||b.due||'';
+      if(ad&&bd)return ad<bd?-1:ad>bd?1:0;
+      if(ad)return -1;if(bd)return 1;return 0;
+    });
+  }
+  if(!list.length){
+    el.innerHTML='<div class="empty" style="padding:20px 0">'+(projFilter==='active'?'還沒有進行中的專案，點下方新增':projFilter==='paused'?'沒有暫停的專案':'沒有已完成的專案')+'</div>';
+    return;
+  }
+  el.innerHTML=list.map(function(p){
+    var cat=projCat(p.category);
+    var ns=projNextStep(p);
+    var steps=p.steps||[];
+    var doneN=steps.filter(function(s){return s.done;}).length;
+    var pct=steps.length?Math.round(doneN/steps.length*100):0;
+    var di=_projDueInfo(p.due);
+    var dueBadge=di?'<span style="font-size:11px;color:'+di.col+';background:'+di.bg+';border-radius:5px;padding:1px 7px;flex-shrink:0">'+di.txt+'</span>':'';
+    var nextBlock;
+    if(ns){
+      var nsDi=_projDueInfo(ns.due);
+      nextBlock='<div style="display:flex;align-items:center;gap:10px;margin-top:10px;padding:10px;background:var(--bg);border-radius:10px">'
+        +'<div class="routine-check" data-action="proj-step-done" data-pid="'+esc(p.id)+'" data-sid="'+esc(ns.id)+'" style="cursor:pointer"></div>'
+        +'<div style="flex:1;min-width:0"><div style="font-size:10px;color:var(--text-3);letter-spacing:.5px">下一步</div>'
+        +'<div style="font-size:14px;color:var(--text);font-weight:500;word-break:break-word">'+esc(ns.text)+'</div></div>'
+        +(nsDi?'<span style="font-size:11px;color:'+nsDi.col+';flex-shrink:0">'+nsDi.txt+'</span>':'')
+        +'</div>';
+    } else {
+      nextBlock='<div style="margin-top:10px;padding:10px;background:var(--teal-light);border-radius:10px;font-size:13px;color:var(--teal)">'
+        +(steps.length?'所有步驟已完成，點開可標記結案':'尚未新增步驟，點開規劃下一步')+'</div>';
+    }
+    return '<div class="card" style="margin-bottom:10px;cursor:pointer" data-action="proj-open" data-pid="'+esc(p.id)+'">'
+      +'<div style="display:flex;align-items:center;gap:8px">'
+        +'<span style="width:10px;height:10px;border-radius:50%;background:'+cat.color+';flex-shrink:0"></span>'
+        +'<span style="font-size:15px;font-weight:600;color:var(--text);flex:1;min-width:0;word-break:break-word">'+esc(p.name)+'</span>'
+        +dueBadge
+      +'</div>'
+      +'<div style="display:flex;align-items:center;gap:8px;margin-top:6px">'
+        +'<span style="font-size:11px;color:'+cat.color+';background:var(--bg);border-radius:5px;padding:1px 7px;flex-shrink:0">'+esc(cat.label)+'</span>'
+        +'<span style="font-size:11px;color:var(--text-3);flex-shrink:0">'+doneN+'/'+steps.length+'</span>'
+        +'<div class="prog" style="flex:1;margin-top:0"><div class="prog-fill" style="width:'+pct+'%;background:'+cat.color+'"></div></div>'
+      +'</div>'
+      +nextBlock
+      +'</div>';
+  }).join('');
+}
+function openProjectModal(id){
+  var sel=document.getElementById('proj-cat');
+  sel.innerHTML=PROJ_CATS.map(function(c){return '<option value="'+c.k+'">'+esc(c.label)+'</option>';}).join('');
+  if(id){
+    var p=projects.find(function(x){return String(x.id)===String(id);});
+    if(!p)return;
+    _projDraft=JSON.parse(JSON.stringify(p));
+  } else {
+    _projDraft={id:'p'+Date.now(),name:'',category:'work',status:'active',due:'',steps:[],createdAt:today()};
+  }
+  document.getElementById('proj-modal-title').textContent=id?'編輯專案':'新增專案';
+  document.getElementById('proj-id').value=_projDraft.id;
+  document.getElementById('proj-name').value=_projDraft.name||'';
+  sel.value=_projDraft.category||'work';
+  document.getElementById('proj-due').value=_projDraft.due||'';
+  document.getElementById('proj-status').value=_projDraft.status||'active';
+  document.getElementById('proj-delete-btn').style.display=id?'':'none';
+  renderProjStepsEditor();
+  openModal('project');
+}
+function renderProjStepsEditor(){
+  var el=document.getElementById('proj-steps-editor');if(!el)return;
+  var steps=_projDraft.steps||[];
+  el.innerHTML=(steps.length?steps.map(function(s,i){
+    return '<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">'
+      +'<div class="routine-check '+(s.done?'done':'')+'" data-action="proj-draft-toggle" data-idx="'+i+'" style="cursor:pointer;width:20px;height:20px">'+(s.done?_PCHK:'')+'</div>'
+      +(i>0?'<button class="icon-btn" data-action="proj-draft-up" data-idx="'+i+'" style="color:var(--text-3);font-size:15px;padding:0 3px" title="上移">↑</button>':'<span style="width:19px;flex-shrink:0"></span>')
+      +'<input type="text" value="'+esc(s.text)+'" oninput="_projDraft.steps['+i+'].text=this.value" placeholder="步驟內容" style="flex:1;min-width:0">'
+      +'<input type="date" value="'+esc(s.due||'')+'" onchange="_projDraft.steps['+i+'].due=this.value" style="width:132px;flex-shrink:0">'
+      +'<button class="icon-btn" data-action="proj-draft-del" data-idx="'+i+'" style="color:var(--red);font-size:18px;padding:0 4px;flex-shrink:0">×</button>'
+      +'</div>';
+  }).join(''):'<div style="font-size:12px;color:var(--text-3);padding:6px 0">尚無步驟，點下方新增</div>')
+  +'<button class="btn btn-ghost btn-sm" data-action="proj-draft-add" style="margin-top:4px">＋ 新增步驟</button>';
+}
+function saveProject(){
+  if(!_projDraft)return;
+  var name=document.getElementById('proj-name').value.trim();
+  if(!name){showToast('請輸入專案名稱');return;}
+  _projDraft.name=name;
+  _projDraft.category=document.getElementById('proj-cat').value;
+  _projDraft.due=document.getElementById('proj-due').value||'';
+  _projDraft.status=document.getElementById('proj-status').value||'active';
+  _projDraft.steps=(_projDraft.steps||[]).filter(function(s){return (s.text||'').trim()!=='';});
+  var idx=projects.findIndex(function(x){return String(x.id)===String(_projDraft.id);});
+  if(idx>=0)projects[idx]=_projDraft;else projects.push(_projDraft);
+  saveProjects();closeModal('project');renderProjects();
+  showToast(idx>=0?'專案已更新':'專案已新增');
+}
+function deleteProject(){
+  if(!_projDraft)return;
+  projects=projects.filter(function(x){return String(x.id)!==String(_projDraft.id);});
+  saveProjects();closeModal('project');renderProjects();showToast('專案已刪除');
+}
+function completeProjectStep(pid,sid){
+  var p=projects.find(function(x){return String(x.id)===String(pid);});if(!p)return;
+  var s=(p.steps||[]).find(function(x){return String(x.id)===String(sid);});if(!s)return;
+  s.done=true;s.doneAt=today();
+  saveProjects();renderProjects();
+  var nx=projNextStep(p);
+  showToast(nx?'已完成，下一步：'+nx.text:'專案步驟全部完成！');
+}
 function renderCourseList(){
   var el=document.getElementById('grad-course-list');if(!el)return;
   if(!courses.length){el.innerHTML='<div class="empty">尚未登記任何課程</div>';return;}
@@ -2903,8 +3082,12 @@ function renderHome(){
   var isTodayView=homePeriod==='today';
   // 晨間/夜間 routine 僅在「今天」檢視顯示；本週/本月只看圖表
   var rcw=document.getElementById('routine-cards-wrap');
-  if(rcw)rcw.style.display=isTodayView?'flex':'none';
   renderMorningCard();renderNightCard();
+  if(rcw){
+    var _mc=document.getElementById('routine-morning-card'),_nc=document.getElementById('routine-night-card');
+    var _bothHidden=(!_mc||_mc.style.display==='none')&&(!_nc||_nc.style.display==='none');
+    rcw.style.display=(isTodayView&&!_bothHidden)?'flex':'none';
+  }
   if(isTodayView)maybeShowMorningFs();
   var qel=document.getElementById('home-checkin-quote');
   if(qel)qel.textContent=quotes.length?quotes[Math.floor(Math.random()*quotes.length)].text:'轉換打卡';
@@ -3731,7 +3914,8 @@ function setExGoal(v){
 function addExercise(){
   var min=parseInt(document.getElementById('e-min').value)||0;
   if(!min){showToast('請輸入運動時間');return;}
-  exercises.push({id:Date.now(),date:today(),time:nowTime(),type:document.getElementById('e-type').value,min,note:document.getElementById('e-note').value.trim()});
+  var startT=minToHM(Math.max(0,hmToMin(nowTime())-min)); // 從登記時間往回推運動時段
+  exercises.push({id:Date.now(),date:today(),time:startT,type:document.getElementById('e-type').value,min,note:document.getElementById('e-note').value.trim()});
   save('lm-exercises',exercises);closeModal('exercise');
   document.getElementById('e-min').value='';document.getElementById('e-note').value='';
   renderExercise();showToast('運動已記錄');
@@ -3824,7 +4008,8 @@ function addExerciseFromMenu(){
   var min=parseInt(document.getElementById('e-menu-min').value)||0;
   if(!min){showToast('請輸入運動時間');return;}
   var note=document.getElementById('e-menu-note').value.trim();
-  exercises.push({id:Date.now(),date:today(),time:nowTime(),type:m.name,min,note:note,menuId:m.id,moves:m.moves||[],target:m.target||''});
+  var startT=minToHM(Math.max(0,hmToMin(nowTime())-min)); // 從登記時間往回推運動時段
+  exercises.push({id:Date.now(),date:today(),time:startT,type:m.name,min,note:note,menuId:m.id,moves:m.moves||[],target:m.target||''});
   save('lm-exercises',exercises);closeModal('exercise');
   document.getElementById('e-menu-min').value='';document.getElementById('e-menu-note').value='';
   selectedMenuId=null;renderExercise();showToast('運動已記錄');
@@ -5823,6 +6008,13 @@ document.body.addEventListener('click',function(e){
   else if(action==='coursework-edit'){openCourseworkEdit(el.dataset.wid);}
   else if(action==='coursework-toggle'){toggleCoursework(el.dataset.wid);}
   else if(action==='gantt-event-edit'){openGanttEventModal(el.dataset.geid);}
+  else if(action==='proj-filter'){setProjFilter(el.dataset.f);}
+  else if(action==='proj-open'){openProjectModal(el.dataset.pid);}
+  else if(action==='proj-step-done'){completeProjectStep(el.dataset.pid,el.dataset.sid);}
+  else if(action==='proj-draft-toggle'){var _i=parseInt(el.dataset.idx);_projDraft.steps[_i].done=!_projDraft.steps[_i].done;renderProjStepsEditor();}
+  else if(action==='proj-draft-up'){var _j=parseInt(el.dataset.idx);var _t=_projDraft.steps[_j];_projDraft.steps[_j]=_projDraft.steps[_j-1];_projDraft.steps[_j-1]=_t;renderProjStepsEditor();}
+  else if(action==='proj-draft-del'){_projDraft.steps.splice(parseInt(el.dataset.idx),1);renderProjStepsEditor();}
+  else if(action==='proj-draft-add'){if(!_projDraft.steps)_projDraft.steps=[];_projDraft.steps.push({id:'s'+Date.now(),text:'',done:false,due:''});renderProjStepsEditor();}
   else if(action==='journal-confirm'){toggleJournalConfirm(el.dataset.key);}
   else if(action==='add-journal-quick'){openJournalQuickModal(null);}
   else if(action==='open-journal-quick'){openJournalQuickModal(el.dataset.id);}
@@ -5886,7 +6078,12 @@ document.body.addEventListener('click',function(e){
   else if(action==='routine-next'){if(_routineViewDate<today()){_routineViewDate=_nextDay(_routineViewDate);renderMorningCard();renderNightCard();}}
   else if(action==='routine-expand'){
     if(el.dataset.which==='morning'&&morningFsEnabled){openMorningFs();}
-    else{_routineOpen[el.dataset.which]=true;if(el.dataset.which==='morning')renderMorningCard();else renderNightCard();}
+    else{
+      _routineOpen[el.dataset.which]=true;
+      // 夜間 routine 一經按下即標記當日隱藏，收合或重開後不再於首頁出現
+      if(el.dataset.which==='night'){var _np=_getNightPlan(today());_np.homeDismissed=true;save('lm-night-plans',nightPlans);}
+      if(el.dataset.which==='morning')renderMorningCard();else renderNightCard();
+    }
   }
   else if(action==='routine-collapse'){_routineOpen[el.dataset.which]=false;if(el.dataset.which==='morning')renderMorningCard();else renderNightCard();}
   else if(action==='del-quote'){
@@ -6033,6 +6230,9 @@ function renderMorningCard(){
     log.items.forEach(function(it){if(!it.done&&!it.missed){it.missed=true;_mc=true;}});
     if(_mc)save('lm-morning-logs',morningLogs);
   }
+  // 首頁：晨間功能僅在早上 6–10 點顯示，10 點後自動隱藏以減少干擾（瀏覽過去日期時仍顯示）
+  if(isToday&&!(h>=6&&h<10)){el.style.display='none';el.innerHTML='';return;}
+  el.style.display='';
   if(!_routineOpen.morning||morningFsEnabled){
     var mst,msc;
     if(!log||!log.items.length){mst='尚無項目';msc='var(--text-3)';}
@@ -6249,6 +6449,9 @@ function renderNightCard(){
   var urgent=isToday&&h>=20&&!plan.sleepTime;
   var canEdit=isToday;
   if(!_routineOpen.night){
+    // 首頁：夜間功能僅在晚上 8 點後出現；一旦按下（開啟）過即當日隱藏，減少干擾（瀏覽過去日期時仍顯示）
+    if(isToday&&(!(h>=20)||plan.homeDismissed)){el.style.display='none';el.innerHTML='';return;}
+    el.style.display='';
     var nst,nsc;
     if(plan.sleepTime){nst='✓ '+esc(plan.sleepTime)+' 就寢';nsc='var(--teal)';}
     else if(urgent){nst='待記錄上床時間';nsc='var(--teal)';}
@@ -6256,6 +6459,7 @@ function renderNightCard(){
     el.innerHTML=_routineCollapsedBtn('night','夜間 Routine',nst,nsc,urgent);
     return;
   }
+  el.style.display='';
   el.style.flexBasis='100%';
   var navStyle='background:none;border:none;font-size:20px;color:var(--text-2);cursor:pointer;padding:0 6px;line-height:1';
   var disabledNext=dt>=t;
@@ -6482,7 +6686,7 @@ document.body.addEventListener('focusin',function(e){
 
 // ── 雲端同步（Supabase）──────────────────────────────
 var sbClient=null,sbUser=null,syncTimer=null,_syncPending=false;
-var DATA_KEYS=['lm-books','lm-exercises','lm-reviews','lm-sessions','lm-med','lm-cases','lm-wmenus','lm-ex-goal','lm-journal','lm-timer-logs','lm-quotes','lm-checkins','lm-morning-base','lm-morning-logs','lm-morning-fs','lm-night-plans','lm-notes','lm-note-tags','lm-expenses','lm-assets','lm-dayplans','lm-plan-palette','lm-courses','lm-coursework','lm-grad-events','lm-grad-semester'];
+var DATA_KEYS=['lm-books','lm-exercises','lm-reviews','lm-sessions','lm-med','lm-cases','lm-wmenus','lm-ex-goal','lm-journal','lm-timer-logs','lm-quotes','lm-checkins','lm-morning-base','lm-morning-logs','lm-morning-fs','lm-night-plans','lm-notes','lm-note-tags','lm-expenses','lm-assets','lm-dayplans','lm-plan-palette','lm-courses','lm-coursework','lm-grad-events','lm-grad-semester','lm-projects'];
 
 var SB_URL='https://gsjljwupeyvqdsrzbadf.supabase.co';
 var SB_KEY='sb_publishable_2jglYptRkedrlZe-ZPHpbQ_U-A_R6ES';
@@ -6683,7 +6887,8 @@ function scheduleSessionEndRefreshes(){
 }
 
 // ── 本機通知 ──────────────────────────────────────────────
-var notifSettings=JSON.parse(localStorage.getItem('lm-notif-settings')||'{"morning":true,"night":true,"caseRec":true}');
+var notifSettings=JSON.parse(localStorage.getItem('lm-notif-settings')||'{"morning":true,"night":true,"caseRec":true,"project":true}');
+if(notifSettings.project===undefined)notifSettings.project=true;
 var _notifTimers=[];
 function _msUntil(h,m){
   var now=new Date(),target=new Date(now.getFullYear(),now.getMonth(),now.getDate(),h,m,0,0);
@@ -6718,6 +6923,23 @@ function scheduleLocalNotifications(){
       return {title:'待寫個案紀錄（'+pending.length+'份）',body:pending.map(function(c){return caseDisplayName(c);}).join('、')};
     },'lm-case-rec');
   }
+  if(notifSettings.project){
+    schedAt(8,0,function(){
+      var items=projectDueReminders();
+      if(!items.length)return null;
+      return {title:'專案下一步提醒（'+items.length+'）',body:items.join('、')};
+    },'lm-project');
+  }
+}
+function projectDueReminders(){
+  var t=today(),out=[];
+  projects.forEach(function(p){
+    if((p.status||'active')!=='active')return;
+    var ns=projNextStep(p);
+    if(ns&&ns.due&&ns.due<=t)out.push(p.name+'：'+ns.text);
+    else if(p.due&&p.due<=t)out.push(p.name+'（截止）');
+  });
+  return out;
 }
 function requestNotificationPermission(){
   if(!('Notification' in window)){showToast('此裝置不支援通知');return;}
@@ -6739,7 +6961,7 @@ function _notifUI(){
   function nr(label,key){
     return '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:0.5px solid var(--border);padding-left:10px"><span style="font-size:14px;color:var(--text)">'+label+'</span><label class="ios-toggle"><input type="checkbox"'+(notifSettings[key]?' checked':'')+' onchange="toggleNotif(\''+key+'\',this.checked)"><span class="ios-track"></span></label></div>';
   }
-  return nr('晨間 Routine（05:00）','morning')+nr('夜間 Routine（21:00）','night')+nr('待寫個案紀錄（15:30）','caseRec');
+  return nr('晨間 Routine（05:00）','morning')+nr('夜間 Routine（21:00）','night')+nr('待寫個案紀錄（15:30）','caseRec')+nr('專案到期提醒（08:00）','project');
 }
 
 if('serviceWorker' in navigator){
@@ -6785,12 +7007,14 @@ function reloadAllFromStorage(){
   gradEvents=load('lm-grad-events',[]);if(!Array.isArray(gradEvents))gradEvents=[];
   gradSemester=load('lm-grad-semester',{name:'',start:'',end:''});
   if(!gradSemester||typeof gradSemester!=='object')gradSemester={name:'',start:'',end:''};
+  projects=load('lm-projects',[]);if(!Array.isArray(projects))projects=[];
   renderHome();renderBooks();renderExercise();renderMedHistory();renderCases();renderReview();
   if(currentPage==='journal')renderJournal();
   if(currentPage==='growth')renderGrowth();
   if(currentPage==='money')setMoneySub(moneySub);
   if(currentPage==='plan')renderPlan();
   if(currentPage==='grad')renderGrad();
+  if(currentPage==='projects')renderProjects();
 }
 </script>
 </body>
