@@ -43,9 +43,11 @@
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;overflow:hidden;background:var(--bg);font-family:-apple-system,'Helvetica Neue',sans-serif;color:var(--text);transition:background .25s,color .25s}
 .app{display:flex;flex-direction:column;height:100vh;max-width:430px;margin:0 auto;background:var(--bg)}
-.header{background:var(--surface);border-bottom:0.5px solid var(--border);padding:52px 20px 14px;flex-shrink:0;display:flex;align-items:flex-end;justify-content:space-between}
-.header-title{font-size:22px;font-weight:600;color:var(--text)}
-.header-sub{font-size:13px;color:var(--text-2);margin-top:2px}
+.header{background:var(--surface);border-bottom:0.5px solid var(--border);padding:50px 20px 16px;flex-shrink:0;display:flex;align-items:flex-end;justify-content:space-between}
+.header-title{font-size:30px;font-weight:700;color:var(--text);letter-spacing:1px;line-height:1.1}
+.header-sub{font-size:11px;color:var(--text-3);letter-spacing:2px;margin-bottom:5px;font-weight:500}
+.hdr-icon-btn{width:38px;height:38px;border-radius:50%;background:var(--bg);border:0.5px solid var(--border);color:var(--text-2);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;flex-shrink:0;transition:background .15s}
+.hdr-icon-btn:active{transform:scale(.94)}
 .ios-toggle{position:relative;width:44px;height:26px;flex-shrink:0}
 .ios-toggle input{opacity:0;width:0;height:0;position:absolute}
 .ios-track{position:absolute;inset:0;background:var(--border-med);border-radius:13px;transition:background .25s;cursor:pointer}
@@ -220,6 +222,24 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
 .home-growth-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:0}
 .home-growth-card{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);padding:12px 8px;text-align:center;cursor:pointer;transition:border-color .15s,transform .1s}
 .home-growth-card:active{transform:scale(0.97)}
+/* 主頁：三合一統計卡 */
+.home-statcard{display:flex;background:var(--surface);border-radius:16px;border:0.5px solid var(--border);box-shadow:0 2px 12px rgba(0,0,0,.045);padding:16px 4px}
+.hsc-col{flex:1;text-align:center;cursor:pointer;padding:0 6px;min-width:0}
+.hsc-col+.hsc-col{border-left:0.5px solid var(--border)}
+.hsc-col:active{opacity:.6}
+.hsc-label{font-size:12px;color:var(--text-2);margin-bottom:6px}
+.hsc-val{font-size:19px;font-weight:700;letter-spacing:.5px;white-space:nowrap}
+.hsc-sub{font-size:11px;margin-top:5px;color:var(--text-3)}
+/* 主頁：現在就開始（霧面黏土綠主卡） */
+.startnow-card{position:relative;background:linear-gradient(152deg,#67805C 0%,#556B49 55%,#47593B 100%);border-radius:20px;padding:18px 18px 16px;color:#fff;box-shadow:0 8px 22px rgba(71,89,59,.30),inset 0 1px 0 rgba(255,255,255,.14),inset 0 -3px 8px rgba(0,0,0,.14)}
+.sn-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.sn-cat{font-size:12px;font-weight:600;color:rgba(255,255,255,.92);display:flex;align-items:center;gap:6px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sn-days{font-size:12px;color:rgba(255,255,255,.78);flex-shrink:0;margin-left:10px}
+.sn-title{font-size:22px;font-weight:700;color:#fff;line-height:1.3;margin-bottom:16px;word-break:break-word}
+.sn-actions{display:flex;gap:10px}
+.sn-start{flex:1;background:rgba(255,255,255,.94);color:#3D4D31;border:none;border-radius:13px;padding:13px;font-size:15px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;box-shadow:0 2px 6px rgba(0,0,0,.12)}
+.sn-check{width:54px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.30);border-radius:13px;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sn-start:active,.sn-check:active{transform:scale(.97)}
 .jn-cat-btn{padding:6px 12px;border-radius:99px;font-size:12px;font-weight:500;border:2px solid transparent;cursor:pointer;transition:border-color .15s,transform .1s;white-space:nowrap}
 .jn-cat-btn:active{transform:scale(0.96)}
 .jn-cat-btn.selected{border-color:rgba(0,0,0,0.35)!important}
@@ -375,7 +395,7 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
   .nav-btn:hover{color:var(--purple)}
   /* 標題列 */
   .header{padding:30px 44px 18px}
-  .header-title{font-size:26px}
+  .header-title{font-size:32px}
   /* 主內容捲動區 */
   .body{padding:28px 44px 56px}
   .page{max-width:780px;margin:0 auto}
@@ -394,6 +414,7 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
   #page-home>.checkin-entry-btn,
   #page-home>.period-tabs,
   #page-home>#home-dashboard,
+  #page-home>#home-startnow,
   #page-home>#routine-cards-wrap,
   #page-home>.sec,
   #page-home>#home-reading-list,
@@ -442,15 +463,15 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
 <div class="app">
 <div class="header">
   <div>
-    <div class="header-title" id="header-title">今天</div>
     <div class="header-sub" id="header-sub"></div>
+    <div class="header-title" id="header-title">今天</div>
   </div>
-  <div style="display:flex;align-items:center;gap:10px">
-    <button onclick="openSettings()" title="功能設定" style="background:none;border:none;color:var(--text-2);padding:4px;cursor:pointer;display:flex;align-items:center">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+  <div style="display:flex;align-items:center;gap:8px">
+    <button class="hdr-icon-btn" onclick="openSettings()" title="功能設定">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
     </button>
-    <button class="dark-toggle" id="sync-btn" onclick="openSyncModal()" title="雲端同步" style="background:none;border:none;color:var(--text-2);padding:4px;cursor:pointer;display:flex;align-items:center">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 10h-1.26A8 8 0 109 20h9a5 5 0 000-10z"/></svg>
+    <button class="hdr-icon-btn" id="sync-btn" onclick="openSyncModal()" title="雲端同步">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 10h-1.26A8 8 0 109 20h9a5 5 0 000-10z"/></svg>
     </button>
     <label class="ios-toggle" title="深色模式">
       <input type="checkbox" id="dark-chk" onchange="toggleDark(this.checked)">
@@ -473,6 +494,9 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
   </div>
   <div id="home-period-nav" style="display:none"></div>
   <div id="home-dashboard"></div>
+  <!-- 現在就開始（最優先專案下一步）-->
+  <div class="sec" id="home-startnow-sec" style="display:none">現在就開始</div>
+  <div id="home-startnow"></div>
   <!-- 萬用計時器 widget -->
   <div id="home-timer-card" class="home-timer-card"></div>
   <!-- 晨間 / 夜間 Routine（收合為小按鈕，點擊展開） -->
@@ -2887,7 +2911,7 @@ function completeProjectStep(pid,sid){
   var s=(p.steps||[]).find(function(x){return String(x.id)===String(sid);});if(!s)return;
   s.done=true;s.doneAt=today();
   saveProjects();renderProjects();
-  if(currentPage==='home')renderHomeProjects();
+  if(currentPage==='home'){renderStartNow();renderHomeProjects();}
   var nx=projNextStep(p);
   showToast(nx?'已完成，下一步：'+nx.text:'專案步驟全部完成！');
 }
@@ -2898,6 +2922,8 @@ function renderHomeProjects(){
   var show=(typeof homePeriod==='undefined'||homePeriod==='today')&&appSettings.pages.projects;
   if(!show){sec.style.display='none';el.innerHTML='';return;}
   var list=projects.filter(function(p){return (p.status||'active')==='active';});
+  // 最優先的下一步已於「現在就開始」呈現，此清單排除避免重複
+  if(_startNowPid)list=list.filter(function(p){return String(p.id)!==String(_startNowPid);});
   if(!list.length){sec.style.display='none';el.innerHTML='';return;}
   list=list.slice().sort(function(a,b){
     var an=projNextStep(a),bn=projNextStep(b);
@@ -2925,6 +2951,70 @@ function renderHomeProjects(){
     }
     return '<div class="card" style="margin-bottom:8px;cursor:pointer" data-action="home-proj-open">'+nameRow+body+'</div>';
   }).join('');
+}
+// ── 現在就開始：挑出最優先的專案下一步 ──────────────────
+var _startNowPid=null;
+var _SN_PLAY='<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20 6 4"/></svg>';
+var _SN_CHECK='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="20 6 9 17 4 12"/></svg>';
+function pickStartNow(){
+  var cands=projects.filter(function(p){return (p.status||'active')==='active';})
+    .map(function(p){var ns=projNextStep(p);return ns?{p:p,step:ns}:null;})
+    .filter(Boolean);
+  if(!cands.length)return null;
+  cands.sort(function(a,b){
+    var ad=a.step.due||a.p.due||'',bd=b.step.due||b.p.due||'';
+    if(ad&&bd)return ad<bd?-1:ad>bd?1:0;
+    if(ad)return -1;if(bd)return 1;return 0;
+  });
+  return cands[0];
+}
+function renderStartNow(){
+  var sec=document.getElementById('home-startnow-sec'),el=document.getElementById('home-startnow');
+  if(!sec||!el)return;
+  var show=(typeof homePeriod==='undefined'||homePeriod==='today')&&appSettings.pages.projects;
+  var pick=show?pickStartNow():null;
+  if(!pick){sec.style.display='none';el.innerHTML='';_startNowPid=null;return;}
+  _startNowPid=pick.p.id;
+  var cat=projCat(pick.p.category);
+  var due=pick.step.due||pick.p.due;
+  var daysHtml='';
+  if(due){var d=_projDaysTo(due);var txt=d<0?'逾期 '+(-d)+' 天':d===0?'今天到期':'剩 '+d+' 天';daysHtml='<span class="sn-days">'+txt+'</span>';}
+  sec.style.display='';
+  el.innerHTML='<div class="startnow-card">'
+    +'<div class="sn-top">'
+      +'<span class="sn-cat"><span style="width:8px;height:8px;border-radius:50%;background:'+cat.color+';display:inline-block;flex-shrink:0"></span>'+esc(cat.label)+'</span>'
+      +daysHtml
+    +'</div>'
+    +'<div class="sn-title">'+esc(pick.step.text)+'</div>'
+    +'<div class="sn-actions">'
+      +'<button class="sn-start" data-action="startnow-timer">'+_SN_PLAY+' 開始計時</button>'
+      +'<button class="sn-check" data-action="startnow-done" title="完成此步驟">'+_SN_CHECK+'</button>'
+    +'</div>'
+  +'</div>';
+}
+function startNowTimer(title){
+  if(uTimerRunning&&!uTimerPaused){document.getElementById('fullscreen-timer').classList.add('open');updateUTimerModal();return;}
+  uTimerTitle=title||'';
+  if(!uTimerRunning){uTimerAccumSec=0;uTimerStartTimeStr=nowTime();uTimerStartDateStr=today();}
+  uTimerStartTs=Date.now();uTimerPaused=false;uTimerRunning=true;
+  clearInterval(uTimerInterval);uTimerInterval=setInterval(tickUTimer,1000);
+  var ftInput=document.getElementById('ft-title-input');if(ftInput)ftInput.value=uTimerTitle||'';
+  var ftDisp=document.getElementById('ft-display');if(ftDisp)ftDisp.textContent='00:00:00';
+  var ftPause=document.getElementById('ft-pause-btn');if(ftPause)ftPause.textContent='暫停';
+  var ftStatus=document.getElementById('ft-status');if(ftStatus)ftStatus.textContent='進行中';
+  var ftErr=document.getElementById('ft-error');if(ftErr)ftErr.style.display='none';
+  document.getElementById('fullscreen-timer').classList.add('open');
+  updateUTimerModal();renderTimerWidget();
+}
+function startNowAction(){
+  var p=projects.find(function(x){return String(x.id)===String(_startNowPid);});if(!p)return;
+  var ns=projNextStep(p);if(!ns)return;
+  startNowTimer(ns.text);
+}
+function startNowDone(){
+  var p=projects.find(function(x){return String(x.id)===String(_startNowPid);});if(!p)return;
+  var ns=projNextStep(p);if(!ns)return;
+  completeProjectStep(p.id,ns.id);
 }
 function renderCourseList(){
   var el=document.getElementById('grad-course-list');if(!el)return;
@@ -3159,23 +3249,23 @@ function renderHome(){
     var medStreakHtml=medStreak>=2?' <span style="font-size:11px;color:var(--amber)">連續'+medStreak+'天</span>':'';
     var _hg=[];
     if(appSettings.pages.growth){
-      if(effGrowthOn('reading'))_hg.push('<div class="home-growth-card" onclick="goToGrowth(\'books\')">'
-        +'<div class="growth-card-name">閱讀</div>'
-        +'<div class="growth-card-val" style="color:var(--purple)">'+(rSec>0?Math.round(rSec/60)+' 分':'尚未開始')+'</div>'
-        +(readStreak>=2?'<div class="growth-card-streak" style="color:var(--purple)">連續'+readStreak+'天</div>':'<div class="growth-card-streak">&nbsp;</div>')
+      if(effGrowthOn('reading'))_hg.push('<div class="hsc-col" onclick="goToGrowth(\'books\')">'
+        +'<div class="hsc-label">閱讀</div>'
+        +'<div class="hsc-val" style="color:'+(rSec>0?'var(--purple)':'var(--text-3)')+'">'+(rSec>0?Math.round(rSec/60)+' 分':'尚未')+'</div>'
+        +'<div class="hsc-sub"'+(readStreak>=2?' style="color:var(--purple)"':'')+'>'+(readStreak>=2?'連續 '+readStreak+' 天':'&nbsp;')+'</div>'
         +'</div>');
-      if(effGrowthOn('exercise'))_hg.push('<div class="home-growth-card" onclick="goToGrowth(\'exercise\')">'
-        +'<div class="growth-card-name">運動</div>'
-        +'<div class="growth-card-val" style="color:'+(hasEx?'var(--teal)':'var(--text-3)')+'">'+(hasEx?'已完成':'尚未進行')+'</div>'
-        +(exStreak>=2?'<div class="growth-card-streak" style="color:var(--teal)">連續'+exStreak+'天</div>':'<div class="growth-card-streak">&nbsp;</div>')
+      if(effGrowthOn('exercise'))_hg.push('<div class="hsc-col" onclick="goToGrowth(\'exercise\')">'
+        +'<div class="hsc-label">運動</div>'
+        +'<div class="hsc-val" style="color:'+(hasEx?'var(--teal)':'var(--text-3)')+'">'+(hasEx?'已完成':'尚未')+'</div>'
+        +'<div class="hsc-sub"'+(exStreak>=2?' style="color:var(--teal)"':'')+'>'+(exStreak>=2?'連續 '+exStreak+' 天':'&nbsp;')+'</div>'
         +'</div>');
-      if(effGrowthOn('meditation'))_hg.push('<div class="home-growth-card" onclick="goToGrowth(\'meditate\')">'
-        +'<div class="growth-card-name">冥想</div>'
-        +'<div class="growth-card-val" style="color:var(--amber)">'+(mSec>0?Math.round(mSec/60)+' 分':'尚未開始')+'</div>'
-        +(medStreak>=2?'<div class="growth-card-streak" style="color:var(--amber)">連續'+medStreak+'天</div>':'<div class="growth-card-streak">&nbsp;</div>')
+      if(effGrowthOn('meditation'))_hg.push('<div class="hsc-col" onclick="goToGrowth(\'meditate\')">'
+        +'<div class="hsc-label">冥想</div>'
+        +'<div class="hsc-val" style="color:'+(mSec>0?'var(--amber)':'var(--text-3)')+'">'+(mSec>0?Math.round(mSec/60)+' 分':'尚未')+'</div>'
+        +'<div class="hsc-sub"'+(medStreak>=2?' style="color:var(--amber)"':'')+'>'+(medStreak>=2?'連續 '+medStreak+' 天':'&nbsp;')+'</div>'
         +'</div>');
     }
-    dash.innerHTML=_hg.length?'<div class="home-growth-grid" style="grid-template-columns:repeat('+_hg.length+',1fr)">'+_hg.join('')+'</div>':'';
+    dash.innerHTML=_hg.length?'<div class="home-statcard">'+_hg.join('')+'</div>':'';
   } else if(homePeriod==='week'){
     wd=weekDatesOffset(homeWeekOffset);
     var days=['一','二','三','四','五','六','日'];
@@ -3276,6 +3366,7 @@ function renderHome(){
       +'</div>';
   }).join(''):'<div class="empty" style="padding:10px 0">還沒有閱讀中的書籍</div>';
   } // end showReadSec
+  renderStartNow();
   renderHomeProjects();
   // 個案待寫
   var sec=document.getElementById('home-case-sec'),cl=document.getElementById('home-case-list');
@@ -6091,6 +6182,8 @@ document.body.addEventListener('click',function(e){
   else if(action==='proj-open'){openProjectModal(el.dataset.pid);}
   else if(action==='proj-step-done'){completeProjectStep(el.dataset.pid,el.dataset.sid);}
   else if(action==='home-proj-open'){switchPage('projects',document.getElementById('nav-projects'));}
+  else if(action==='startnow-timer'){startNowAction();}
+  else if(action==='startnow-done'){startNowDone();}
   else if(action==='home-ov-prev'){shiftHomeOverview(-1);}
   else if(action==='home-ov-next'){shiftHomeOverview(1);}
   else if(action==='proj-draft-toggle'){var _i=parseInt(el.dataset.idx);_projDraft.steps[_i].done=!_projDraft.steps[_i].done;renderProjStepsEditor();}
