@@ -481,6 +481,8 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
   </div>
   <div class="sec" id="home-reading-sec">閱讀中</div>
   <div id="home-reading-list"></div>
+  <div class="sec" id="home-project-sec" style="display:none">專案下一步</div>
+  <div id="home-project-list"></div>
   <div class="sec" id="home-case-sec" style="display:none">今日個案待辦</div>
   <div id="home-case-list"></div>
   <div style="margin-top:16px">
@@ -1587,7 +1589,7 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
     <div class="modal-title"><span id="proj-modal-title">新增專案</span> <button class="modal-close" onclick="closeModal('project')">✕</button></div>
     <input type="hidden" id="proj-id">
     <div class="field"><label>專案名稱</label><input type="text" id="proj-name" placeholder="例：碩士論文、五年級輔導方案" autocomplete="off"></div>
-    <div class="field"><label>類別</label><select id="proj-cat"></select></div>
+    <div class="field"><label>類別</label><input type="text" id="proj-cat" list="proj-cat-suggest" placeholder="例：工作、論文、課程、讀書、個人" autocomplete="off"><datalist id="proj-cat-suggest"><option value="工作"><option value="論文"><option value="研究所課程"><option value="讀書計畫"><option value="個人"></datalist></div>
     <div style="display:flex;gap:10px">
       <div class="field" style="flex:1"><label>截止日（選填）</label><input type="date" id="proj-due"></div>
       <div class="field" style="flex:1"><label>狀態</label><select id="proj-status"><option value="active">進行中</option><option value="paused">暫停</option><option value="done">已完成</option></select></div>
@@ -2743,18 +2745,17 @@ function deleteGanttEvent(){
 }
 
 // ── 專案（下一步行動）──────────────────────────────────────
-var PROJ_CATS=[
-  {k:'work',label:'工作',color:'#8FA3B8'},
-  {k:'thesis',label:'論文',color:'#B5A0B0'},
-  {k:'course',label:'課程',color:'#8E9C7C'},
-  {k:'reading',label:'讀書',color:'#C49A6C'},
-  {k:'personal',label:'個人',color:'#6E9B8A'}
-];
+var PROJ_PALETTE=['#7FA8C9','#8E9C7C','#C49A6C','#B5A0B0','#6E9B8A','#C9A87F','#8FA3B8','#CDA0A0','#9DA873','#A8A08C'];
 var _PCHK='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>';
 var projFilter='active';
 var _projDraft=null;
 function saveProjects(){save('lm-projects',projects);}
-function projCat(k){for(var i=0;i<PROJ_CATS.length;i++){if(PROJ_CATS[i].k===k)return PROJ_CATS[i];}return {k:k,label:k||'其他',color:'#A8A08C'};}
+function projCatColor(cat){
+  if(!cat)return '#A8A08C';
+  var h=0;for(var i=0;i<cat.length;i++)h=(h*31+cat.charCodeAt(i))>>>0;
+  return PROJ_PALETTE[h%PROJ_PALETTE.length];
+}
+function projCat(k){return {label:k||'未分類',color:projCatColor(k)};}
 function projNextStep(p){return (p.steps||[]).filter(function(s){return !s.done;})[0]||null;}
 function _projDaysTo(due){return Math.round((new Date(due+'T00:00:00')-new Date(today()+'T00:00:00'))/86400000);}
 function _projDueInfo(due){
@@ -2764,6 +2765,14 @@ function _projDueInfo(due){
   if(d===0)return {txt:'今天到期',col:'var(--amber)',bg:'var(--amber-light)'};
   if(d<=3)return {txt:'剩 '+d+' 天',col:'var(--amber)',bg:'var(--amber-light)'};
   return {txt:esc(due.slice(5)),col:'var(--text-3)',bg:'var(--bg)'};
+}
+// 下一步永遠以「還剩幾天」呈現
+function _projDaysTag(due){
+  if(!due)return '';
+  var d=_projDaysTo(due);
+  var col=d<0?'var(--red)':d<=3?'var(--amber)':'var(--text-3)';
+  var txt=d<0?'逾期 '+(-d)+' 天':d===0?'今天到期':'剩 '+d+' 天';
+  return '<span style="font-size:11px;color:'+col+';flex-shrink:0">'+txt+'</span>';
 }
 function setProjFilter(f){
   projFilter=f;
@@ -2796,12 +2805,11 @@ function renderProjects(){
     var dueBadge=di?'<span style="font-size:11px;color:'+di.col+';background:'+di.bg+';border-radius:5px;padding:1px 7px;flex-shrink:0">'+di.txt+'</span>':'';
     var nextBlock;
     if(ns){
-      var nsDi=_projDueInfo(ns.due);
       nextBlock='<div style="display:flex;align-items:center;gap:10px;margin-top:10px;padding:10px;background:var(--bg);border-radius:10px">'
         +'<div class="routine-check" data-action="proj-step-done" data-pid="'+esc(p.id)+'" data-sid="'+esc(ns.id)+'" style="cursor:pointer"></div>'
         +'<div style="flex:1;min-width:0"><div style="font-size:10px;color:var(--text-3);letter-spacing:.5px">下一步</div>'
         +'<div style="font-size:14px;color:var(--text);font-weight:500;word-break:break-word">'+esc(ns.text)+'</div></div>'
-        +(nsDi?'<span style="font-size:11px;color:'+nsDi.col+';flex-shrink:0">'+nsDi.txt+'</span>':'')
+        +_projDaysTag(ns.due)
         +'</div>';
     } else {
       nextBlock='<div style="margin-top:10px;padding:10px;background:var(--teal-light);border-radius:10px;font-size:13px;color:var(--teal)">'
@@ -2823,19 +2831,17 @@ function renderProjects(){
   }).join('');
 }
 function openProjectModal(id){
-  var sel=document.getElementById('proj-cat');
-  sel.innerHTML=PROJ_CATS.map(function(c){return '<option value="'+c.k+'">'+esc(c.label)+'</option>';}).join('');
   if(id){
     var p=projects.find(function(x){return String(x.id)===String(id);});
     if(!p)return;
     _projDraft=JSON.parse(JSON.stringify(p));
   } else {
-    _projDraft={id:'p'+Date.now(),name:'',category:'work',status:'active',due:'',steps:[],createdAt:today()};
+    _projDraft={id:'p'+Date.now(),name:'',category:'',status:'active',due:'',steps:[],createdAt:today()};
   }
   document.getElementById('proj-modal-title').textContent=id?'編輯專案':'新增專案';
   document.getElementById('proj-id').value=_projDraft.id;
   document.getElementById('proj-name').value=_projDraft.name||'';
-  sel.value=_projDraft.category||'work';
+  document.getElementById('proj-cat').value=_projDraft.category||'';
   document.getElementById('proj-due').value=_projDraft.due||'';
   document.getElementById('proj-status').value=_projDraft.status||'active';
   document.getElementById('proj-delete-btn').style.display=id?'':'none';
@@ -2861,7 +2867,7 @@ function saveProject(){
   var name=document.getElementById('proj-name').value.trim();
   if(!name){showToast('請輸入專案名稱');return;}
   _projDraft.name=name;
-  _projDraft.category=document.getElementById('proj-cat').value;
+  _projDraft.category=document.getElementById('proj-cat').value.trim();
   _projDraft.due=document.getElementById('proj-due').value||'';
   _projDraft.status=document.getElementById('proj-status').value||'active';
   _projDraft.steps=(_projDraft.steps||[]).filter(function(s){return (s.text||'').trim()!=='';});
@@ -2880,8 +2886,44 @@ function completeProjectStep(pid,sid){
   var s=(p.steps||[]).find(function(x){return String(x.id)===String(sid);});if(!s)return;
   s.done=true;s.doneAt=today();
   saveProjects();renderProjects();
+  if(currentPage==='home')renderHomeProjects();
   var nx=projNextStep(p);
   showToast(nx?'已完成，下一步：'+nx.text:'專案步驟全部完成！');
+}
+// 主頁：進行中專案的下一步，依截止日最近者排最上
+function renderHomeProjects(){
+  var sec=document.getElementById('home-project-sec'),el=document.getElementById('home-project-list');
+  if(!sec||!el)return;
+  var show=(typeof homePeriod==='undefined'||homePeriod==='today')&&appSettings.pages.projects;
+  if(!show){sec.style.display='none';el.innerHTML='';return;}
+  var list=projects.filter(function(p){return (p.status||'active')==='active';});
+  if(!list.length){sec.style.display='none';el.innerHTML='';return;}
+  list=list.slice().sort(function(a,b){
+    var an=projNextStep(a),bn=projNextStep(b);
+    var ad=(an&&an.due)||a.due||'',bd=(bn&&bn.due)||b.due||'';
+    if(ad&&bd)return ad<bd?-1:ad>bd?1:0;
+    if(ad)return -1;if(bd)return 1;return 0;
+  });
+  sec.style.display='';
+  el.innerHTML=list.map(function(p){
+    var cat=projCat(p.category);
+    var ns=projNextStep(p);
+    var nameRow='<div style="display:flex;align-items:center;gap:8px">'
+      +'<span style="width:9px;height:9px;border-radius:50%;background:'+cat.color+';flex-shrink:0"></span>'
+      +'<span style="flex:1;min-width:0;font-size:14px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(p.name)+'</span>'
+      +(ns?_projDaysTag(ns.due):'')
+      +'</div>';
+    var body;
+    if(ns){
+      body='<div style="display:flex;align-items:center;gap:10px;margin-top:8px">'
+        +'<div class="routine-check" data-action="proj-step-done" data-pid="'+esc(p.id)+'" data-sid="'+esc(ns.id)+'" style="cursor:pointer;width:20px;height:20px"></div>'
+        +'<div style="flex:1;min-width:0;font-size:13px;color:var(--text-2);word-break:break-word">'+esc(ns.text)+'</div>'
+        +'</div>';
+    } else {
+      body='<div style="margin-top:6px;font-size:12px;color:var(--teal)">步驟已完成</div>';
+    }
+    return '<div class="card" style="margin-bottom:8px;cursor:pointer" data-action="home-proj-open">'+nameRow+body+'</div>';
+  }).join('');
 }
 function renderCourseList(){
   var el=document.getElementById('grad-course-list');if(!el)return;
@@ -3105,19 +3147,16 @@ function renderHome(){
     var _hg=[];
     if(appSettings.pages.growth){
       if(effGrowthOn('reading'))_hg.push('<div class="home-growth-card" onclick="goToGrowth(\'books\')">'
-        +'<div class="growth-card-ico ic-purple" style="margin:0 auto 6px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg></div>'
         +'<div class="growth-card-name">閱讀</div>'
         +'<div class="growth-card-val" style="color:var(--purple)">'+(rSec>0?Math.round(rSec/60)+' 分':'尚未開始')+'</div>'
         +(readStreak>=2?'<div class="growth-card-streak" style="color:var(--purple)">連續'+readStreak+'天</div>':'<div class="growth-card-streak">&nbsp;</div>')
         +'</div>');
       if(effGrowthOn('exercise'))_hg.push('<div class="home-growth-card" onclick="goToGrowth(\'exercise\')">'
-        +'<div class="growth-card-ico ic-teal" style="margin:0 auto 6px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 3a3 3 0 00-3 3v12a3 3 0 003 3 3 3 0 003-3 3 3 0 00-3-3H6a3 3 0 00-3 3 3 3 0 003 3 3 3 0 003-3V6a3 3 0 00-3-3 3 3 0 00-3 3 3 3 0 003 3h12a3 3 0 003-3 3 3 0 00-3-3z"/></svg></div>'
         +'<div class="growth-card-name">運動</div>'
         +'<div class="growth-card-val" style="color:'+(hasEx?'var(--teal)':'var(--text-3)')+'">'+(hasEx?'已完成':'尚未進行')+'</div>'
         +(exStreak>=2?'<div class="growth-card-streak" style="color:var(--teal)">連續'+exStreak+'天</div>':'<div class="growth-card-streak">&nbsp;</div>')
         +'</div>');
       if(effGrowthOn('meditation'))_hg.push('<div class="home-growth-card" onclick="goToGrowth(\'meditate\')">'
-        +'<div class="growth-card-ico ic-amber" style="margin:0 auto 6px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg></div>'
         +'<div class="growth-card-name">冥想</div>'
         +'<div class="growth-card-val" style="color:var(--amber)">'+(mSec>0?Math.round(mSec/60)+' 分':'尚未開始')+'</div>'
         +(medStreak>=2?'<div class="growth-card-streak" style="color:var(--amber)">連續'+medStreak+'天</div>':'<div class="growth-card-streak">&nbsp;</div>')
@@ -3203,6 +3242,7 @@ function renderHome(){
       +'</div>';
   }).join(''):'<div class="empty" style="padding:10px 0">還沒有閱讀中的書籍</div>';
   } // end showReadSec
+  renderHomeProjects();
   // 個案待寫
   var sec=document.getElementById('home-case-sec'),cl=document.getElementById('home-case-list');
   if(!appSettings.pages.cases){sec.style.display='none';cl.innerHTML='';}
@@ -3709,10 +3749,11 @@ function renderBookSessions(bookIdx){
   if(!rows.length){el.innerHTML='<div style="font-size:13px;color:var(--text-3);padding:6px 0">尚無閱讀紀錄</div>';return;}
   el.innerHTML=rows.map(function(r){
     var s=r.s,mins=Math.round((s.sec||0)/60);
+    var timeRange=(s.startTime||s.time)?((s.startTime||s.time)+(s.endTime?'–'+s.endTime:'')):'';
     return '<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:0.5px solid var(--border)">'
-      +'<div style="flex:1;min-width:0">'
-      +'<div style="font-size:13px;color:var(--text)">'+esc(s.date)+' · '+mins+' 分</div>'
-      +'<div style="font-size:12px;color:var(--text-2)">第 '+(s.startPage||0)+'–'+(s.endPage||0)+' 頁'+(s.rate?' · '+s.rate+' 頁/時':'')+'</div>'
+      +'<div style="flex:1;min-width:0;cursor:pointer" data-action="edit-read" data-rid="'+esc(s.id)+'">'
+      +'<div style="font-size:13px;color:var(--text)">'+esc(s.date)+(timeRange?' · '+esc(timeRange):'')+' · '+mins+' 分</div>'
+      +'<div style="font-size:12px;color:var(--text-2)">第 '+(s.startPage||0)+'–'+(s.endPage||0)+' 頁'+(s.rate?' · '+s.rate+' 頁/時':'')+' · 點擊編輯</div>'
       +'</div>'
       +'<button class="icon-btn" style="color:var(--text-3);font-size:16px;padding:0 4px;line-height:1" data-action="del-read-session" data-gi="'+r.gi+'">×</button>'
       +'</div>';
@@ -3779,6 +3820,8 @@ function saveReadEdit(){
   _recalcBookPage(s.bookId);
   closeModal('read-edit');_reId=null;
   if(currentPage==='journal')renderJournal();
+  var _bem=document.getElementById('modal-book-edit');
+  if(_bem&&_bem.classList.contains('open')){var _bi=parseInt(document.getElementById('be-idx').value);if(!isNaN(_bi))renderBookSessions(_bi);}
   renderBooks();showToast('已更新閱讀紀錄');
 }
 function deleteReadEdit(){
@@ -3789,6 +3832,8 @@ function deleteReadEdit(){
   _recalcBookPage(bookId);
   closeModal('read-edit');_reId=null;
   if(currentPage==='journal')renderJournal();
+  var _bem=document.getElementById('modal-book-edit');
+  if(_bem&&_bem.classList.contains('open')){var _bi=parseInt(document.getElementById('be-idx').value);if(!isNaN(_bi))renderBookSessions(_bi);}
   renderBooks();showToast('已刪除紀錄');
 }
 function saveBookEdit(){
@@ -5281,7 +5326,7 @@ function collectDayBlocks(date){
 // 計算區塊版面（top/高度/重疊欄位），與單日時間軸同邏輯
 function layoutDayBlocks(blocks){
   blocks.sort(function(a,b){return a.start-b.start;});
-  blocks.forEach(function(b){b.top=(b.start-TL_START)*PX_PER_MIN;b.natH=Math.max(5,b.realDur*PX_PER_MIN);b.realEnd=b.start+b.realDur;});
+  blocks.forEach(function(b){b.top=(b.start-TL_START)*PX_PER_MIN;b.natH=Math.max(15,b.realDur*PX_PER_MIN);b.realEnd=b.start+b.realDur;});
   var clusters=[],cur=null;
   blocks.forEach(function(b){
     if(cur&&b.start<cur.end-1e-6){cur.items.push(b);cur.end=Math.max(cur.end,b.realEnd);}
@@ -5303,7 +5348,7 @@ function layoutDayBlocks(blocks){
       if(c===b)return;var cf1=c.col/c.numCols,cf2=(c.col+1)/c.numCols;
       if(c.top>b.top+0.5 && cf1<bf2-1e-6 && bf1<cf2-1e-6 && c.top<minTop)minTop=c.top;
     });
-    b.h=isFinite(minTop)?Math.min(b.natH,Math.max(4,minTop-b.top)):b.natH;
+    b.h=isFinite(minTop)?Math.min(b.natH,Math.max(15,minTop-b.top)):b.natH;
   });
   return blocks;
 }
@@ -5341,7 +5386,7 @@ function renderJournalWeek(){
       var pos='top:'+b.top.toFixed(1)+'px;height:'+b.h.toFixed(1)+'px;left:calc('+left+'% + 1px);width:calc('+w+'% - 2px)';
       // 備註若有自訂顏色，沿用該柔和色當底（深色文字）；其餘類別用 tb-* 淺底＋同色文字
       if((b.cls==='tb-note'||b.cls==='tb-course')&&b.noteColor)pos+=';background:'+b.noteColor+';border-color:'+b.noteColor;
-      var txt=b.h>=15?'<div class="jweek-block-txt">'+b.title+'</div>':'';
+      var txt='<div class="jweek-block-txt">'+b.title+'</div>';
       return '<div class="jweek-block '+b.cls+(b.projected?' tb-unconfirmed':'')+'" title="'+b.title+'" style="'+pos+'">'+txt+'</div>';
     }).join('');
     cols+='<div class="jweek-col'+(isToday?' is-today':'')+'" data-action="week-open-day" data-date="'+date+'">'+bHtml+'</div>';
@@ -5750,12 +5795,12 @@ function renderTimerWidget(){
       +'</div></div>';
   } else {
     el.className='home-timer-card';
-    el.innerHTML='<div style="width:fit-content;margin:0 auto;text-align:center">'
-      +'<div class="home-timer-running-disp" id="home-timer-time" style="color:var(--text-3);margin:0 0 10px">00:00:00</div>'
-      +'<input id="home-timer-input" type="text" placeholder="" value="'+esc(uTimerTitle||'')+'" '
-      +'style="display:block;width:100%;box-sizing:border-box;border:none;border-bottom:1px solid var(--border);background:transparent;padding:5px 2px;font-size:13px;color:var(--text);outline:none;text-align:center" '
+    el.innerHTML='<div style="display:flex;align-items:center;gap:10px">'
+      +'<span id="home-timer-time" style="font-size:17px;font-weight:500;color:var(--text-3);font-variant-numeric:tabular-nums;flex-shrink:0">00:00:00</span>'
+      +'<input id="home-timer-input" type="text" placeholder="要做什麼？（選填）" value="'+esc(uTimerTitle||'')+'" '
+      +'style="flex:1;min-width:0;box-sizing:border-box;border:none;border-bottom:1px solid var(--border);background:transparent;padding:5px 2px;font-size:13px;color:var(--text);outline:none" '
       +'oninput="uTimerTitle=this.value" onclick="event.stopPropagation()">'
-      +'<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();startUTimerHome()" style="width:100%;margin-top:10px">開始</button>'
+      +'<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();startUTimerHome()" style="flex-shrink:0">開始</button>'
       +'</div>';
   }
 }
@@ -6011,6 +6056,7 @@ document.body.addEventListener('click',function(e){
   else if(action==='proj-filter'){setProjFilter(el.dataset.f);}
   else if(action==='proj-open'){openProjectModal(el.dataset.pid);}
   else if(action==='proj-step-done'){completeProjectStep(el.dataset.pid,el.dataset.sid);}
+  else if(action==='home-proj-open'){switchPage('projects',document.getElementById('nav-projects'));}
   else if(action==='proj-draft-toggle'){var _i=parseInt(el.dataset.idx);_projDraft.steps[_i].done=!_projDraft.steps[_i].done;renderProjStepsEditor();}
   else if(action==='proj-draft-up'){var _j=parseInt(el.dataset.idx);var _t=_projDraft.steps[_j];_projDraft.steps[_j]=_projDraft.steps[_j-1];_projDraft.steps[_j-1]=_t;renderProjStepsEditor();}
   else if(action==='proj-draft-del'){_projDraft.steps.splice(parseInt(el.dataset.idx),1);renderProjStepsEditor();}
