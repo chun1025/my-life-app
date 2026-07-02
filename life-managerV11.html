@@ -471,6 +471,7 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
     <button class="rtab" onclick="setPeriod('week',this)">本週</button>
     <button class="rtab" onclick="setPeriod('month',this)">本月</button>
   </div>
+  <div id="home-period-nav" style="display:none"></div>
   <div id="home-dashboard"></div>
   <!-- 萬用計時器 widget -->
   <div id="home-timer-card" class="home-timer-card"></div>
@@ -479,10 +480,10 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
     <div id="routine-morning-card" style="flex:1;min-width:150px"></div>
     <div id="routine-night-card" style="flex:1;min-width:150px"></div>
   </div>
-  <div class="sec" id="home-reading-sec">閱讀中</div>
-  <div id="home-reading-list"></div>
   <div class="sec" id="home-project-sec" style="display:none">專案下一步</div>
   <div id="home-project-list"></div>
+  <div class="sec" id="home-reading-sec">閱讀中</div>
+  <div id="home-reading-list"></div>
   <div class="sec" id="home-case-sec" style="display:none">今日個案待辦</div>
   <div id="home-case-list"></div>
   <div style="margin-top:16px">
@@ -3096,10 +3097,22 @@ function toggleCoursework(id){
 
 // ── 首頁 ──────────────────────────────────────────────
 var homePeriod='today';
+var homeWeekOffset=0,homeMonthOffset=0;
 function setPeriod(p,btn){
-  homePeriod=p;
+  homePeriod=p;homeWeekOffset=0;homeMonthOffset=0;
   document.querySelectorAll('.period-tabs .rtab').forEach(function(b){b.classList.remove('active');});
   btn.classList.add('active');renderHome();
+}
+function shiftHomeOverview(dir){
+  if(homePeriod==='week')homeWeekOffset+=dir;
+  else if(homePeriod==='month')homeMonthOffset+=dir;
+  else return;
+  renderHome();
+}
+function weekDatesOffset(off){
+  var d=new Date();d.setDate(d.getDate()+off*7);
+  var day=d.getDay(),mon=new Date(d);mon.setDate(d.getDate()-(day===0?6:day-1));
+  var a=[];for(var i=0;i<7;i++){var x=new Date(mon);x.setDate(mon.getDate()+i);a.push(localYMD(x));}return a;
 }
 function weekDotsHTML(dates,hasFn,colorClass){
   var days=['一','二','三','四','五','六','日'],t=today();
@@ -3164,6 +3177,7 @@ function renderHome(){
     }
     dash.innerHTML=_hg.length?'<div class="home-growth-grid" style="grid-template-columns:repeat('+_hg.length+',1fr)">'+_hg.join('')+'</div>':'';
   } else if(homePeriod==='week'){
+    wd=weekDatesOffset(homeWeekOffset);
     var days=['一','二','三','四','五','六','日'];
     var isGrowthOn=appSettings.pages.growth;
     var isReadOn=isGrowthOn&&effGrowthOn('reading');
@@ -3188,7 +3202,7 @@ function renderHome(){
   } else {
     // 本月習慣日曆圈圈
     var allDaysInMonth=[];
-    var d0=new Date();
+    var d0=new Date();d0.setDate(1);d0.setMonth(d0.getMonth()+homeMonthOffset);
     var totalInMonth=new Date(d0.getFullYear(),d0.getMonth()+1,0).getDate();
     for(var i=1;i<=totalInMonth;i++){
       var dx=new Date(d0.getFullYear(),d0.getMonth(),i);
@@ -3218,6 +3232,26 @@ function renderHome(){
     if(isExOnM){var eD=allDaysInMonth.filter(function(d){return d<=todayStr&&exercises.some(function(e){return e.date===d;});}).length;monthSections+='<div style="margin-bottom:14px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px"><span style="font-size:12px;color:var(--text-2)">運動</span><span style="font-size:12px;color:var(--teal);font-weight:500">'+eD+' 天</span></div>'+monthDotGrid(function(d){return exercises.some(function(e){return e.date===d;});},'var(--teal)')+'</div>';}
     if(isMedOnM){var mD=allDaysInMonth.filter(function(d){return d<=todayStr&&medSessions.some(function(s){return s.date===d;});}).length;monthSections+='<div><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px"><span style="font-size:12px;color:var(--text-2)">冥想</span><span style="font-size:12px;color:var(--amber);font-weight:500">'+mD+' 天</span></div>'+monthDotGrid(function(d){return medSessions.some(function(s){return s.date===d;});},'var(--amber)')+'</div>';}
     dash.innerHTML=(monthSections?'<div class="home-section"><div class="home-section-title">本月習慣（共'+totalInMonth+'天）</div>'+monthSections+'</div>':'')+wakeSleepChart(allDaysInMonth,allDaysInMonth.map(function(d,i){return i%7===0?parseInt(d.slice(8)):'';}));
+  }
+  // 概覽期間切換列（本週／本月可左右滑動或點箭頭前後切換）
+  var pnav=document.getElementById('home-period-nav');
+  if(pnav){
+    if(isTodayView){pnav.style.display='none';pnav.innerHTML='';}
+    else{
+      var _lbl;
+      if(homePeriod==='week'){
+        var _w=weekDatesOffset(homeWeekOffset);
+        _lbl=homeWeekOffset===0?'本週':(parseInt(_w[0].slice(5,7),10)+'/'+parseInt(_w[0].slice(8),10)+' – '+parseInt(_w[6].slice(5,7),10)+'/'+parseInt(_w[6].slice(8),10));
+      } else {
+        var _bm=new Date();_bm.setDate(1);_bm.setMonth(_bm.getMonth()+homeMonthOffset);
+        _lbl=homeMonthOffset===0?'本月':(_bm.getFullYear()+'年'+(_bm.getMonth()+1)+'月');
+      }
+      var _navBtn='background:none;border:none;font-size:20px;color:var(--text-2);cursor:pointer;padding:2px 12px;line-height:1';
+      pnav.style.cssText='display:flex;align-items:center;justify-content:space-between;margin-bottom:10px';
+      pnav.innerHTML='<button style="'+_navBtn+'" data-action="home-ov-prev">‹</button>'
+        +'<span style="font-size:13px;font-weight:600;color:var(--text)">'+_lbl+'</span>'
+        +'<button style="'+_navBtn+'" data-action="home-ov-next">›</button>';
+    }
   }
   // 萬用計時器 widget（僅「今天」檢視顯示）
   renderTimerWidget();
@@ -5797,7 +5831,7 @@ function renderTimerWidget(){
     el.className='home-timer-card';
     el.innerHTML='<div style="display:flex;align-items:center;gap:10px">'
       +'<span id="home-timer-time" style="font-size:17px;font-weight:500;color:var(--text-3);font-variant-numeric:tabular-nums;flex-shrink:0">00:00:00</span>'
-      +'<input id="home-timer-input" type="text" placeholder="要做什麼？（選填）" value="'+esc(uTimerTitle||'')+'" '
+      +'<input id="home-timer-input" type="text" placeholder="" value="'+esc(uTimerTitle||'')+'" '
       +'style="flex:1;min-width:0;box-sizing:border-box;border:none;border-bottom:1px solid var(--border);background:transparent;padding:5px 2px;font-size:13px;color:var(--text);outline:none" '
       +'oninput="uTimerTitle=this.value" onclick="event.stopPropagation()">'
       +'<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();startUTimerHome()" style="flex-shrink:0">開始</button>'
@@ -6057,6 +6091,8 @@ document.body.addEventListener('click',function(e){
   else if(action==='proj-open'){openProjectModal(el.dataset.pid);}
   else if(action==='proj-step-done'){completeProjectStep(el.dataset.pid,el.dataset.sid);}
   else if(action==='home-proj-open'){switchPage('projects',document.getElementById('nav-projects'));}
+  else if(action==='home-ov-prev'){shiftHomeOverview(-1);}
+  else if(action==='home-ov-next'){shiftHomeOverview(1);}
   else if(action==='proj-draft-toggle'){var _i=parseInt(el.dataset.idx);_projDraft.steps[_i].done=!_projDraft.steps[_i].done;renderProjStepsEditor();}
   else if(action==='proj-draft-up'){var _j=parseInt(el.dataset.idx);var _t=_projDraft.steps[_j];_projDraft.steps[_j]=_projDraft.steps[_j-1];_projDraft.steps[_j-1]=_t;renderProjStepsEditor();}
   else if(action==='proj-draft-del'){_projDraft.steps.splice(parseInt(el.dataset.idx),1);renderProjStepsEditor();}
@@ -6689,6 +6725,18 @@ function renderCheckinReview(){
     var dy=e.changedTouches[0].clientY-_ty;
     if(Math.abs(dx)<50||Math.abs(dx)<Math.abs(dy)*1.5)return;
     shiftJournalDate(dx<0?(journalView==='week'?7:1):(journalView==='week'?-7:-1));
+  },{passive:true});
+})();
+// ── 主頁本週／本月概覽左右滑動切換 ─────────────────────
+(function(){
+  var hd=document.getElementById('home-dashboard');if(!hd)return;
+  var _hx=0,_hy=0;
+  hd.addEventListener('touchstart',function(e){_hx=e.changedTouches[0].clientX;_hy=e.changedTouches[0].clientY;},{passive:true});
+  hd.addEventListener('touchend',function(e){
+    if(homePeriod==='today')return;
+    var dx=e.changedTouches[0].clientX-_hx,dy=e.changedTouches[0].clientY-_hy;
+    if(Math.abs(dx)<45||Math.abs(dx)<Math.abs(dy)*1.5)return;
+    shiftHomeOverview(dx<0?1:-1);
   },{passive:true});
 })();
 // ── 記帳圓餅圖左右滑動切換月份 ─────────────────────────
