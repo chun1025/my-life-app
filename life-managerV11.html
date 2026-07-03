@@ -821,9 +821,15 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
         <span id="proj-cal-lbl" style="font-size:14px;font-weight:600;color:var(--text)"></span>
         <button class="pcal-navbtn" data-action="proj-cal-next">›</button>
       </div>
-      <button class="btn btn-ghost btn-sm" data-action="cal-event-add" style="flex-shrink:0">＋ 事務</button>
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;flex-shrink:0" title="只看事務、找出空檔天">
+        <span style="font-size:12px;color:var(--text-2)">隱藏專案</span>
+        <span class="ios-toggle"><input type="checkbox" id="pcal-hide-proj" onchange="setProjHideProjects(this.checked)"><span class="ios-track"></span></span>
+      </label>
     </div>
     <div id="proj-calendar"></div>
+    <div style="margin-top:10px">
+      <button class="btn btn-ghost btn-sm" data-action="cal-event-add">＋ 事務</button>
+    </div>
   </div>
 </div>
 
@@ -1652,8 +1658,9 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
   <div class="modal">
     <div class="modal-title"><span id="proj-modal-title">新增專案</span> <button class="modal-close" onclick="closeModal('project')">✕</button></div>
     <input type="hidden" id="proj-id">
-    <div class="field"><label>專案名稱</label><input type="text" id="proj-name" placeholder="例：碩士論文、五年級輔導方案" autocomplete="off"></div>
-    <div class="field"><label>類別</label><input type="text" id="proj-cat" list="proj-cat-suggest" placeholder="例：工作、論文、課程、讀書、個人" autocomplete="off"><datalist id="proj-cat-suggest"><option value="工作"><option value="論文"><option value="研究所課程"><option value="讀書計畫"><option value="個人"></datalist></div>
+    <div class="field"><label>專案名稱</label><input type="text" id="proj-name" placeholder="" autocomplete="off"></div>
+    <div class="field"><label>類別</label><input type="text" id="proj-cat" list="proj-cat-suggest" placeholder="" autocomplete="off" oninput="_projSyncColorPicker()"><datalist id="proj-cat-suggest"><option value="工作"><option value="論文"><option value="研究所課程"><option value="讀書計畫"><option value="個人"></datalist></div>
+    <div class="field"><label>顏色</label><div id="proj-color-picker"></div></div>
     <div style="display:flex;gap:10px">
       <div class="field" style="flex:1"><label>截止日（選填）</label><input type="date" id="proj-due"></div>
       <div class="field" style="flex:1"><label>狀態</label><select id="proj-status"><option value="active">進行中</option><option value="paused">暫停</option><option value="done">已完成</option></select></div>
@@ -1671,8 +1678,9 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
   <div class="modal">
     <div class="modal-title"><span id="cev-modal-title">安排事務</span> <button class="modal-close" onclick="closeModal('cal-event')">✕</button></div>
     <input type="hidden" id="cev-id">
-    <div class="field"><label>事務名稱</label><input type="text" id="cev-title" placeholder="例：家庭出遊、研習、會議" autocomplete="off"></div>
-    <div class="field"><label>類別</label><input type="text" id="cev-cat" list="cev-cat-suggest" placeholder="例：工作、出遊、家庭、休假" autocomplete="off"><datalist id="cev-cat-suggest"><option value="工作"><option value="出遊"><option value="家庭"><option value="休假"><option value="會議"><option value="研習"></datalist></div>
+    <div class="field"><label>事務名稱</label><input type="text" id="cev-title" placeholder="" autocomplete="off"></div>
+    <div class="field"><label>類別</label><input type="text" id="cev-cat" list="cev-cat-suggest" placeholder="" autocomplete="off" oninput="_cevSyncColorPicker()"><datalist id="cev-cat-suggest"><option value="工作"><option value="出遊"><option value="家庭"><option value="休假"><option value="會議"><option value="研習"></datalist></div>
+    <div class="field"><label>顏色</label><div id="cev-color-picker"></div></div>
     <div style="display:flex;gap:10px">
       <div class="field" style="flex:1"><label>開始日期</label><input type="date" id="cev-start"></div>
       <div class="field" style="flex:1"><label>結束日期</label><input type="date" id="cev-end"></div>
@@ -2839,6 +2847,19 @@ function projCatColor(cat){
   return PROJ_PALETTE[h%PROJ_PALETTE.length];
 }
 function projCat(k){return {label:k||'未分類',color:projCatColor(k)};}
+// 有效顏色：優先使用自訂顏色，否則依類別自動配色（維持莫蘭迪風格）
+function projColor(p){return (p&&p.color)||projCatColor(p&&p.category);}
+function calEventColor(e){return (e&&e.color)||projCatColor(e&&e.category);}
+// 顏色色票（沿用專案莫蘭迪調色盤，確保與原本風格一致）
+function _colorSwatchHTML(selected,action){
+  var sel=(selected||'').toLowerCase();
+  return '<div style="display:flex;flex-wrap:wrap;gap:9px">'+PROJ_PALETTE.map(function(c){
+    var on=c.toLowerCase()===sel;
+    return '<button type="button" data-action="'+action+'" data-color="'+c+'" title="'+c+'" '
+      +'style="width:30px;height:30px;border-radius:50%;background:'+c+';cursor:pointer;padding:0;'
+      +'border:2px solid '+(on?'var(--text)':'transparent')+';box-shadow:0 0 0 1px var(--border-med)'+(on?',0 0 0 4px var(--purple-light)':'')+'"></button>';
+  }).join('')+'</div>';
+}
 function projNextStep(p){return (p.steps||[]).filter(function(s){return !s.done;})[0]||null;}
 function _projDaysTo(due){return Math.round((new Date(due+'T00:00:00')-new Date(today()+'T00:00:00'))/86400000);}
 function _projDueInfo(due){
@@ -2880,6 +2901,7 @@ function renderProjects(){
   }
   el.innerHTML=list.map(function(p){
     var cat=projCat(p.category);
+    var pcol=projColor(p);
     var ns=projNextStep(p);
     var steps=p.steps||[];
     var doneN=steps.filter(function(s){return s.done;}).length;
@@ -2900,14 +2922,14 @@ function renderProjects(){
     }
     return '<div class="card" style="margin-bottom:10px;cursor:pointer" data-action="proj-open" data-pid="'+esc(p.id)+'">'
       +'<div style="display:flex;align-items:center;gap:8px">'
-        +'<span style="width:10px;height:10px;border-radius:50%;background:'+cat.color+';flex-shrink:0"></span>'
+        +'<span style="width:10px;height:10px;border-radius:50%;background:'+pcol+';flex-shrink:0"></span>'
         +'<span style="font-size:15px;font-weight:600;color:var(--text);flex:1;min-width:0;word-break:break-word">'+esc(p.name)+'</span>'
         +dueBadge
       +'</div>'
       +'<div style="display:flex;align-items:center;gap:8px;margin-top:6px">'
-        +'<span style="font-size:11px;color:'+cat.color+';background:var(--bg);border-radius:5px;padding:1px 7px;flex-shrink:0">'+esc(cat.label)+'</span>'
+        +'<span style="font-size:11px;color:'+pcol+';background:var(--bg);border-radius:5px;padding:1px 7px;flex-shrink:0">'+esc(cat.label)+'</span>'
         +'<span style="font-size:11px;color:var(--text-3);flex-shrink:0">'+doneN+'/'+steps.length+'</span>'
-        +'<div class="prog" style="flex:1;margin-top:0"><div class="prog-fill" style="width:'+pct+'%;background:'+cat.color+'"></div></div>'
+        +'<div class="prog" style="flex:1;margin-top:0"><div class="prog-fill" style="width:'+pct+'%;background:'+pcol+'"></div></div>'
       +'</div>'
       +nextBlock
       +'</div>';
@@ -2919,7 +2941,7 @@ function openProjectModal(id){
     if(!p)return;
     _projDraft=JSON.parse(JSON.stringify(p));
   } else {
-    _projDraft={id:'p'+Date.now(),name:'',category:'',status:'active',due:'',steps:[],createdAt:today()};
+    _projDraft={id:'p'+Date.now(),name:'',category:'',color:'',status:'active',due:'',steps:[],createdAt:today()};
   }
   document.getElementById('proj-modal-title').textContent=id?'編輯專案':'新增專案';
   document.getElementById('proj-id').value=_projDraft.id;
@@ -2928,9 +2950,16 @@ function openProjectModal(id){
   document.getElementById('proj-due').value=_projDraft.due||'';
   document.getElementById('proj-status').value=_projDraft.status||'active';
   document.getElementById('proj-delete-btn').style.display=id?'':'none';
+  renderProjColorPicker();
   renderProjStepsEditor();
   openModal('project');
 }
+function renderProjColorPicker(){
+  var el=document.getElementById('proj-color-picker');if(!el||!_projDraft)return;
+  var sel=_projDraft.color||projCatColor((document.getElementById('proj-cat').value||_projDraft.category||'').trim());
+  el.innerHTML=_colorSwatchHTML(sel,'proj-color-pick');
+}
+function _projSyncColorPicker(){if(_projDraft&&!_projDraft.color)renderProjColorPicker();}
 function renderProjStepsEditor(){
   var el=document.getElementById('proj-steps-editor');if(!el)return;
   var steps=_projDraft.steps||[];
@@ -2938,7 +2967,7 @@ function renderProjStepsEditor(){
     return '<div style="background:var(--bg);border-radius:10px;padding:9px 10px;margin-bottom:8px">'
       +'<div style="display:flex;align-items:center;gap:8px">'
         +'<div class="routine-check '+(s.done?'done':'')+'" data-action="proj-draft-toggle" data-idx="'+i+'" style="cursor:pointer;width:20px;height:20px;flex-shrink:0">'+(s.done?_PCHK:'')+'</div>'
-        +'<input type="text" value="'+esc(s.text)+'" oninput="_projDraft.steps['+i+'].text=this.value" placeholder="步驟內容" style="flex:1;min-width:0;border:none;background:transparent;padding:4px 0">'
+        +'<input type="text" value="'+esc(s.text)+'" oninput="_projDraft.steps['+i+'].text=this.value" placeholder="" style="flex:1;min-width:0;border:none;background:transparent;padding:4px 0">'
         +(i>0?'<button class="icon-btn" data-action="proj-draft-up" data-idx="'+i+'" style="color:var(--text-3);font-size:15px;padding:0 3px;flex-shrink:0" title="上移">↑</button>':'')
         +'<button class="icon-btn" data-action="proj-draft-del" data-idx="'+i+'" style="color:var(--red);font-size:18px;padding:0 4px;flex-shrink:0">×</button>'
       +'</div>'
@@ -2964,12 +2993,15 @@ function saveProject(){
   var idx=projects.findIndex(function(x){return String(x.id)===String(_projDraft.id);});
   if(idx>=0)projects[idx]=_projDraft;else projects.push(_projDraft);
   saveProjects();closeModal('project');renderProjects();
+  if(typeof projView!=='undefined'&&projView==='cal')renderProjCalendar();
   showToast(idx>=0?'專案已更新':'專案已新增');
 }
 function deleteProject(){
   if(!_projDraft)return;
   projects=projects.filter(function(x){return String(x.id)!==String(_projDraft.id);});
-  saveProjects();closeModal('project');renderProjects();showToast('專案已刪除');
+  saveProjects();closeModal('project');renderProjects();
+  if(typeof projView!=='undefined'&&projView==='cal')renderProjCalendar();
+  showToast('專案已刪除');
 }
 function completeProjectStep(pid,sid){
   var p=projects.find(function(x){return String(x.id)===String(pid);});if(!p)return;
@@ -3001,7 +3033,7 @@ function renderHomeProjects(){
     var cat=projCat(p.category);
     var ns=projNextStep(p);
     var nameRow='<div style="display:flex;align-items:center;gap:8px">'
-      +'<span style="width:9px;height:9px;border-radius:50%;background:'+cat.color+';flex-shrink:0"></span>'
+      +'<span style="width:9px;height:9px;border-radius:50%;background:'+projColor(p)+';flex-shrink:0"></span>'
       +'<span style="flex:1;min-width:0;font-size:14px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(p.name)+'</span>'
       +(ns?_projDaysTag(ns.due):'')
       +'</div>';
@@ -3047,7 +3079,7 @@ function renderStartNow(){
   sec.style.display='';
   el.innerHTML='<div class="startnow-card">'
     +'<div class="sn-top">'
-      +'<span class="sn-cat"><span style="width:8px;height:8px;border-radius:50%;background:'+cat.color+';display:inline-block;flex-shrink:0"></span>'+esc(cat.label)+'</span>'
+      +'<span class="sn-cat"><span style="width:8px;height:8px;border-radius:50%;background:'+projColor(pick.p)+';display:inline-block;flex-shrink:0"></span>'+esc(cat.label)+'</span>'
       +daysHtml
     +'</div>'
     +'<div class="sn-title">'+esc(pick.step.text)+'</div>'
@@ -3082,7 +3114,8 @@ function startNowDone(){
   completeProjectStep(p.id,ns.id);
 }
 // ── 專案月曆甘特（整月一覽，避免橫向過長）──────────────────
-var projView='list',projCalOffset=0;
+var projView='list',projCalOffset=0,projHideProjects=false;
+function setProjHideProjects(on){projHideProjects=on;renderProjCalendar();}
 function setProjView(v){
   projView=v;
   document.querySelectorAll('#page-projects .proj-vtab').forEach(function(b){b.classList.toggle('active',b.dataset.v===v);});
@@ -3098,6 +3131,7 @@ function renderProjCalendar(){
   var base=new Date();base.setDate(1);base.setMonth(base.getMonth()+projCalOffset);
   var y=base.getFullYear(),m=base.getMonth();
   var lbl=document.getElementById('proj-cal-lbl');if(lbl)lbl.textContent=y+'年'+(m+1)+'月';
+  var hideChk=document.getElementById('pcal-hide-proj');if(hideChk)hideChk.checked=projHideProjects;
   var daysInMonth=new Date(y,m+1,0).getDate();
   var firstDow=(new Date(y,m,1).getDay()+6)%7; // 週一為 0
   var gridStart=new Date(y,m,1);gridStart.setDate(1-firstDow);
@@ -3105,14 +3139,14 @@ function renderProjCalendar(){
   var tStr=today();
   // 收集所有（未結案專案的）有起訖或截止日的步驟
   var events=[];
-  projects.forEach(function(p){
+  if(!projHideProjects)projects.forEach(function(p){
     if((p.status||'active')==='done')return;
-    var col=projCatColor(p.category),catLbl=p.category||'未分類';
+    var col=projColor(p);
     (p.steps||[]).forEach(function(s){
       var st=s.start||s.due,en=s.due||s.start;
       if(!st&&!en)return;
       if(st>en){var tt=st;st=en;en=tt;}
-      events.push({kind:'step',pid:p.id,start:st,end:en,text:s.text||p.name,color:col,cat:catLbl,done:!!s.done,dl:(!s.start&&!!s.due)});
+      events.push({kind:'step',pid:p.id,start:st,end:en,text:s.text||p.name,color:col,legKey:'p:'+p.id,legLabel:p.name||'未命名專案',done:!!s.done,dl:(!s.start&&!!s.due)});
     });
   });
   // 自訂事務（工作、出遊等）以相同方式標記時間
@@ -3120,20 +3154,20 @@ function renderProjCalendar(){
     var st=e.start||e.end,en=e.end||e.start;
     if(!st&&!en)return;
     if(st>en){var tt=st;st=en;en=tt;}
-    events.push({kind:'event',eid:e.id,start:st,end:en,text:e.title||'（未命名）',color:projCatColor(e.category),cat:e.category||'其他',done:false,dl:false});
+    events.push({kind:'event',eid:e.id,start:st,end:en,text:e.title||'（未命名）',color:calEventColor(e),legKey:'e:'+e.id,legLabel:e.title||'（未命名）',done:false,dl:false});
   });
   var weekHdr='<div class="pcal-weekhdr">'+['一','二','三','四','五','六','日'].map(function(d){return '<div>'+d+'</div>';}).join('')+'</div>';
   // 圖例（先算，才能估算可用高度）
   var gStart=localYMD(gridStart);
   var gEnd=localYMD(new Date(gridStart.getFullYear(),gridStart.getMonth(),gridStart.getDate()+nWeeks*7-1));
   var visEvents=events.filter(function(ev){return ev.start<=gEnd&&ev.end>=gStart;});
-  var cats=[],catSeen={};
-  visEvents.forEach(function(ev){if(!catSeen[ev.cat]){catSeen[ev.cat]=1;cats.push(ev.cat);}});
-  var legend=cats.length?'<div class="pcal-legend">'+cats.map(function(c){return '<span class="pcal-leg"><span class="pcal-leg-dot" style="background:'+projCatColor(c)+'"></span>'+esc(c)+'</span>';}).join('')+'</div>':'';
+  var legItems=[],legSeen={};
+  visEvents.forEach(function(ev){if(!legSeen[ev.legKey]){legSeen[ev.legKey]=1;legItems.push({label:ev.legLabel,color:ev.color});}});
+  var legend=legItems.length?'<div class="pcal-legend">'+legItems.map(function(it){return '<span class="pcal-leg"><span class="pcal-leg-dot" style="background:'+it.color+'"></span>'+esc(it.label)+'</span>';}).join('')+'</div>':'';
   // 讓月曆盡量填滿手機可視高度：估算每週最小高度，把剩餘空間平均分給各週
   var numRowH=17,barH=15,barGap=2;
   var calTop=el.getBoundingClientRect().top;if(!calTop||calTop<40)calTop=180;
-  var availH=(window.innerHeight||720)-calTop-76/*底部導覽*/-(cats.length?46:0)/*圖例*/-24/*星期列*/-8;
+  var availH=(window.innerHeight||720)-calTop-76/*底部導覽*/-(legItems.length?46:0)/*圖例*/-24/*星期列*/-44/*新增事務鈕*/-8;
   var perWeek=Math.max(60,Math.min(148,Math.floor(availH/nWeeks)));
   var monthHtml='';
   for(var w=0;w<nWeeks;w++){
@@ -3170,6 +3204,7 @@ function renderProjCalendar(){
   el.innerHTML=weekHdr+'<div class="pcal-month">'+monthHtml+'</div>'
     +(visEvents.length?legend:'<div class="empty" style="padding:18px 0">此月份尚無事項，點任一天或「＋ 事務」開始安排</div>');
 }
+var _cevColor='';
 function openCalEventModal(id,presetDate){
   if(id){
     var e=calEvents.find(function(x){return String(x.id)===String(id);});if(!e)return;
@@ -3180,6 +3215,7 @@ function openCalEventModal(id,presetDate){
     document.getElementById('cev-start').value=e.start||'';
     document.getElementById('cev-end').value=e.end||'';
     document.getElementById('cev-delete-btn').style.display='';
+    _cevColor=e.color||'';
   } else {
     var d=presetDate||today();
     document.getElementById('cev-modal-title').textContent='安排事務';
@@ -3189,9 +3225,17 @@ function openCalEventModal(id,presetDate){
     document.getElementById('cev-start').value=d;
     document.getElementById('cev-end').value=d;
     document.getElementById('cev-delete-btn').style.display='none';
+    _cevColor='';
   }
+  renderCevColorPicker();
   openModal('cal-event');
 }
+function renderCevColorPicker(){
+  var el=document.getElementById('cev-color-picker');if(!el)return;
+  var sel=_cevColor||projCatColor((document.getElementById('cev-cat').value||'').trim());
+  el.innerHTML=_colorSwatchHTML(sel,'cev-color-pick');
+}
+function _cevSyncColorPicker(){if(!_cevColor)renderCevColorPicker();}
 function saveCalEvent(){
   var title=document.getElementById('cev-title').value.trim();
   if(!title){showToast('請輸入事務名稱');return;}
@@ -3203,9 +3247,9 @@ function saveCalEvent(){
   var id=document.getElementById('cev-id').value;
   if(id){
     var e=calEvents.find(function(x){return String(x.id)===String(id);});
-    if(e){e.title=title;e.category=cat;e.start=start;e.end=end;}
+    if(e){e.title=title;e.category=cat;e.start=start;e.end=end;e.color=_cevColor||'';}
   } else {
-    calEvents.push({id:'e'+Date.now(),title:title,category:cat,start:start,end:end});
+    calEvents.push({id:'e'+Date.now(),title:title,category:cat,start:start,end:end,color:_cevColor||''});
   }
   saveCalEvents();closeModal('cal-event');renderProjCalendar();
   showToast(id?'事務已更新':'事務已新增');
@@ -6384,6 +6428,8 @@ document.body.addEventListener('click',function(e){
   else if(action==='cal-event-add'){openCalEventModal(null);}
   else if(action==='cal-event-open'){openCalEventModal(el.dataset.eid);}
   else if(action==='cal-day-add'){openCalEventModal(null,el.dataset.date);}
+  else if(action==='proj-color-pick'){if(_projDraft){_projDraft.color=el.dataset.color;renderProjColorPicker();}}
+  else if(action==='cev-color-pick'){_cevColor=el.dataset.color;renderCevColorPicker();}
   else if(action==='proj-open'){openProjectModal(el.dataset.pid);}
   else if(action==='proj-step-done'){completeProjectStep(el.dataset.pid,el.dataset.sid);}
   else if(action==='home-proj-open'){switchPage('projects',document.getElementById('nav-projects'));}
