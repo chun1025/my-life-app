@@ -3094,7 +3094,18 @@ function renderProjCalendar(){
     });
   });
   var weekHdr='<div class="pcal-weekhdr">'+['一','二','三','四','五','六','日'].map(function(d){return '<div>'+d+'</div>';}).join('')+'</div>';
-  var numRowH=16,barH=15,barGap=2;
+  // 圖例（先算，才能估算可用高度）
+  var gStart=localYMD(gridStart);
+  var gEnd=localYMD(new Date(gridStart.getFullYear(),gridStart.getMonth(),gridStart.getDate()+nWeeks*7-1));
+  var visEvents=events.filter(function(ev){return ev.start<=gEnd&&ev.end>=gStart;});
+  var cats=[],catSeen={};
+  visEvents.forEach(function(ev){if(!catSeen[ev.cat]){catSeen[ev.cat]=1;cats.push(ev.cat);}});
+  var legend=cats.length?'<div class="pcal-legend">'+cats.map(function(c){return '<span class="pcal-leg"><span class="pcal-leg-dot" style="background:'+projCatColor(c)+'"></span>'+esc(c)+'</span>';}).join('')+'</div>':'';
+  // 讓月曆盡量填滿手機可視高度：估算每週最小高度，把剩餘空間平均分給各週
+  var numRowH=17,barH=15,barGap=2;
+  var calTop=el.getBoundingClientRect().top;if(!calTop||calTop<40)calTop=180;
+  var availH=(window.innerHeight||720)-calTop-76/*底部導覽*/-(cats.length?46:0)/*圖例*/-24/*星期列*/-8;
+  var perWeek=Math.max(60,Math.min(148,Math.floor(availH/nWeeks)));
   var monthHtml='';
   for(var w=0;w<nWeeks;w++){
     var days=[];
@@ -3110,7 +3121,7 @@ function renderProjCalendar(){
       }
       if(!placed){item.lane=lanes.length;lanes.push([item]);}
     });
-    var wkH=numRowH+Math.max(1,lanes.length)*(barH+barGap)+4;
+    var wkH=Math.max(perWeek,numRowH+Math.max(1,lanes.length)*(barH+barGap)+4);
     var cells='<div class="pcal-daysrow" style="position:absolute;inset:0">';
     for(var d=0;d<7;d++){
       var ds=days[d],inMonth=(new Date(ds+'T00:00:00').getMonth()===m),isT=ds===tStr;
@@ -3126,12 +3137,6 @@ function renderProjCalendar(){
     });
     monthHtml+='<div class="pcal-week" style="height:'+wkH+'px">'+cells+bars+'</div>';
   }
-  var gEnd=localYMD(new Date(gridStart.getFullYear(),gridStart.getMonth(),gridStart.getDate()+nWeeks*7-1));
-  var gStart=localYMD(gridStart);
-  var visEvents=events.filter(function(ev){return ev.start<=gEnd&&ev.end>=gStart;});
-  var cats=[],catSeen={};
-  visEvents.forEach(function(ev){if(!catSeen[ev.cat]){catSeen[ev.cat]=1;cats.push(ev.cat);}});
-  var legend=cats.length?'<div class="pcal-legend">'+cats.map(function(c){return '<span class="pcal-leg"><span class="pcal-leg-dot" style="background:'+projCatColor(c)+'"></span>'+esc(c)+'</span>';}).join('')+'</div>':'';
   el.innerHTML=weekHdr+'<div class="pcal-month">'+monthHtml+'</div>'
     +(visEvents.length?legend:'<div class="empty" style="padding:18px 0">此月份沒有設定開始或截止日期的步驟</div>');
 }
