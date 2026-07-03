@@ -816,9 +816,12 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
   </div>
   <div id="proj-cal-view" style="display:none">
     <div class="pcal-nav">
-      <button class="pcal-navbtn" data-action="proj-cal-prev">‹</button>
-      <span id="proj-cal-lbl" style="font-size:14px;font-weight:600;color:var(--text)"></span>
-      <button class="pcal-navbtn" data-action="proj-cal-next">›</button>
+      <div style="display:flex;align-items:center;gap:2px">
+        <button class="pcal-navbtn" data-action="proj-cal-prev">‹</button>
+        <span id="proj-cal-lbl" style="font-size:14px;font-weight:600;color:var(--text)"></span>
+        <button class="pcal-navbtn" data-action="proj-cal-next">›</button>
+      </div>
+      <button class="btn btn-ghost btn-sm" data-action="cal-event-add" style="flex-shrink:0">＋ 事務</button>
     </div>
     <div id="proj-calendar"></div>
   </div>
@@ -1664,6 +1667,23 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
   </div>
 </div>
 
+<div class="modal-overlay" id="modal-cal-event">
+  <div class="modal">
+    <div class="modal-title"><span id="cev-modal-title">安排事務</span> <button class="modal-close" onclick="closeModal('cal-event')">✕</button></div>
+    <input type="hidden" id="cev-id">
+    <div class="field"><label>事務名稱</label><input type="text" id="cev-title" placeholder="例：家庭出遊、研習、會議" autocomplete="off"></div>
+    <div class="field"><label>類別</label><input type="text" id="cev-cat" list="cev-cat-suggest" placeholder="例：工作、出遊、家庭、休假" autocomplete="off"><datalist id="cev-cat-suggest"><option value="工作"><option value="出遊"><option value="家庭"><option value="休假"><option value="會議"><option value="研習"></datalist></div>
+    <div style="display:flex;gap:10px">
+      <div class="field" style="flex:1"><label>開始日期</label><input type="date" id="cev-start"></div>
+      <div class="field" style="flex:1"><label>結束日期</label><input type="date" id="cev-end"></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:16px">
+      <button class="btn btn-danger" id="cev-delete-btn" style="flex:1;justify-content:center" onclick="deleteCalEvent()">刪除</button>
+      <button class="btn btn-primary" style="flex:2;justify-content:center" onclick="saveCalEvent()">儲存</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -1725,6 +1745,7 @@ function saveCoursework(){save('lm-coursework',coursework);}
 function saveGradEvents(){save('lm-grad-events',gradEvents);}
 function saveGradSemester(){save('lm-grad-semester',gradSemester);}
 var projects=load('lm-projects',[]);if(!Array.isArray(projects))projects=[];
+var calEvents=load('lm-cal-events',[]);if(!Array.isArray(calEvents))calEvents=[];
 var reviews=load('lm-reviews',{});
 var readSessions=load('lm-sessions',[]);
 // 補欄位：每筆閱讀紀錄需有 id 與起訖時間（舊資料 time 視為開始時間）
@@ -2811,6 +2832,7 @@ var _PCHK='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="w
 var projFilter='active';
 var _projDraft=null;
 function saveProjects(){save('lm-projects',projects);}
+function saveCalEvents(){save('lm-cal-events',calEvents);}
 function projCatColor(cat){
   if(!cat)return '#A8A08C';
   var h=0;for(var i=0;i<cat.length;i++)h=(h*31+cat.charCodeAt(i))>>>0;
@@ -3090,8 +3112,15 @@ function renderProjCalendar(){
       var st=s.start||s.due,en=s.due||s.start;
       if(!st&&!en)return;
       if(st>en){var tt=st;st=en;en=tt;}
-      events.push({pid:p.id,start:st,end:en,text:s.text||p.name,color:col,cat:catLbl,done:!!s.done,dl:(!s.start&&!!s.due)});
+      events.push({kind:'step',pid:p.id,start:st,end:en,text:s.text||p.name,color:col,cat:catLbl,done:!!s.done,dl:(!s.start&&!!s.due)});
     });
+  });
+  // 自訂事務（工作、出遊等）以相同方式標記時間
+  calEvents.forEach(function(e){
+    var st=e.start||e.end,en=e.end||e.start;
+    if(!st&&!en)return;
+    if(st>en){var tt=st;st=en;en=tt;}
+    events.push({kind:'event',eid:e.id,start:st,end:en,text:e.title||'（未命名）',color:projCatColor(e.category),cat:e.category||'其他',done:false,dl:false});
   });
   var weekHdr='<div class="pcal-weekhdr">'+['一','二','三','四','五','六','日'].map(function(d){return '<div>'+d+'</div>';}).join('')+'</div>';
   // 圖例（先算，才能估算可用高度）
@@ -3125,7 +3154,7 @@ function renderProjCalendar(){
     var cells='<div class="pcal-daysrow" style="position:absolute;inset:0">';
     for(var d=0;d<7;d++){
       var ds=days[d],inMonth=(new Date(ds+'T00:00:00').getMonth()===m),isT=ds===tStr;
-      cells+='<div class="pcal-daycell'+(isT?' pcal-today':'')+'"><div class="pcal-daynum'+(inMonth?'':' pcal-out')+'">'+parseInt(ds.slice(8),10)+'</div></div>';
+      cells+='<div class="pcal-daycell'+(isT?' pcal-today':'')+'" data-action="cal-day-add" data-date="'+ds+'"><div class="pcal-daynum'+(inMonth?'':' pcal-out')+'">'+parseInt(ds.slice(8),10)+'</div></div>';
     }
     cells+='</div>';
     var bars='';
@@ -3133,12 +3162,58 @@ function renderProjCalendar(){
       var ev=item.ev,left=(item.sc/7*100),width=((item.ec-item.sc+1)/7*100),top=numRowH+item.lane*(barH+barGap);
       var st='left:'+left+'%;width:calc('+width+'% - 3px);top:'+top+'px;';
       st+=ev.dl?('background:var(--surface);border:1px solid '+ev.color+';color:'+ev.color+';line-height:13px'):('background:'+ev.color+';color:#fff');
-      bars+='<div class="pcal-bar'+(ev.done?' pcal-bar-done':'')+'" data-action="proj-open" data-pid="'+esc(ev.pid)+'" style="'+st+'" title="'+esc(ev.text)+'">'+(ev.dl?'⚑ ':'')+esc(ev.text)+'</div>';
+      var act=ev.kind==='event'?('data-action="cal-event-open" data-eid="'+esc(ev.eid)+'"'):('data-action="proj-open" data-pid="'+esc(ev.pid)+'"');
+      bars+='<div class="pcal-bar'+(ev.done?' pcal-bar-done':'')+'" '+act+' style="'+st+'" title="'+esc(ev.text)+'">'+(ev.dl?'⚑ ':'')+esc(ev.text)+'</div>';
     });
     monthHtml+='<div class="pcal-week" style="height:'+wkH+'px">'+cells+bars+'</div>';
   }
   el.innerHTML=weekHdr+'<div class="pcal-month">'+monthHtml+'</div>'
-    +(visEvents.length?legend:'<div class="empty" style="padding:18px 0">此月份沒有設定開始或截止日期的步驟</div>');
+    +(visEvents.length?legend:'<div class="empty" style="padding:18px 0">此月份尚無事項，點任一天或「＋ 事務」開始安排</div>');
+}
+function openCalEventModal(id,presetDate){
+  if(id){
+    var e=calEvents.find(function(x){return String(x.id)===String(id);});if(!e)return;
+    document.getElementById('cev-modal-title').textContent='編輯事務';
+    document.getElementById('cev-id').value=e.id;
+    document.getElementById('cev-title').value=e.title||'';
+    document.getElementById('cev-cat').value=e.category||'';
+    document.getElementById('cev-start').value=e.start||'';
+    document.getElementById('cev-end').value=e.end||'';
+    document.getElementById('cev-delete-btn').style.display='';
+  } else {
+    var d=presetDate||today();
+    document.getElementById('cev-modal-title').textContent='安排事務';
+    document.getElementById('cev-id').value='';
+    document.getElementById('cev-title').value='';
+    document.getElementById('cev-cat').value='';
+    document.getElementById('cev-start').value=d;
+    document.getElementById('cev-end').value=d;
+    document.getElementById('cev-delete-btn').style.display='none';
+  }
+  openModal('cal-event');
+}
+function saveCalEvent(){
+  var title=document.getElementById('cev-title').value.trim();
+  if(!title){showToast('請輸入事務名稱');return;}
+  var start=document.getElementById('cev-start').value,end=document.getElementById('cev-end').value;
+  if(!start&&!end){showToast('請設定日期');return;}
+  if(!start)start=end;if(!end)end=start;
+  if(start>end){var t=start;start=end;end=t;}
+  var cat=document.getElementById('cev-cat').value.trim();
+  var id=document.getElementById('cev-id').value;
+  if(id){
+    var e=calEvents.find(function(x){return String(x.id)===String(id);});
+    if(e){e.title=title;e.category=cat;e.start=start;e.end=end;}
+  } else {
+    calEvents.push({id:'e'+Date.now(),title:title,category:cat,start:start,end:end});
+  }
+  saveCalEvents();closeModal('cal-event');renderProjCalendar();
+  showToast(id?'事務已更新':'事務已新增');
+}
+function deleteCalEvent(){
+  var id=document.getElementById('cev-id').value;
+  calEvents=calEvents.filter(function(x){return String(x.id)!==String(id);});
+  saveCalEvents();closeModal('cal-event');renderProjCalendar();showToast('事務已刪除');
 }
 function renderCourseList(){
   var el=document.getElementById('grad-course-list');if(!el)return;
@@ -6306,6 +6381,9 @@ document.body.addEventListener('click',function(e){
   else if(action==='proj-view'){setProjView(el.dataset.v);}
   else if(action==='proj-cal-prev'){shiftProjCal(-1);}
   else if(action==='proj-cal-next'){shiftProjCal(1);}
+  else if(action==='cal-event-add'){openCalEventModal(null);}
+  else if(action==='cal-event-open'){openCalEventModal(el.dataset.eid);}
+  else if(action==='cal-day-add'){openCalEventModal(null,el.dataset.date);}
   else if(action==='proj-open'){openProjectModal(el.dataset.pid);}
   else if(action==='proj-step-done'){completeProjectStep(el.dataset.pid,el.dataset.sid);}
   else if(action==='home-proj-open'){switchPage('projects',document.getElementById('nav-projects'));}
@@ -7011,7 +7089,7 @@ document.body.addEventListener('focusin',function(e){
 
 // ── 雲端同步（Supabase）──────────────────────────────
 var sbClient=null,sbUser=null,syncTimer=null,_syncPending=false;
-var DATA_KEYS=['lm-books','lm-exercises','lm-reviews','lm-sessions','lm-med','lm-cases','lm-wmenus','lm-ex-goal','lm-journal','lm-timer-logs','lm-quotes','lm-checkins','lm-morning-base','lm-morning-logs','lm-morning-fs','lm-night-plans','lm-notes','lm-note-tags','lm-expenses','lm-assets','lm-dayplans','lm-plan-palette','lm-courses','lm-coursework','lm-grad-events','lm-grad-semester','lm-projects'];
+var DATA_KEYS=['lm-books','lm-exercises','lm-reviews','lm-sessions','lm-med','lm-cases','lm-wmenus','lm-ex-goal','lm-journal','lm-timer-logs','lm-quotes','lm-checkins','lm-morning-base','lm-morning-logs','lm-morning-fs','lm-night-plans','lm-notes','lm-note-tags','lm-expenses','lm-assets','lm-dayplans','lm-plan-palette','lm-courses','lm-coursework','lm-grad-events','lm-grad-semester','lm-projects','lm-cal-events'];
 
 var SB_URL='https://gsjljwupeyvqdsrzbadf.supabase.co';
 var SB_KEY='sb_publishable_2jglYptRkedrlZe-ZPHpbQ_U-A_R6ES';
@@ -7333,6 +7411,7 @@ function reloadAllFromStorage(){
   gradSemester=load('lm-grad-semester',{name:'',start:'',end:''});
   if(!gradSemester||typeof gradSemester!=='object')gradSemester={name:'',start:'',end:''};
   projects=load('lm-projects',[]);if(!Array.isArray(projects))projects=[];
+  calEvents=load('lm-cal-events',[]);if(!Array.isArray(calEvents))calEvents=[];
   renderHome();renderBooks();renderExercise();renderMedHistory();renderCases();renderReview();
   if(currentPage==='journal')renderJournal();
   if(currentPage==='growth')renderGrowth();
