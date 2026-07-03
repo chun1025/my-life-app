@@ -240,6 +240,28 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
 .sn-start{flex:1;background:rgba(255,255,255,.94);color:#3D4D31;border:none;border-radius:13px;padding:13px;font-size:15px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;box-shadow:0 2px 6px rgba(0,0,0,.12)}
 .sn-check{width:54px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.30);border-radius:13px;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .sn-start:active,.sn-check:active{transform:scale(.97)}
+/* 專案：清單／月曆檢視切換 + 月曆甘特 */
+.proj-viewbar{display:flex;gap:6px;margin-bottom:14px}
+.proj-vtab{flex:1;padding:8px;border-radius:99px;font-size:13px;font-weight:500;border:0.5px solid var(--border-med);background:transparent;color:var(--text-2);cursor:pointer;transition:all .15s}
+.proj-vtab.active{background:var(--purple);color:#fff;border-color:var(--purple)}
+.pcal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.pcal-navbtn{background:none;border:none;font-size:20px;color:var(--text-2);cursor:pointer;padding:2px 14px;line-height:1}
+.pcal-weekhdr{display:flex;margin-bottom:3px}
+.pcal-weekhdr>div{flex:1;text-align:center;font-size:10px;color:var(--text-3)}
+.pcal-month{border:0.5px solid var(--border);border-radius:10px;overflow:hidden;background:var(--surface)}
+.pcal-week{position:relative;border-top:0.5px solid var(--border)}
+.pcal-week:first-child{border-top:none}
+.pcal-daysrow{display:flex}
+.pcal-daycell{flex:1;border-right:0.5px solid var(--border);box-sizing:border-box}
+.pcal-daycell:last-child{border-right:none}
+.pcal-daycell.pcal-today{background:var(--purple-light)}
+.pcal-daynum{font-size:10px;color:var(--text-2);text-align:right;padding:2px 4px 0 0}
+.pcal-daynum.pcal-out{color:var(--text-3);opacity:.5}
+.pcal-bar{position:absolute;height:15px;border-radius:4px;font-size:9px;padding:0 4px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;line-height:15px;cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,.14);font-weight:500}
+.pcal-bar-done{opacity:.4;text-decoration:line-through}
+.pcal-legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:12px}
+.pcal-leg{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text-2)}
+.pcal-leg-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
 .jn-cat-btn{padding:6px 12px;border-radius:99px;font-size:12px;font-weight:500;border:2px solid transparent;cursor:pointer;transition:border-color .15s,transform .1s;white-space:nowrap}
 .jn-cat-btn:active{transform:scale(0.96)}
 .jn-cat-btn.selected{border-color:rgba(0,0,0,0.35)!important}
@@ -777,15 +799,29 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
 
 <!-- 專案 -->
 <div class="page" id="page-projects">
-  <div class="chip-row" id="proj-filter-row">
-    <button class="chip active" data-action="proj-filter" data-f="active">進行中</button>
-    <button class="chip" data-action="proj-filter" data-f="paused">暫停</button>
-    <button class="chip" data-action="proj-filter" data-f="done">已完成</button>
+  <div class="proj-viewbar">
+    <button class="proj-vtab active" data-action="proj-view" data-v="list">清單</button>
+    <button class="proj-vtab" data-action="proj-view" data-v="cal">月曆</button>
   </div>
-  <div id="project-list"></div>
-  <button class="add-row" onclick="openProjectModal(null)">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>新增專案
-  </button>
+  <div id="proj-list-view">
+    <div class="chip-row" id="proj-filter-row">
+      <button class="chip active" data-action="proj-filter" data-f="active">進行中</button>
+      <button class="chip" data-action="proj-filter" data-f="paused">暫停</button>
+      <button class="chip" data-action="proj-filter" data-f="done">已完成</button>
+    </div>
+    <div id="project-list"></div>
+    <button class="add-row" onclick="openProjectModal(null)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>新增專案
+    </button>
+  </div>
+  <div id="proj-cal-view" style="display:none">
+    <div class="pcal-nav">
+      <button class="pcal-navbtn" data-action="proj-cal-prev">‹</button>
+      <span id="proj-cal-lbl" style="font-size:14px;font-weight:600;color:var(--text)"></span>
+      <button class="pcal-navbtn" data-action="proj-cal-next">›</button>
+    </div>
+    <div id="proj-calendar"></div>
+  </div>
 </div>
 
 </div>
@@ -1870,7 +1906,7 @@ function switchPage(name,btn){
   if(name==='money')setMoneySub(moneySub);
   if(name==='plan')renderPlan();
   if(name==='grad')renderGrad();
-  if(name==='projects')renderProjects();
+  if(name==='projects'){if(projView==='cal')renderProjCalendar();else renderProjects();}
 }
 
 // ── 成長頁（容器）──────────────────────────────────────
@@ -2877,13 +2913,20 @@ function renderProjStepsEditor(){
   var el=document.getElementById('proj-steps-editor');if(!el)return;
   var steps=_projDraft.steps||[];
   el.innerHTML=(steps.length?steps.map(function(s,i){
-    return '<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">'
-      +'<div class="routine-check '+(s.done?'done':'')+'" data-action="proj-draft-toggle" data-idx="'+i+'" style="cursor:pointer;width:20px;height:20px">'+(s.done?_PCHK:'')+'</div>'
-      +(i>0?'<button class="icon-btn" data-action="proj-draft-up" data-idx="'+i+'" style="color:var(--text-3);font-size:15px;padding:0 3px" title="上移">↑</button>':'<span style="width:19px;flex-shrink:0"></span>')
-      +'<input type="text" value="'+esc(s.text)+'" oninput="_projDraft.steps['+i+'].text=this.value" placeholder="步驟內容" style="flex:1;min-width:0">'
-      +'<input type="date" value="'+esc(s.due||'')+'" onchange="_projDraft.steps['+i+'].due=this.value" style="width:132px;flex-shrink:0">'
-      +'<button class="icon-btn" data-action="proj-draft-del" data-idx="'+i+'" style="color:var(--red);font-size:18px;padding:0 4px;flex-shrink:0">×</button>'
-      +'</div>';
+    return '<div style="background:var(--bg);border-radius:10px;padding:9px 10px;margin-bottom:8px">'
+      +'<div style="display:flex;align-items:center;gap:8px">'
+        +'<div class="routine-check '+(s.done?'done':'')+'" data-action="proj-draft-toggle" data-idx="'+i+'" style="cursor:pointer;width:20px;height:20px;flex-shrink:0">'+(s.done?_PCHK:'')+'</div>'
+        +'<input type="text" value="'+esc(s.text)+'" oninput="_projDraft.steps['+i+'].text=this.value" placeholder="步驟內容" style="flex:1;min-width:0;border:none;background:transparent;padding:4px 0">'
+        +(i>0?'<button class="icon-btn" data-action="proj-draft-up" data-idx="'+i+'" style="color:var(--text-3);font-size:15px;padding:0 3px;flex-shrink:0" title="上移">↑</button>':'')
+        +'<button class="icon-btn" data-action="proj-draft-del" data-idx="'+i+'" style="color:var(--red);font-size:18px;padding:0 4px;flex-shrink:0">×</button>'
+      +'</div>'
+      +'<div style="display:flex;align-items:center;gap:6px;margin-top:6px;padding-left:28px">'
+        +'<span style="font-size:11px;color:var(--text-3);flex-shrink:0">開始</span>'
+        +'<input type="date" value="'+esc(s.start||'')+'" onchange="_projDraft.steps['+i+'].start=this.value" style="flex:1;min-width:0;padding:6px 8px;font-size:12px">'
+        +'<span style="font-size:11px;color:var(--text-3);flex-shrink:0">截止</span>'
+        +'<input type="date" value="'+esc(s.due||'')+'" onchange="_projDraft.steps['+i+'].due=this.value" style="flex:1;min-width:0;padding:6px 8px;font-size:12px">'
+      +'</div>'
+    +'</div>';
   }).join(''):'<div style="font-size:12px;color:var(--text-3);padding:6px 0">尚無步驟，點下方新增</div>')
   +'<button class="btn btn-ghost btn-sm" data-action="proj-draft-add" style="margin-top:4px">＋ 新增步驟</button>';
 }
@@ -3015,6 +3058,82 @@ function startNowDone(){
   var p=projects.find(function(x){return String(x.id)===String(_startNowPid);});if(!p)return;
   var ns=projNextStep(p);if(!ns)return;
   completeProjectStep(p.id,ns.id);
+}
+// ── 專案月曆甘特（整月一覽，避免橫向過長）──────────────────
+var projView='list',projCalOffset=0;
+function setProjView(v){
+  projView=v;
+  document.querySelectorAll('#page-projects .proj-vtab').forEach(function(b){b.classList.toggle('active',b.dataset.v===v);});
+  var lv=document.getElementById('proj-list-view'),cv=document.getElementById('proj-cal-view');
+  if(lv)lv.style.display=v==='list'?'':'none';
+  if(cv)cv.style.display=v==='cal'?'':'none';
+  if(v==='cal')renderProjCalendar();else renderProjects();
+}
+function shiftProjCal(dir){projCalOffset+=dir;renderProjCalendar();}
+function _pcalDayDiff(a,b){return Math.round((new Date(a+'T00:00:00')-new Date(b+'T00:00:00'))/86400000);}
+function renderProjCalendar(){
+  var el=document.getElementById('proj-calendar');if(!el)return;
+  var base=new Date();base.setDate(1);base.setMonth(base.getMonth()+projCalOffset);
+  var y=base.getFullYear(),m=base.getMonth();
+  var lbl=document.getElementById('proj-cal-lbl');if(lbl)lbl.textContent=y+'年'+(m+1)+'月';
+  var daysInMonth=new Date(y,m+1,0).getDate();
+  var firstDow=(new Date(y,m,1).getDay()+6)%7; // 週一為 0
+  var gridStart=new Date(y,m,1);gridStart.setDate(1-firstDow);
+  var nWeeks=Math.ceil((firstDow+daysInMonth)/7);
+  var tStr=today();
+  // 收集所有（未結案專案的）有起訖或截止日的步驟
+  var events=[];
+  projects.forEach(function(p){
+    if((p.status||'active')==='done')return;
+    var col=projCatColor(p.category),catLbl=p.category||'未分類';
+    (p.steps||[]).forEach(function(s){
+      var st=s.start||s.due,en=s.due||s.start;
+      if(!st&&!en)return;
+      if(st>en){var tt=st;st=en;en=tt;}
+      events.push({pid:p.id,start:st,end:en,text:s.text||p.name,color:col,cat:catLbl,done:!!s.done,dl:(!s.start&&!!s.due)});
+    });
+  });
+  var weekHdr='<div class="pcal-weekhdr">'+['一','二','三','四','五','六','日'].map(function(d){return '<div>'+d+'</div>';}).join('')+'</div>';
+  var numRowH=16,barH=15,barGap=2;
+  var monthHtml='';
+  for(var w=0;w<nWeeks;w++){
+    var days=[];
+    for(var d=0;d<7;d++){var dt=new Date(gridStart);dt.setDate(gridStart.getDate()+w*7+d);days.push(localYMD(dt));}
+    var wevs=events.filter(function(ev){return ev.start<=days[6]&&ev.end>=days[0];}).map(function(ev){
+      return {ev:ev,sc:Math.max(0,_pcalDayDiff(ev.start,days[0])),ec:Math.min(6,_pcalDayDiff(ev.end,days[0]))};
+    }).sort(function(a,b){return a.sc-b.sc||b.ec-a.ec;});
+    var lanes=[];
+    wevs.forEach(function(item){
+      var placed=false;
+      for(var li=0;li<lanes.length;li++){
+        if(lanes[li].every(function(x){return item.sc>x.ec||item.ec<x.sc;})){lanes[li].push(item);item.lane=li;placed=true;break;}
+      }
+      if(!placed){item.lane=lanes.length;lanes.push([item]);}
+    });
+    var wkH=numRowH+Math.max(1,lanes.length)*(barH+barGap)+4;
+    var cells='<div class="pcal-daysrow" style="position:absolute;inset:0">';
+    for(var d=0;d<7;d++){
+      var ds=days[d],inMonth=(new Date(ds+'T00:00:00').getMonth()===m),isT=ds===tStr;
+      cells+='<div class="pcal-daycell'+(isT?' pcal-today':'')+'"><div class="pcal-daynum'+(inMonth?'':' pcal-out')+'">'+parseInt(ds.slice(8),10)+'</div></div>';
+    }
+    cells+='</div>';
+    var bars='';
+    wevs.forEach(function(item){
+      var ev=item.ev,left=(item.sc/7*100),width=((item.ec-item.sc+1)/7*100),top=numRowH+item.lane*(barH+barGap);
+      var st='left:'+left+'%;width:calc('+width+'% - 3px);top:'+top+'px;';
+      st+=ev.dl?('background:var(--surface);border:1px solid '+ev.color+';color:'+ev.color+';line-height:13px'):('background:'+ev.color+';color:#fff');
+      bars+='<div class="pcal-bar'+(ev.done?' pcal-bar-done':'')+'" data-action="proj-open" data-pid="'+esc(ev.pid)+'" style="'+st+'" title="'+esc(ev.text)+'">'+(ev.dl?'⚑ ':'')+esc(ev.text)+'</div>';
+    });
+    monthHtml+='<div class="pcal-week" style="height:'+wkH+'px">'+cells+bars+'</div>';
+  }
+  var gEnd=localYMD(new Date(gridStart.getFullYear(),gridStart.getMonth(),gridStart.getDate()+nWeeks*7-1));
+  var gStart=localYMD(gridStart);
+  var visEvents=events.filter(function(ev){return ev.start<=gEnd&&ev.end>=gStart;});
+  var cats=[],catSeen={};
+  visEvents.forEach(function(ev){if(!catSeen[ev.cat]){catSeen[ev.cat]=1;cats.push(ev.cat);}});
+  var legend=cats.length?'<div class="pcal-legend">'+cats.map(function(c){return '<span class="pcal-leg"><span class="pcal-leg-dot" style="background:'+projCatColor(c)+'"></span>'+esc(c)+'</span>';}).join('')+'</div>':'';
+  el.innerHTML=weekHdr+'<div class="pcal-month">'+monthHtml+'</div>'
+    +(visEvents.length?legend:'<div class="empty" style="padding:18px 0">此月份沒有設定開始或截止日期的步驟</div>');
 }
 function renderCourseList(){
   var el=document.getElementById('grad-course-list');if(!el)return;
@@ -6179,6 +6298,9 @@ document.body.addEventListener('click',function(e){
   else if(action==='coursework-toggle'){toggleCoursework(el.dataset.wid);}
   else if(action==='gantt-event-edit'){openGanttEventModal(el.dataset.geid);}
   else if(action==='proj-filter'){setProjFilter(el.dataset.f);}
+  else if(action==='proj-view'){setProjView(el.dataset.v);}
+  else if(action==='proj-cal-prev'){shiftProjCal(-1);}
+  else if(action==='proj-cal-next'){shiftProjCal(1);}
   else if(action==='proj-open'){openProjectModal(el.dataset.pid);}
   else if(action==='proj-step-done'){completeProjectStep(el.dataset.pid,el.dataset.sid);}
   else if(action==='home-proj-open'){switchPage('projects',document.getElementById('nav-projects'));}
@@ -6189,7 +6311,7 @@ document.body.addEventListener('click',function(e){
   else if(action==='proj-draft-toggle'){var _i=parseInt(el.dataset.idx);_projDraft.steps[_i].done=!_projDraft.steps[_i].done;renderProjStepsEditor();}
   else if(action==='proj-draft-up'){var _j=parseInt(el.dataset.idx);var _t=_projDraft.steps[_j];_projDraft.steps[_j]=_projDraft.steps[_j-1];_projDraft.steps[_j-1]=_t;renderProjStepsEditor();}
   else if(action==='proj-draft-del'){_projDraft.steps.splice(parseInt(el.dataset.idx),1);renderProjStepsEditor();}
-  else if(action==='proj-draft-add'){if(!_projDraft.steps)_projDraft.steps=[];_projDraft.steps.push({id:'s'+Date.now(),text:'',done:false,due:''});renderProjStepsEditor();}
+  else if(action==='proj-draft-add'){if(!_projDraft.steps)_projDraft.steps=[];_projDraft.steps.push({id:'s'+Date.now(),text:'',done:false,start:'',due:''});renderProjStepsEditor();}
   else if(action==='journal-confirm'){toggleJournalConfirm(el.dataset.key);}
   else if(action==='add-journal-quick'){openJournalQuickModal(null);}
   else if(action==='open-journal-quick'){openJournalQuickModal(el.dataset.id);}
@@ -6832,6 +6954,17 @@ function renderCheckinReview(){
     shiftHomeOverview(dx<0?1:-1);
   },{passive:true});
 })();
+// ── 專案月曆左右滑動切換月份 ─────────────────────────
+(function(){
+  var pc=document.getElementById('proj-calendar');if(!pc)return;
+  var _px=0,_py=0;
+  pc.addEventListener('touchstart',function(e){_px=e.changedTouches[0].clientX;_py=e.changedTouches[0].clientY;},{passive:true});
+  pc.addEventListener('touchend',function(e){
+    var dx=e.changedTouches[0].clientX-_px,dy=e.changedTouches[0].clientY-_py;
+    if(Math.abs(dx)<45||Math.abs(dx)<Math.abs(dy)*1.5)return;
+    shiftProjCal(dx<0?1:-1);
+  },{passive:true});
+})();
 // ── 記帳圓餅圖左右滑動切換月份 ─────────────────────────
 (function(){
   var mc=document.getElementById('money-chart');if(!mc)return;
@@ -7201,7 +7334,7 @@ function reloadAllFromStorage(){
   if(currentPage==='money')setMoneySub(moneySub);
   if(currentPage==='plan')renderPlan();
   if(currentPage==='grad')renderGrad();
-  if(currentPage==='projects')renderProjects();
+  if(currentPage==='projects'){if(projView==='cal')renderProjCalendar();else renderProjects();}
 }
 </script>
 </body>
