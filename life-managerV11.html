@@ -192,6 +192,35 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
 .growth-card-streak{font-size:10px;margin-top:2px}
 .growth-sub{display:none}
 .growth-sub.active{display:block}
+/* ── 調節紀錄 ── */
+.reg-seg{display:flex;flex-wrap:wrap;gap:6px}
+.reg-seg-col{flex-direction:column}
+.reg-seg-btn{background:var(--bg);border:0.5px solid var(--border-med);border-radius:20px;padding:7px 14px;font-size:13px;color:var(--text-2);cursor:pointer;transition:all .12s;text-align:center;font-family:inherit}
+.reg-seg-col .reg-seg-btn{border-radius:12px;text-align:left}
+.reg-seg-btn:active{transform:scale(0.97)}
+.reg-seg-btn.active{background:var(--purple);border-color:var(--purple);color:#fff}
+.reg-seg-btn .reg-seg-sub{display:block;font-size:11px;opacity:.75;margin-top:1px}
+.reg-slider{width:100%;-webkit-appearance:none;appearance:none;height:6px;border-radius:3px;background:var(--purple-light);outline:none;margin:4px 0}
+.reg-slider::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:22px;height:22px;border-radius:50%;background:var(--purple);cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.2)}
+.reg-slider::-moz-range-thumb{width:22px;height:22px;border:none;border-radius:50%;background:var(--purple);cursor:pointer}
+.reg-slider-val{display:inline-block;min-width:22px;text-align:center;font-weight:700;color:var(--purple);background:var(--purple-light);border-radius:8px;padding:0 6px;margin-left:4px}
+.reg-slider-hint{display:flex;justify-content:space-between;font-size:10px;color:var(--text-3);margin-top:2px}
+.reg-item{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);padding:12px 14px;margin-bottom:8px;cursor:pointer;transition:transform .1s}
+.reg-item:active{transform:scale(0.99)}
+.reg-item-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px}
+.reg-item-type{font-size:15px;font-weight:600;color:var(--text)}
+.reg-item-time{font-size:11px;color:var(--text-3);flex-shrink:0}
+.reg-item-tags{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.reg-tag{font-size:11px;padding:2px 9px;border-radius:12px;background:var(--bg);color:var(--text-2);border:0.5px solid var(--border)}
+.reg-tag-move{font-size:12px;font-weight:600}
+.reg-item-flow{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text-2);margin-top:6px}
+.reg-flow-num{font-weight:700}
+.reg-sumcard{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:6px;display:flex}
+.reg-sum-col{flex:1;text-align:center}
+.reg-sum-col+.reg-sum-col{border-left:0.5px solid var(--border)}
+.reg-sum-val{font-size:20px;font-weight:700;color:var(--text)}
+.reg-sum-label{font-size:11px;color:var(--text-3);margin-top:3px}
+.reg-empty{text-align:center;color:var(--text-3);font-size:13px;padding:26px 12px;line-height:1.7}
 /* ── V9：日誌 ── */
 .journal-datebar{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px}
 .journal-date-nav{background:var(--surface);border:0.5px solid var(--border-med);border-radius:var(--radius-sm);width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-2);flex-shrink:0}
@@ -617,6 +646,16 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
     <div class="sec">冥想紀錄</div>
     <div class="card card-sm" id="med-history"></div>
   </div>
+
+  <!-- 子視圖：調節紀錄 -->
+  <div class="growth-sub" id="growth-regulate">
+    <div id="reg-summary"></div>
+    <div class="sec">覺察紀錄</div>
+    <div id="reg-list"></div>
+    <button class="add-row" onclick="openRegulationModal(null)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>記錄一次
+    </button>
+  </div>
 </div>
 
 <!-- 日誌 -->
@@ -942,6 +981,33 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
     <div style="display:flex;gap:8px">
       <button class="btn btn-danger" style="flex:1;justify-content:center" onclick="deleteExerciseFromEdit()">刪除</button>
       <button class="btn btn-primary" style="flex:2;justify-content:center" onclick="saveExerciseEdit()">儲存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 調節紀錄 modal -->
+<div class="modal-overlay" id="modal-regulation">
+  <div class="modal">
+    <div class="modal-title" id="reg-modal-title">記錄一次 <button class="modal-close" onclick="closeModal('regulation')">x</button></div>
+    <input type="hidden" id="reg-id">
+    <div class="field"><label>時間</label><input type="datetime-local" id="reg-time"></div>
+    <div class="field"><label>類型</label><input type="text" id="reg-type" list="reg-type-list">
+      <datalist id="reg-type-list"><option>滑手機</option><option>打電動</option><option>追劇</option><option>亂吃</option><option>網購</option></datalist>
+    </div>
+    <div class="field"><label>觸發前狀態</label><div class="reg-seg" id="reg-before-seg"></div></div>
+    <div class="field"><label>事前衝動強度 <span class="reg-slider-val" id="reg-impulse-val">5</span></label>
+      <input type="range" class="reg-slider" id="reg-impulse" min="1" max="10" value="5" oninput="document.getElementById('reg-impulse-val').textContent=this.value">
+      <div class="reg-slider-hint"><span>1 微弱</span><span>10 難以抗拒</span></div>
+    </div>
+    <div class="field"><label>是否執行了 10 分鐘協定</label><div class="reg-seg" id="reg-protocol-seg"></div></div>
+    <div class="field"><label>結果</label><div class="reg-seg reg-seg-col" id="reg-result-seg"></div></div>
+    <div class="field"><label>事後感受 <span class="reg-slider-val" id="reg-after-val">5</span></label>
+      <input type="range" class="reg-slider" id="reg-after" min="1" max="10" value="5" oninput="document.getElementById('reg-after-val').textContent=this.value">
+      <div class="reg-slider-hint"><span>1 更空</span><span>10 真的有休息到</span></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:4px">
+      <button class="btn btn-danger" id="reg-del-btn" style="flex:1;justify-content:center;display:none" onclick="deleteRegulation()">刪除</button>
+      <button class="btn btn-primary" style="flex:2;justify-content:center" onclick="saveRegulation()">儲存</button>
     </div>
   </div>
 </div>
@@ -1707,6 +1773,7 @@ function esc(s){
 }
 var books=load('lm-books',[]);
 var exercises=load('lm-exercises',[]);
+var regulations=load('lm-regulations',[]);if(!Array.isArray(regulations))regulations=[];
 var expenses=load('lm-expenses',[]);
 var assets=load('lm-assets',{banks:[],etfs:[]});
 if(!assets||typeof assets!=='object'||Array.isArray(assets))assets={banks:[],etfs:[]};
@@ -1954,7 +2021,9 @@ function renderGrowth(){
     {sub:'exercise',cls:'ic-teal',name:'運動',val:hasEx?'已完成':'尚未進行',vcol:hasEx?'var(--teal)':'var(--text-3)',streak:exStreak,scol:'var(--teal)',
      ico:'<path d="M18 3a3 3 0 00-3 3v12a3 3 0 003 3 3 3 0 003-3 3 3 0 00-3-3H6a3 3 0 00-3 3 3 3 0 003 3 3 3 0 003-3V6a3 3 0 00-3-3 3 3 0 00-3 3 3 3 0 003 3h12a3 3 0 003-3 3 3 0 00-3-3z"/>'},
     {sub:'meditate',cls:'ic-amber',name:'冥想',val:mSec>0?Math.round(mSec/60)+' 分':'尚未開始',vcol:'var(--amber)',streak:medStreak,scol:'var(--amber)',
-     ico:'<circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/>'}
+     ico:'<circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/>'},
+    {sub:'regulate',cls:'ic-purple',name:'調節',val:(function(){var n=regulations.filter(function(r){return (r.time||'').slice(0,10)===t;}).length;return n>0?'覺察 '+n+' 次':'尚未紀錄';})(),vcol:'var(--purple)',streak:0,scol:'var(--purple)',
+     ico:'<path d="M12 21s-7-4.35-9.5-8.5C.8 9.6 2.2 6 5.5 6c2 0 3.2 1.2 3.9 2.3C10.1 7.2 11.3 6 13.3 6c3.3 0 4.7 3.6 3 6.5C18.9 16.65 12 21 12 21z" opacity="0.25" fill="currentColor" stroke="none"/><path d="M8 12h2l1.5-3 2 6L15 12h1"/>'}
   ];
   var cards=allCards.filter(function(c){
     if(c.sub==='books')return effGrowthOn('reading');
@@ -1978,7 +2047,7 @@ function renderGrowth(){
 }
 function setGrowthSub(sub){
   growthSub=sub;
-  ['books','exercise','meditate'].forEach(function(s){
+  ['books','exercise','meditate','regulate'].forEach(function(s){
     var el=document.getElementById('growth-'+s);
     if(el)el.classList.toggle('active',s===sub);
   });
@@ -1988,6 +2057,115 @@ function setGrowthSub(sub){
   if(sub==='books')renderBooks();
   else if(sub==='exercise')renderExercise();
   else if(sub==='meditate')renderMedHistory();
+  else if(sub==='regulate')renderRegulations();
+}
+
+// ── 調節紀錄 ──────────────────────────────────────────
+var REG_BEFORE=['耗竭','無聊','焦慮','孤單','習慣性','觸發'];
+var REG_RESULT=[
+  {v:'轉向替代行為',sub:''},
+  {v:'有框進行',sub:'宣告了結束條件'},
+  {v:'自動駕駛',sub:''}
+];
+var _regDraft={before:'',protocol:'',result:''};
+function _regNowLocal(){var d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,16);}
+function saveRegulations(){save('lm-regulations',regulations);}
+function renderRegSegs(){
+  var bel=document.getElementById('reg-before-seg');
+  if(bel)bel.innerHTML=REG_BEFORE.map(function(v){
+    return '<button type="button" class="reg-seg-btn'+(_regDraft.before===v?' active':'')+'" onclick="pickRegField(\'before\',\''+v+'\')">'+v+'</button>';
+  }).join('');
+  var pel=document.getElementById('reg-protocol-seg');
+  if(pel)pel.innerHTML=['是','否'].map(function(v){
+    return '<button type="button" class="reg-seg-btn'+(_regDraft.protocol===v?' active':'')+'" onclick="pickRegField(\'protocol\',\''+v+'\')">'+v+'</button>';
+  }).join('');
+  var rel=document.getElementById('reg-result-seg');
+  if(rel)rel.innerHTML=REG_RESULT.map(function(o){
+    return '<button type="button" class="reg-seg-btn'+(_regDraft.result===o.v?' active':'')+'" onclick="pickRegField(\'result\',\''+o.v+'\')">'+esc(o.v)+(o.sub?'<span class="reg-seg-sub">'+esc(o.sub)+'</span>':'')+'</button>';
+  }).join('');
+}
+function pickRegField(field,val){_regDraft[field]=val;renderRegSegs();}
+function openRegulationModal(id){
+  var rec=id?regulations.filter(function(r){return r.id===id;})[0]:null;
+  document.getElementById('reg-id').value=id||'';
+  document.getElementById('reg-modal-title').firstChild.textContent=(rec?'編輯紀錄 ':'記錄一次 ');
+  document.getElementById('reg-del-btn').style.display=rec?'':'none';
+  document.getElementById('reg-time').value=rec&&rec.time?rec.time:_regNowLocal();
+  document.getElementById('reg-type').value=rec?(rec.type||''):'';
+  var imp=rec&&rec.impulse?rec.impulse:5,aft=rec&&rec.after?rec.after:5;
+  document.getElementById('reg-impulse').value=imp;document.getElementById('reg-impulse-val').textContent=imp;
+  document.getElementById('reg-after').value=aft;document.getElementById('reg-after-val').textContent=aft;
+  _regDraft={before:rec?(rec.before||''):'',protocol:rec?(rec.protocol||''):'',result:rec?(rec.result||''):''};
+  renderRegSegs();
+  openModal('regulation');
+}
+function saveRegulation(){
+  var id=document.getElementById('reg-id').value;
+  var time=document.getElementById('reg-time').value||_regNowLocal();
+  var type=document.getElementById('reg-type').value.trim();
+  var rec={
+    time:time,type:type,before:_regDraft.before,
+    impulse:parseInt(document.getElementById('reg-impulse').value,10)||5,
+    protocol:_regDraft.protocol,result:_regDraft.result,
+    after:parseInt(document.getElementById('reg-after').value,10)||5
+  };
+  if(id){
+    for(var i=0;i<regulations.length;i++)if(regulations[i].id===id){rec.id=id;regulations[i]=rec;break;}
+  }else{
+    rec.id='r'+Date.now();regulations.push(rec);
+  }
+  saveRegulations();closeModal('regulation');renderRegulations();
+  if(currentPage==='growth')renderGrowth();
+}
+function deleteRegulation(){
+  var id=document.getElementById('reg-id').value;if(!id)return;
+  regulations=regulations.filter(function(r){return r.id!==id;});
+  saveRegulations();closeModal('regulation');renderRegulations();
+  if(currentPage==='growth')renderGrowth();
+}
+function _regFmtTime(s){
+  if(!s)return '';
+  var d=new Date(s);if(isNaN(d.getTime()))return esc(s);
+  var t=today(),ds=localYMD(d);
+  var hm=(d.getHours()<10?'0':'')+d.getHours()+':'+(d.getMinutes()<10?'0':'')+d.getMinutes();
+  var prefix=ds===t?'今天':(d.getMonth()+1)+'/'+d.getDate();
+  return prefix+' '+hm;
+}
+function renderRegulations(){
+  var listEl=document.getElementById('reg-list'),sumEl=document.getElementById('reg-summary');
+  if(!listEl)return;
+  var sorted=regulations.slice().sort(function(a,b){return (b.time||'').localeCompare(a.time||'');});
+  // 近 7 天統計
+  var cut=new Date();cut.setDate(cut.getDate()-6);var cutStr=localYMD(cut);
+  var wk=regulations.filter(function(r){return (r.time||'').slice(0,10)>=cutStr;});
+  var proto=wk.filter(function(r){return r.protocol==='是';}).length;
+  var afterVals=wk.filter(function(r){return r.after;}).map(function(r){return r.after;});
+  var avgAfter=afterVals.length?(afterVals.reduce(function(a,b){return a+b;},0)/afterVals.length).toFixed(1):'—';
+  if(sumEl){
+    if(regulations.length){
+      sumEl.innerHTML='<div class="reg-sumcard">'
+        +'<div class="reg-sum-col"><div class="reg-sum-val">'+wk.length+'</div><div class="reg-sum-label">近 7 天覺察</div></div>'
+        +'<div class="reg-sum-col"><div class="reg-sum-val">'+proto+'</div><div class="reg-sum-label">執行 10 分鐘協定</div></div>'
+        +'<div class="reg-sum-col"><div class="reg-sum-val">'+avgAfter+'</div><div class="reg-sum-label">平均事後感受</div></div>'
+        +'</div>';
+    }else sumEl.innerHTML='';
+  }
+  if(!sorted.length){
+    listEl.innerHTML='<div class="reg-empty">還沒有紀錄。<br>下次想滑手機、打電動時，先在這裡幫自己按下暫停、記一筆，就是一次覺察。</div>';
+    return;
+  }
+  var resCol={'轉向替代行為':'var(--teal)','有框進行':'var(--purple)','自動駕駛':'var(--text-3)'};
+  listEl.innerHTML=sorted.map(function(r){
+    var tags='';
+    if(r.before)tags+='<span class="reg-tag">'+esc(r.before)+'</span>';
+    if(r.protocol)tags+='<span class="reg-tag">10 分鐘協定：'+esc(r.protocol)+'</span>';
+    if(r.result)tags+='<span class="reg-tag reg-tag-move" style="color:'+(resCol[r.result]||'var(--text-2)')+'">'+esc(r.result)+'</span>';
+    return '<div class="reg-item" data-action="reg-open" data-id="'+esc(r.id)+'">'
+      +'<div class="reg-item-top"><span class="reg-item-type">'+(r.type?esc(r.type):'（未命名）')+'</span><span class="reg-item-time">'+_regFmtTime(r.time)+'</span></div>'
+      +(tags?'<div class="reg-item-tags">'+tags+'</div>':'')
+      +'<div class="reg-item-flow">衝動 <span class="reg-flow-num">'+(r.impulse||'—')+'</span> → 事後 <span class="reg-flow-num">'+(r.after||'—')+'</span></div>'
+      +'</div>';
+  }).join('');
 }
 
 // ── 記帳 ──────────────────────────────────────────────
@@ -6430,6 +6608,7 @@ document.body.addEventListener('click',function(e){
   else if(action==='cal-day-add'){openCalEventModal(null,el.dataset.date);}
   else if(action==='proj-color-pick'){if(_projDraft){_projDraft.color=el.dataset.color;renderProjColorPicker();}}
   else if(action==='cev-color-pick'){_cevColor=el.dataset.color;renderCevColorPicker();}
+  else if(action==='reg-open'){openRegulationModal(el.dataset.id);}
   else if(action==='proj-open'){openProjectModal(el.dataset.pid);}
   else if(action==='proj-step-done'){completeProjectStep(el.dataset.pid,el.dataset.sid);}
   else if(action==='home-proj-open'){switchPage('projects',document.getElementById('nav-projects'));}
@@ -7135,7 +7314,7 @@ document.body.addEventListener('focusin',function(e){
 
 // ── 雲端同步（Supabase）──────────────────────────────
 var sbClient=null,sbUser=null,syncTimer=null,_syncPending=false;
-var DATA_KEYS=['lm-books','lm-exercises','lm-reviews','lm-sessions','lm-med','lm-cases','lm-wmenus','lm-ex-goal','lm-journal','lm-timer-logs','lm-quotes','lm-checkins','lm-morning-base','lm-morning-logs','lm-morning-fs','lm-night-plans','lm-notes','lm-note-tags','lm-expenses','lm-assets','lm-dayplans','lm-plan-palette','lm-courses','lm-coursework','lm-grad-events','lm-grad-semester','lm-projects','lm-cal-events'];
+var DATA_KEYS=['lm-books','lm-exercises','lm-reviews','lm-sessions','lm-med','lm-cases','lm-wmenus','lm-ex-goal','lm-journal','lm-timer-logs','lm-quotes','lm-checkins','lm-morning-base','lm-morning-logs','lm-morning-fs','lm-night-plans','lm-notes','lm-note-tags','lm-expenses','lm-assets','lm-dayplans','lm-plan-palette','lm-courses','lm-coursework','lm-grad-events','lm-grad-semester','lm-projects','lm-cal-events','lm-regulations'];
 
 var SB_URL='https://gsjljwupeyvqdsrzbadf.supabase.co';
 var SB_KEY='sb_publishable_2jglYptRkedrlZe-ZPHpbQ_U-A_R6ES';
@@ -7438,6 +7617,7 @@ if(initSupabase()){
 }
 function reloadAllFromStorage(){
   books=load('lm-books',[]);exercises=load('lm-exercises',[]);reviews=load('lm-reviews',{});
+  regulations=load('lm-regulations',[]);if(!Array.isArray(regulations))regulations=[];
   readSessions=load('lm-sessions',[]);medSessions=load('lm-med',[]);cases=load('lm-cases',[]);
   workoutMenus=load('lm-wmenus',[]);uTimerLogs=load('lm-timer-logs',[]);exGoal=load('lm-ex-goal',3);
   quotes=load('lm-quotes',[]);checkins=load('lm-checkins',[]);morningBase=load('lm-morning-base',['喝水','刷牙','冥想']);
