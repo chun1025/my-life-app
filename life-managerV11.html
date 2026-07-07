@@ -586,10 +586,10 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
       <button class="chip" onclick="filterBooks('done',this)">已完成</button>
       <button class="chip active" onclick="filterBooks('all',this)">全部</button>
     </div>
-    <div id="book-list"></div>
     <button class="add-row" onclick="openModal('book')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>新增書籍
     </button>
+    <div id="book-list"></div>
   </div>
 
   <!-- 子視圖：運動 -->
@@ -601,8 +601,6 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
       <div class="prog" id="ex-goal-prog"><div class="prog-fill" id="ex-goal-fill" style="width:0%"></div></div>
       <div style="text-align:center;font-size:13px;color:var(--teal);margin-top:8px" id="ex-week-summary"></div>
     </div>
-    <div class="sec">運動紀錄</div>
-    <div class="card card-sm" id="exercise-list"></div>
     <div style="display:flex;gap:16px;flex-wrap:wrap;padding-top:4px">
       <button class="add-row" onclick="openExerciseModal()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>記錄今日運動
@@ -611,6 +609,8 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>管理菜單
       </button>
     </div>
+    <div class="sec">運動紀錄</div>
+    <div class="card card-sm" id="exercise-list"></div>
   </div>
 
   <!-- 子視圖：冥想 -->
@@ -3039,6 +3039,12 @@ function _colorSwatchHTML(selected,action){
   }).join('')+'</div>';
 }
 function projNextStep(p){return (p.steps||[]).filter(function(s){return !s.done;})[0]||null;}
+// 主頁專用：下一步若設有開始時間且尚未到，視為「主頁上還沒有可顯示的下一步」
+function projNextStepForHome(p){
+  var ns=projNextStep(p);
+  if(ns&&ns.start&&ns.start>today())return undefined;
+  return ns;
+}
 function _projDaysTo(due){return Math.round((new Date(due+'T00:00:00')-new Date(today()+'T00:00:00'))/86400000);}
 function _projDueInfo(due){
   if(!due)return null;
@@ -3199,9 +3205,11 @@ function renderHomeProjects(){
   var list=projects.filter(function(p){return (p.status||'active')==='active';});
   // 最優先的下一步已於「現在就開始」呈現，此清單排除避免重複
   if(_startNowPid)list=list.filter(function(p){return String(p.id)!==String(_startNowPid);});
+  // 下一步若設有開始時間且尚未到，暫不顯示在主頁
+  list=list.filter(function(p){return projNextStepForHome(p)!==undefined;});
   if(!list.length){sec.style.display='none';el.innerHTML='';return;}
   list=list.slice().sort(function(a,b){
-    var an=projNextStep(a),bn=projNextStep(b);
+    var an=projNextStepForHome(a),bn=projNextStepForHome(b);
     var ad=(an&&an.due)||a.due||'',bd=(bn&&bn.due)||b.due||'';
     if(ad&&bd)return ad<bd?-1:ad>bd?1:0;
     if(ad)return -1;if(bd)return 1;return 0;
@@ -3209,7 +3217,7 @@ function renderHomeProjects(){
   sec.style.display='';
   el.innerHTML=list.map(function(p){
     var cat=projCat(p.category);
-    var ns=projNextStep(p);
+    var ns=projNextStepForHome(p);
     var nameRow='<div style="display:flex;align-items:center;gap:8px">'
       +'<span style="width:9px;height:9px;border-radius:50%;background:'+projColor(p)+';flex-shrink:0"></span>'
       +'<span style="flex:1;min-width:0;font-size:14px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(p.name)+'</span>'
@@ -3233,7 +3241,7 @@ var _SN_PLAY='<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor
 var _SN_CHECK='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="20 6 9 17 4 12"/></svg>';
 function pickStartNow(){
   var cands=projects.filter(function(p){return (p.status||'active')==='active';})
-    .map(function(p){var ns=projNextStep(p);return ns?{p:p,step:ns}:null;})
+    .map(function(p){var ns=projNextStepForHome(p);return ns?{p:p,step:ns}:null;})
     .filter(Boolean);
   if(!cands.length)return null;
   cands.sort(function(a,b){
