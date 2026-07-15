@@ -594,7 +594,11 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
 
   <!-- 子視圖：運動 -->
   <div class="growth-sub" id="growth-exercise">
-    <div class="sec" style="margin-top:4px">本週紀錄</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:16px;margin-bottom:8px">
+      <button style="background:none;border:none;font-size:20px;color:var(--text-2);cursor:pointer;padding:2px 12px;line-height:1" data-action="ex-week-prev">‹</button>
+      <span class="sec" style="margin:0" id="ex-week-label">本週紀錄</span>
+      <button style="background:none;border:none;font-size:20px;color:var(--text-2);cursor:pointer;padding:2px 12px;line-height:1" data-action="ex-week-next">›</button>
+    </div>
     <div class="card">
       <div class="goal-row"><span>每週目標</span><div style="display:flex;align-items:center;gap:6px"><input type="number" id="ex-goal-input" min="1" max="7" onchange="setExGoal(this.value)"><span>天</span></div></div>
       <div class="week-dots" id="ex-week-grid"></div>
@@ -951,13 +955,15 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
         <div style="font-size:13px;font-weight:500;color:var(--text);margin-bottom:8px" id="ex-preview-name"></div>
         <div id="ex-preview-moves"></div>
       </div>
-      <div class="field" style="margin-top:8px"><label>時間（分鐘）</label><input type="number" id="e-menu-min" placeholder="" min="1"></div>
+      <div class="field" style="margin-top:8px"><label>登記時間</label><input type="time" id="e-menu-time"></div>
+      <div class="field"><label>時間（分鐘）</label><input type="number" id="e-menu-min" placeholder="" min="1"></div>
       <div class="field"><label>備註（選填）</label><input type="text" id="e-menu-note"></div>
       <button class="btn btn-primary btn-full" onclick="addExerciseFromMenu()">記錄</button>
     </div>
     <!-- 快速記錄模式 -->
     <div id="ex-quick-mode" style="display:none">
       <div class="field"><label>運動類型</label><select id="e-type"><option>跑步</option><option>游泳</option><option>騎車</option><option>瑜珈</option><option>籃球</option><option>其他</option></select></div>
+      <div class="field"><label>登記時間</label><input type="time" id="e-time"></div>
       <div class="field"><label>時間（分鐘）</label><input type="number" id="e-min" placeholder="" min="1"></div>
       <div class="field"><label>備註（選填）</label><input type="text" id="e-note"></div>
       <button class="btn btn-primary btn-full" onclick="addExercise()">記錄</button>
@@ -971,11 +977,12 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
     <div class="modal-title">編輯運動紀錄 <button class="modal-close" onclick="closeModal('exercise-edit')">x</button></div>
     <input type="hidden" id="ee-id">
     <div class="field"><label>類型</label><input type="text" id="ee-type"></div>
-    <div class="field"><label>時間（分鐘）</label><input type="number" id="ee-min" min="1"></div>
     <div class="field"><label>日期</label><input type="date" id="ee-date"></div>
+    <div class="field"><label>登記時間</label><input type="time" id="ee-time"></div>
+    <div class="field"><label>時間（分鐘）</label><input type="number" id="ee-min" min="1"></div>
     <div class="field"><label>備註</label><input type="text" id="ee-note"></div>
     <div id="ee-moves-wrap" style="display:none">
-      <div class="sec" style="margin-top:4px">動作（套用菜單，僅供參考）</div>
+      <div class="sec" style="margin-top:4px">動作（可依實際狀況調整組數/次數）</div>
       <div id="ee-moves" style="background:var(--bg);border-radius:var(--radius-sm);padding:10px;margin-bottom:12px"></div>
     </div>
     <div style="display:flex;gap:8px">
@@ -1163,7 +1170,10 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
 <div class="fullscreen-overlay" id="fullscreen-morning">
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;padding-top:4px">
     <div style="font-size:11px;font-weight:600;color:var(--text-3);letter-spacing:.6px;text-transform:uppercase">晨間 Routine</div>
-    <button onclick="closeMorningFs()" style="background:none;border:none;color:var(--text-2);font-size:28px;cursor:pointer;line-height:1;padding:0 2px">×</button>
+    <div style="display:flex;align-items:center;gap:2px">
+      <button onclick="openModal('morning-edit');renderMorningBaseList()" style="background:none;border:none;color:var(--text-3);font-size:18px;cursor:pointer;line-height:1;padding:0 6px" title="編輯晨間項目">···</button>
+      <button onclick="closeMorningFs()" style="background:none;border:none;color:var(--text-2);font-size:28px;cursor:pointer;line-height:1;padding:0 2px">×</button>
+    </div>
   </div>
   <div id="morning-fs-body" style="flex:1;display:flex;flex-direction:column"></div>
 </div>
@@ -1199,7 +1209,7 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
 </div>
 
 <!-- 晨間項目設定 -->
-<div class="modal-overlay" id="modal-morning-edit">
+<div class="modal-overlay" id="modal-morning-edit" style="z-index:400">
   <div class="modal">
     <div class="modal-title">晨間項目設定 <button class="modal-close" onclick="closeModal('morning-edit')">×</button></div>
     <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0 12px;border-bottom:0.5px solid var(--border);margin-bottom:10px">
@@ -1834,6 +1844,7 @@ var cases=load('lm-cases',[]);
 var workoutMenus=load('lm-wmenus',[]);
 var uTimerLogs=load('lm-timer-logs',[]);
 var exGoal=load('lm-ex-goal',3);
+var exWeekOffset=0;
 var quotes=load('lm-quotes',[]);
 var checkins=load('lm-checkins',[]);
 var morningBase=load('lm-morning-base',['喝水','刷牙','冥想']);
@@ -2055,7 +2066,7 @@ function setGrowthSub(sub){
     c.classList.toggle('active',c.dataset.sub===sub);
   });
   if(sub==='books')renderBooks();
-  else if(sub==='exercise')renderExercise();
+  else if(sub==='exercise'){exWeekOffset=0;renderExercise();}
   else if(sub==='meditate')renderMedHistory();
   else if(sub==='regulate')renderRegulations();
 }
@@ -4480,9 +4491,15 @@ function saveSession(){
 }
 
 // ── 運動 ──────────────────────────────────────────────
+function shiftExWeek(dir){
+  if(exWeekOffset+dir>0)return; // 不可切到未來週
+  exWeekOffset+=dir;renderExercise();
+}
 function renderExercise(){
-  var wd=weekDates(),days=['一','二','三','四','五','六','日'],t=today();
+  var wd=weekDatesOffset(exWeekOffset),days=['一','二','三','四','五','六','日'],t=today();
   document.getElementById('ex-goal-input').value=exGoal;
+  var lblEl=document.getElementById('ex-week-label');
+  if(lblEl)lblEl.textContent=exWeekOffset===0?'本週紀錄':(parseInt(wd[0].slice(5,7),10)+'/'+parseInt(wd[0].slice(8),10)+' – '+parseInt(wd[6].slice(5,7),10)+'/'+parseInt(wd[6].slice(8),10));
   document.getElementById('ex-week-grid').innerHTML=wd.map(function(d,i){
     var has=exercises.some(function(e){return e.date===d;}),isT=d===t;
     return '<div class="wd-col"><div class="wd-name">'+days[i]+'</div><div class="wd-dot '+(has?'wd-done':'wd-empty')+(isT?' wd-today':'')+'">'+(has?'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>':'')+'</div></div>';
@@ -4490,7 +4507,7 @@ function renderExercise(){
   var doneCount=wd.filter(function(d){return exercises.some(function(e){return e.date===d;});}).length;
   var rate=exGoal>0?Math.min(100,Math.round(doneCount/exGoal*100)):0;
   document.getElementById('ex-goal-fill').style.width=rate+'%';
-  document.getElementById('ex-week-summary').textContent='本週已完成 '+doneCount+' / '+exGoal+' 天 · 達成率 '+rate+'%';
+  document.getElementById('ex-week-summary').textContent=(exWeekOffset===0?'本週':'該週')+'已完成 '+doneCount+' / '+exGoal+' 天 · 達成率 '+rate+'%';
   var list=document.getElementById('exercise-list');
   var recent=exercises.slice().reverse();
   if(!recent.length){list.innerHTML='<div class="empty">還沒有運動紀錄</div>';return;}
@@ -4513,11 +4530,23 @@ function setExGoal(v){
 function addExercise(){
   var min=parseInt(document.getElementById('e-min').value)||0;
   if(!min){showToast('請輸入運動時間');return;}
-  var startT=minToHM(Math.max(0,hmToMin(nowTime())-min)); // 從登記時間往回推運動時段
+  var startT=document.getElementById('e-time').value||minToHM(Math.max(0,hmToMin(nowTime())-min));
   exercises.push({id:Date.now(),date:today(),time:startT,type:document.getElementById('e-type').value,min,note:document.getElementById('e-note').value.trim()});
   save('lm-exercises',exercises);closeModal('exercise');
   document.getElementById('e-min').value='';document.getElementById('e-note').value='';
   renderExercise();showToast('運動已記錄');
+}
+var _eeMoves=[];
+function _exMovesRowsHTML(moves,onEdit){
+  return moves.length
+    ?'<div>'+moves.map(function(mv,i){
+        return '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:5px 0;border-bottom:0.5px solid var(--border);font-size:13px">'
+          +'<span style="color:var(--text);flex:1;min-width:0">'+esc(mv.name)+'</span>'
+          +'<span style="display:flex;align-items:center;gap:4px;color:var(--text-2);flex-shrink:0">'
+          +'<input type="number" min="1" value="'+esc(mv.sets)+'" oninput="'+onEdit+'('+i+',\'sets\',this.value)" style="width:38px;text-align:center;border:0.5px solid var(--border-med);border-radius:6px;padding:2px 0;font-size:13px">組 x '
+          +'<input type="number" min="1" value="'+esc(mv.reps)+'" oninput="'+onEdit+'('+i+',\'reps\',this.value)" style="width:38px;text-align:center;border:0.5px solid var(--border-med);border-radius:6px;padding:2px 0;font-size:13px">下</span></div>';
+      }).join('')+'</div>'
+    :'<div style="font-size:13px;color:var(--text-3)">這個菜單還沒有動作</div>';
 }
 function openExerciseEdit(eid){
   var e=exercises.find(function(x){return String(x.id)===String(eid);});
@@ -4526,18 +4555,20 @@ function openExerciseEdit(eid){
   document.getElementById('ee-type').value=e.type||'';
   document.getElementById('ee-min').value=e.min||'';
   document.getElementById('ee-date').value=e.date||today();
+  document.getElementById('ee-time').value=e.time||'';
   document.getElementById('ee-note').value=e.note||'';
   var movesWrap=document.getElementById('ee-moves-wrap'),movesEl=document.getElementById('ee-moves');
   if(e.moves&&e.moves.length){
+    _eeMoves=e.moves.map(function(mv){return {name:mv.name,sets:mv.sets,reps:mv.reps};});
     movesWrap.style.display='block';
-    movesEl.innerHTML=e.moves.map(function(mv){
-      return '<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px"><span style="color:var(--text)">'+esc(mv.name)+'</span><span style="color:var(--text-2)">'+esc(mv.sets)+'組 x '+esc(mv.reps)+'下</span></div>';
-    }).join('');
+    movesEl.innerHTML=_exMovesRowsHTML(_eeMoves,'updateEeMove');
   } else {
+    _eeMoves=[];
     movesWrap.style.display='none';movesEl.innerHTML='';
   }
   openModal('exercise-edit');
 }
+function updateEeMove(i,field,val){_eeMoves[i][field]=val;}
 function saveExerciseEdit(){
   var eid=document.getElementById('ee-id').value;
   var e=exercises.find(function(x){return String(x.id)===String(eid);});
@@ -4548,7 +4579,9 @@ function saveExerciseEdit(){
   e.type=type||e.type;
   e.min=min;
   e.date=date;
+  e.time=document.getElementById('ee-time').value||e.time;
   e.note=document.getElementById('ee-note').value.trim();
+  if(_eeMoves.length)e.moves=_eeMoves.map(function(mv){return {name:mv.name,sets:parseInt(mv.sets)||mv.sets,reps:parseInt(mv.reps)||mv.reps};});
   save('lm-exercises',exercises);closeModal('exercise-edit');
   renderExercise();renderHome();showToast('運動紀錄已更新');
 }
@@ -4565,6 +4598,9 @@ var selectedMenuId=null;
 function openExerciseModal(){
   setExMode('menu',document.querySelector('#ex-mode-chips .chip'));
   renderMenuPicker();
+  var t=nowTime();
+  document.getElementById('e-menu-time').value=t;
+  document.getElementById('e-time').value=t;
   openModal('exercise');
 }
 function setExMode(mode,btn){
@@ -4587,31 +4623,29 @@ function renderMenuPicker(){
   if(selectedMenuId)showMenuPreview(selectedMenuId);
   else document.getElementById('ex-menu-preview').style.display='none';
 }
+var _exPreviewMoves=[];
 function showMenuPreview(id){
   var m=workoutMenus.find(function(x){return x.id===id;});
   if(!m){document.getElementById('ex-menu-preview').style.display='none';return;}
   document.getElementById('ex-preview-name').textContent=m.name+(m.target?' · '+m.target:'');
-  var moves=m.moves||[];
-  document.getElementById('ex-preview-moves').innerHTML=moves.length
-    ?'<div style="background:var(--bg);border-radius:var(--radius-sm);padding:10px">'+moves.map(function(mv){
-        return '<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:0.5px solid var(--border);font-size:13px">'
-          +'<span style="color:var(--text)">'+esc(mv.name)+'</span>'
-          +'<span style="color:var(--text-2)">'+esc(mv.sets)+'組 x '+esc(mv.reps)+'下</span></div>';
-      }).join('')+'</div>'
-    :'<div style="font-size:13px;color:var(--text-3)">這個菜單還沒有動作</div>';
+  _exPreviewMoves=(m.moves||[]).map(function(mv){return {name:mv.name,sets:mv.sets,reps:mv.reps};});
+  document.getElementById('ex-preview-moves').style.cssText=_exPreviewMoves.length?'background:var(--bg);border-radius:var(--radius-sm);padding:10px':'';
+  document.getElementById('ex-preview-moves').innerHTML=_exMovesRowsHTML(_exPreviewMoves,'updateExPreviewMove');
   document.getElementById('ex-menu-preview').style.display='block';
 }
+function updateExPreviewMove(i,field,val){_exPreviewMoves[i][field]=val;}
 function addExerciseFromMenu(){
   if(!selectedMenuId){showToast('請選擇一個菜單');return;}
   var m=workoutMenus.find(function(x){return x.id===selectedMenuId;});
   var min=parseInt(document.getElementById('e-menu-min').value)||0;
   if(!min){showToast('請輸入運動時間');return;}
   var note=document.getElementById('e-menu-note').value.trim();
-  var startT=minToHM(Math.max(0,hmToMin(nowTime())-min)); // 從登記時間往回推運動時段
-  exercises.push({id:Date.now(),date:today(),time:startT,type:m.name,min,note:note,menuId:m.id,moves:m.moves||[],target:m.target||''});
+  var startT=document.getElementById('e-menu-time').value||minToHM(Math.max(0,hmToMin(nowTime())-min));
+  var moves=_exPreviewMoves.length?_exPreviewMoves.map(function(mv){return {name:mv.name,sets:parseInt(mv.sets)||mv.sets,reps:parseInt(mv.reps)||mv.reps};}):(m.moves||[]);
+  exercises.push({id:Date.now(),date:today(),time:startT,type:m.name,min,note:note,menuId:m.id,moves:moves,target:m.target||''});
   save('lm-exercises',exercises);closeModal('exercise');
   document.getElementById('e-menu-min').value='';document.getElementById('e-menu-note').value='';
-  selectedMenuId=null;renderExercise();showToast('運動已記錄');
+  selectedMenuId=null;_exPreviewMoves=[];renderExercise();showToast('運動已記錄');
 }
 function renderWorkoutMenuList(){
   var el=document.getElementById('workout-menu-list');
@@ -6624,6 +6658,8 @@ document.body.addEventListener('click',function(e){
   else if(action==='startnow-done'){startNowDone();}
   else if(action==='home-ov-prev'){shiftHomeOverview(-1);}
   else if(action==='home-ov-next'){shiftHomeOverview(1);}
+  else if(action==='ex-week-prev'){shiftExWeek(-1);}
+  else if(action==='ex-week-next'){shiftExWeek(1);}
   else if(action==='proj-draft-toggle'){var _i=parseInt(el.dataset.idx);_projDraft.steps[_i].done=!_projDraft.steps[_i].done;renderProjStepsEditor();}
   else if(action==='proj-draft-up'){var _j=parseInt(el.dataset.idx);var _t=_projDraft.steps[_j];_projDraft.steps[_j]=_projDraft.steps[_j-1];_projDraft.steps[_j-1]=_t;renderProjStepsEditor();}
   else if(action==='proj-draft-del'){_projDraft.steps.splice(parseInt(el.dataset.idx),1);renderProjStepsEditor();}
@@ -6999,61 +7035,6 @@ function _getNightPlan(t){
   if(!nightPlans[t])nightPlans[t]={baseItems:morningBase.map(function(x){return {name:x,enabled:true};}),extras:[],sleepTime:null};
   return nightPlans[t];
 }
-// 當日回顧：閱讀／運動／冥想統計 + 當日日誌列表
-function _reflectStatsHTML(dt){
-  var rSess=readSessions.filter(function(s){return s.date===dt;});
-  var rSec=rSess.reduce(function(a,s){return a+(s.sec||0);},0);
-  var rPages=rSess.reduce(function(a,s){return a+(s.pagesRead||0);},0);
-  var exs=exercises.filter(function(e){return e.date===dt;});
-  var exMin=exs.reduce(function(a,e){return a+(e.min||0);},0);
-  var mSec=medSessions.filter(function(s){return s.date===dt;}).reduce(function(a,s){return a+(s.sec||0);},0);
-  function stat(label,val,on){
-    return '<div style="flex:1;min-width:0;text-align:center;padding:8px 4px;background:'+(on?'var(--teal-light)':'transparent')+';border-radius:8px">'
-      +'<div style="font-size:11px;color:var(--text-3)">'+label+'</div>'
-      +'<div style="font-size:13px;font-weight:600;color:'+(on?'var(--text)':'var(--text-3)')+';margin-top:2px">'+val+'</div></div>';
-  }
-  var stats='<div style="display:flex;gap:8px;margin-bottom:12px">'
-    +stat('閱讀',rSec>0?Math.round(rSec/60)+'分 · '+rPages+'頁':'—',rSec>0)
-    +stat('運動',exMin>0?exMin+'分':'—',exMin>0)
-    +stat('冥想',mSec>0?Math.round(mSec/60)+'分':'—',mSec>0)
-    +'</div>';
-  // 當日日誌：自動項目（已預先 esc）+ 手動 workItems
-  var auto=collectAutoItems(dt).map(function(it){return {start:it.start,titleHtml:it.title||'',subHtml:it.sub||''};});
-  var wi=(journalDayObj(dt).workItems||[]).map(function(w){
-    // 記一筆/雜事/計時用 text；臨時紀錄用 班級-代號 或 類別；最後才退回事件或「紀錄」
-    var nm=w.text||((w.className?w.className+'-':'')+(w.code||''))||w.quickType||w.event||'紀錄';
-    var sub=(w.event&&w.event!==nm)?w.event:'';
-    return {start:hmToMin(w.startTime),titleHtml:esc(nm),subHtml:esc(sub)};
-  });
-  var all=auto.concat(wi).filter(function(x){return x.start!=null;}).sort(function(a,b){return a.start-b.start;});
-  var logHTML;
-  if(!all.length){logHTML='<div style="font-size:12px;color:var(--text-3);padding:4px 0">這天還沒有活動紀錄</div>';}
-  else{
-    logHTML=all.map(function(x){
-      return '<div style="display:flex;gap:8px;padding:5px 0;border-bottom:0.5px solid var(--border);font-size:12.5px">'
-        +'<span style="color:var(--text-3);flex-shrink:0;width:40px">'+minToHM(x.start)+'</span>'
-        +'<span style="color:var(--text);flex:1;min-width:0">'+x.titleHtml+(x.subHtml?' <span style="color:var(--text-3)">· '+x.subHtml+'</span>':'')+'</span></div>';
-    }).join('');
-  }
-  return stats
-    +'<div style="font-size:12px;color:var(--text-2);margin-bottom:4px">當日日誌</div>'
-    +'<div>'+logHTML+'</div>';
-}
-// 4F 反思（事實／感受／發現／未來）
-function _reflect4FHTML(plan,canEdit){
-  var r=plan.reflect||{};
-  var fields=[['facts','事實','今天發生了哪些事？'],['feelings','感受','當下的心情與感受？'],['findings','發現','我察覺或學到了什麼？'],['future','未來','接下來我想怎麼做？']];
-  return '<div style="font-size:12px;font-weight:600;color:var(--teal);margin:16px 0 10px">4F 反思</div>'
-    +fields.map(function(f){
-      var v=r[f[0]]||'';
-      return '<div style="margin-bottom:10px">'
-        +'<div style="font-size:12.5px;font-weight:600;color:var(--text);margin-bottom:4px">'+f[1]+' <span style="font-weight:400;color:var(--text-3);font-size:11px">'+f[2]+'</span></div>'
-        +(canEdit
-          ?'<textarea data-reflect="'+f[0]+'" oninput="_saveReflect()" style="width:100%;min-height:46px;resize:vertical;font-size:13px;line-height:1.5;padding:8px 10px;border:0.5px solid var(--border-med);border-radius:8px;background:var(--surface);color:var(--text);font-family:inherit;box-sizing:border-box">'+esc(v)+'</textarea>'
-          :'<div style="font-size:13px;color:'+(v?'var(--text)':'var(--text-3)')+';white-space:pre-wrap;line-height:1.5;padding:4px 0">'+(v?esc(v):'—')+'</div>')
-        +'</div>';
-    }).join('');
-}
 function renderNightCard(){
   var el=document.getElementById('routine-night-card');if(!el)return;
   var dt=_routineViewDate,t=today(),h=new Date().getHours();
@@ -7097,26 +7078,14 @@ function renderNightCard(){
     }).join(''):'')
     +(canEdit?'<div style="display:flex;gap:8px;margin-top:10px"><input type="text" id="night-extra-input" placeholder="" style="flex:1"><button class="btn btn-ghost btn-sm" onclick="addNightExtra()">新增</button></div>':'');
   var sleepBtn=canEdit&&!plan.sleepTime?'<button class="btn btn-primary btn-full" style="margin-top:14px" onclick="recordSleepTime()">記錄上床時間</button>':'';
-  var reflectSection='<div style="border-top:0.5px solid var(--border);margin:16px 0"></div>'
-    +'<div style="font-size:11px;font-weight:600;color:var(--text-2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:12px">當日回顧</div>'
-    +_reflectStatsHTML(dt)
-    +_reflect4FHTML(plan,canEdit);
   el.innerHTML='<div class="routine-card" style="'+(urgent?'border:1.5px solid var(--teal);':'')+'">'
-    +header+urgentBanner+sleepLine+extrasSection+reflectSection+sleepBtn+'</div>';
+    +header+urgentBanner+sleepLine+extrasSection+sleepBtn+'</div>';
 }
 function addNightExtra(){
   var v=document.getElementById('night-extra-input').value.trim();if(!v)return;
   var plan=_getNightPlan(today());
   plan.extras.push(v);save('lm-night-plans',nightPlans);
   renderNightCard();
-}
-function _saveReflect(){
-  var plan=_getNightPlan(today());
-  if(!plan.reflect)plan.reflect={};
-  document.querySelectorAll('#routine-night-card textarea[data-reflect]').forEach(function(ta){
-    plan.reflect[ta.getAttribute('data-reflect')]=ta.value;
-  });
-  save('lm-night-plans',nightPlans);
 }
 function toggleNightBase(idx,checked){
   var plan=_getNightPlan(today());
@@ -7550,7 +7519,7 @@ function scheduleLocalNotifications(){
     schedAt(5,0,function(){return {title:'晨間 Routine',body:'早安！記得完成今天的晨間計畫'};}, 'lm-morning');
   }
   if(notifSettings.night){
-    schedAt(21,0,function(){return {title:'夜間 Routine',body:'今天辛苦了，來做個夜間反思吧'};}, 'lm-night');
+    schedAt(21,0,function(){return {title:'夜間 Routine',body:'今天辛苦了，記得記錄上床時間'};}, 'lm-night');
   }
   if(notifSettings.caseRec){
     schedAt(15,30,function(){
