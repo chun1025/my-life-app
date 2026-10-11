@@ -182,16 +182,54 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
 .qc-other-wrap{margin-top:8px}
 /* ── V9：成長頁 ── */
 .growth-cards{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px}
-.growth-card{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);padding:12px 8px;text-align:center;cursor:pointer;transition:border-color .15s,transform .1s}
+.growth-card{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);padding:12px 3px;text-align:center;cursor:pointer;transition:border-color .15s,transform .1s}
 .growth-card:active{transform:scale(0.97)}
 .growth-card.active{border:1.5px solid var(--purple)}
 .growth-card-ico{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;margin:0 auto 6px}
 .growth-card-ico svg{width:18px;height:18px;stroke-width:2}
 .growth-card-name{font-size:12px;font-weight:600;color:var(--text)}
-.growth-card-val{font-size:13px;font-weight:600;margin-top:3px}
+.growth-card-val{font-size:12px;font-weight:600;margin-top:3px;white-space:nowrap}
 .growth-card-streak{font-size:10px;margin-top:2px}
 .growth-sub{display:none}
 .growth-sub.active{display:block}
+/* ── 人生地圖 ── */
+.lm-maprow{display:flex;gap:6px;overflow-x:auto;margin-bottom:10px;padding-bottom:2px}
+.lm-maprow .chip{flex-shrink:0;white-space:nowrap}
+.lm-tools{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.lm-viewport{position:relative;height:62vh;min-height:380px;max-height:640px;background-color:var(--bg);background-image:radial-gradient(var(--border-med) 1px,transparent 1px);background-size:22px 22px;border:0.5px solid var(--border-med);border-radius:var(--radius);overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab}
+.lm-world{position:absolute;left:0;top:0;transform-origin:0 0;will-change:transform}
+.lm-band{position:absolute;left:-8000px;width:16000px;border-top:1px dashed var(--border-med);border-bottom:1px dashed var(--border-med);pointer-events:none}
+.lm-edges{position:absolute;left:0;top:0;width:1px;height:1px;overflow:visible;pointer-events:none}
+.lm-edge-line{fill:none;stroke:var(--text-3);stroke-width:1.8;transition:opacity .15s}
+.lm-edge-hit{fill:none;stroke:transparent;stroke-width:18;pointer-events:stroke;cursor:pointer}
+.lm-edge.on .lm-edge-line{stroke:var(--purple);stroke-width:2.8}
+.lm-edge.sel .lm-edge-line{stroke:var(--red);stroke-width:3}
+.lm-edge.dim .lm-edge-line{opacity:.15}
+.lm-block{position:absolute;box-sizing:border-box;padding:8px 10px;border-radius:10px;border:1.5px solid;font-size:13px;line-height:1.4;color:var(--text);cursor:grab;word-break:break-word;box-shadow:0 1px 3px rgba(0,0,0,.08);touch-action:none;transition:opacity .15s}
+.lm-block.sel{box-shadow:0 0 0 2.5px var(--purple)}
+.lm-block.src{box-shadow:0 0 0 2.5px var(--amber)}
+.lm-block.dim{opacity:.28}
+.lm-bt{font-weight:600}
+.lm-bn{font-size:11.5px;color:var(--text-2);margin-top:3px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;white-space:pre-wrap}
+.lm-bl{display:inline-block;margin-top:5px;padding:1px 8px;border-radius:99px;background:var(--surface);border:0.5px solid var(--border-med);font-size:10.5px;color:var(--text-2);cursor:pointer}
+.lm-labels{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.lm-label{position:absolute;left:6px;max-width:30%;padding:1px 7px;border-radius:99px;background:var(--surface);opacity:.82;border:0.5px solid var(--border-med);font-size:10.5px;font-weight:600;color:var(--text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lm-bar{position:absolute;left:8px;top:8px;max-width:calc(100% - 56px);display:none;align-items:center;gap:6px;padding:5px 6px;border-radius:99px;background:var(--surface);border:0.5px solid var(--border-med);box-shadow:0 2px 10px rgba(0,0,0,.15);white-space:nowrap}
+.lm-bar.show{display:flex}
+.lm-bar-t{font-size:12px;color:var(--text-2);padding:0 4px 0 8px;max-width:84px;overflow:hidden;text-overflow:ellipsis}
+.lm-bb{border:none;background:var(--bg);color:var(--text);border-radius:99px;padding:6px 10px;font-size:12.5px;font-family:inherit;cursor:pointer}
+.lm-bb.pri{background:var(--purple);color:#fff}
+.lm-bb.dng{color:var(--red)}
+.lm-zoom{position:absolute;right:8px;top:8px;display:flex;flex-direction:column;gap:6px}
+.lm-zoom button{width:32px;height:32px;border-radius:8px;border:0.5px solid var(--border-med);background:var(--surface);color:var(--text-2);font-size:16px;cursor:pointer;line-height:1;padding:0}
+.lm-colors{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.lm-sw{width:28px;height:28px;border-radius:50%;border:2px solid transparent;cursor:pointer;padding:0}
+.lm-sw.on{border-color:var(--text)}
+.lm-colors input[type=color]{width:30px;height:30px;padding:0;border:none;background:none;cursor:pointer}
+.lm-lrow{display:flex;align-items:center;gap:6px;padding:8px 0;border-bottom:0.5px solid var(--border)}
+.lm-lrow input[type=color]{width:28px;height:28px;padding:0;border:none;background:none;flex-shrink:0}
+.lm-ib{border:0.5px solid var(--border-med);background:var(--surface);color:var(--text-2);border-radius:6px;width:28px;height:28px;cursor:pointer;font-size:13px;padding:0;flex-shrink:0}
+.lm-crow{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:0.5px solid var(--border);font-size:13px}
 /* ── 調節紀錄 ── */
 .reg-seg{display:flex;flex-wrap:wrap;gap:6px}
 .reg-seg-col{flex-direction:column}
@@ -660,6 +698,32 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>記錄一次
     </button>
   </div>
+
+  <!-- 子視圖：人生地圖 -->
+  <div class="growth-sub" id="growth-lifemap">
+    <div class="lm-maprow" id="lm-maprow"></div>
+    <div class="lm-tools">
+      <button class="btn btn-primary btn-sm" data-action="lm-add-block">＋ 方塊</button>
+      <button class="btn btn-ghost btn-sm" data-action="lm-layers">管理層</button>
+      <button class="btn btn-ghost btn-sm" data-action="lm-undo" id="lm-undo-btn">復原</button>
+      <button class="btn btn-ghost btn-sm" data-action="lm-map-edit">地圖設定</button>
+    </div>
+    <div class="lm-viewport" id="lm-viewport">
+      <div class="lm-world" id="lm-world">
+        <div id="lm-bands"></div>
+        <svg class="lm-edges" id="lm-edges"></svg>
+        <div id="lm-blocks"></div>
+      </div>
+      <div class="lm-labels" id="lm-labels"></div>
+      <div class="lm-zoom lm-ui">
+        <button data-action="lm-zoom-in" aria-label="放大">＋</button>
+        <button data-action="lm-zoom-out" aria-label="縮小">－</button>
+        <button data-action="lm-zoom-fit" aria-label="顯示全部" style="font-size:12px">全</button>
+      </div>
+      <div class="lm-bar lm-ui" id="lm-bar"></div>
+    </div>
+    <div style="font-size:11.5px;color:var(--text-3);margin-top:8px;line-height:1.6">拖空白處平移、雙指縮放；拖方塊移動；點方塊後可編輯、連線或刪除，點兩下直接編輯。</div>
+  </div>
 </div>
 
 <!-- 日誌 -->
@@ -772,6 +836,7 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
       <div class="home-section-title">資產配置</div>
       <div id="asset-chart"></div>
     </div>
+    <button class="btn btn-primary btn-full" style="margin-top:2px" onclick="openAssetUpdateModal()">更新資產配置</button>
     <div class="sec">銀行帳戶</div>
     <div id="asset-bank-list"></div>
     <div style="display:flex;gap:16px;padding-top:2px;flex-wrap:wrap">
@@ -786,6 +851,12 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>新增 ETF
       </button>
     </div>
+    <div class="sec" style="margin-top:18px">總資產趨勢</div>
+    <div class="card"><div id="asset-total-chart"></div></div>
+    <div class="sec" style="margin-top:18px">存款與 ETF 佔比趨勢</div>
+    <div class="card"><div id="asset-ratio-chart"></div></div>
+    <div class="sec" style="margin-top:18px">歷史紀錄</div>
+    <div id="asset-history-list"></div>
   </div>
 </div>
 
@@ -988,6 +1059,64 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
     <div style="display:flex;gap:8px">
       <button class="btn btn-danger" style="flex:1;justify-content:center" onclick="deleteExerciseFromEdit()">刪除</button>
       <button class="btn btn-primary" style="flex:2;justify-content:center" onclick="saveExerciseEdit()">儲存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 人生地圖：方塊 modal -->
+<div class="modal-overlay" id="modal-lm-block">
+  <div class="modal">
+    <div class="modal-title"><span id="lmb-head">新增方塊</span> <button class="modal-close" onclick="closeModal('lm-block')">x</button></div>
+    <input type="hidden" id="lmb-id">
+    <div class="field"><label>標題</label><input type="text" id="lmb-title" autocomplete="off"></div>
+    <div class="field"><label>備註／說明</label><textarea id="lmb-note" rows="3" placeholder="例如：為什麼這對我重要"></textarea></div>
+    <div class="field"><label>顏色</label><div class="lm-colors" id="lmb-colors"></div></div>
+    <div class="field"><label>大小</label><div class="reg-seg" id="lmb-sizes"></div></div>
+    <div class="field"><label>所在層</label><select id="lmb-layer"></select></div>
+    <div class="field"><label>關聯</label>
+      <div style="display:flex;gap:8px">
+        <select id="lmb-link-type" onchange="lmbLinkTypeChanged()" style="flex:1"><option value="">無</option><option value="project">專案</option><option value="morning">晨間 Routine</option></select>
+        <select id="lmb-link-ref" style="flex:2;display:none"></select>
+      </div>
+    </div>
+    <div id="lmb-conn-wrap">
+      <div class="sec" style="margin-top:4px">連線</div>
+      <div id="lmb-conn-list"></div>
+      <div style="display:flex;gap:8px;margin:8px 0 14px">
+        <select id="lmb-conn-add" style="flex:1"></select>
+        <button class="btn btn-ghost btn-sm" onclick="lmbAddConn()">連線</button>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:4px">
+      <button class="btn btn-danger" id="lmb-del-btn" style="flex:1;justify-content:center;display:none" onclick="lmDeleteBlock(document.getElementById('lmb-id').value)">刪除</button>
+      <button class="btn btn-primary" style="flex:2;justify-content:center" onclick="lmbSave()">儲存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 人生地圖：層管理 modal -->
+<div class="modal-overlay" id="modal-lm-layers">
+  <div class="modal">
+    <div class="modal-title">管理層 <button class="modal-close" onclick="closeModal('lm-layers')">x</button></div>
+    <div style="font-size:12px;color:var(--text-3);margin:-6px 0 10px;line-height:1.6">層是畫布上的橫向色帶，由上到下排列。方塊拖進哪一條就屬於那一層。刪除層不會刪掉方塊。</div>
+    <div id="lml-list"></div>
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <input type="text" id="lml-new" placeholder="新增層的名稱…" autocomplete="off" style="flex:1">
+      <button class="btn btn-ghost btn-sm" onclick="lmAddLayer()">新增</button>
+    </div>
+  </div>
+</div>
+
+<!-- 人生地圖：地圖設定 modal -->
+<div class="modal-overlay" id="modal-lm-map">
+  <div class="modal">
+    <div class="modal-title"><span id="lmm-head">新地圖</span> <button class="modal-close" onclick="closeModal('lm-map')">x</button></div>
+    <input type="hidden" id="lmm-id">
+    <div class="field"><label>地圖名稱</label><input type="text" id="lmm-name" autocomplete="off"></div>
+    <button class="btn btn-primary btn-full" onclick="lmSaveMap()">儲存</button>
+    <div id="lmm-extra" style="display:none;margin-top:8px">
+      <button class="btn btn-ghost btn-full" onclick="lmDupMap()">複製這張地圖</button>
+      <button class="btn btn-danger btn-full" style="margin-top:8px" onclick="lmDeleteMap()">刪除這張地圖</button>
     </div>
   </div>
 </div>
@@ -1599,6 +1728,15 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
   </div>
 </div>
 
+<div class="modal-overlay" id="modal-asset-update">
+  <div class="modal">
+    <div class="modal-title">更新資產配置 <button class="modal-close" onclick="closeModal('asset-update')">x</button></div>
+    <div style="font-size:12px;color:var(--text-3);margin:-6px 0 12px">已帶入上次記錄的數字，直接修改後儲存即可</div>
+    <div id="asset-update-body"></div>
+    <button class="btn btn-primary btn-full" style="margin-top:6px" onclick="saveAssetUpdate()">儲存這次更新</button>
+  </div>
+</div>
+
 <div class="modal-overlay" id="modal-plan-item">
   <div class="modal">
     <div class="modal-title">編輯行程 <button class="modal-close" onclick="closeModal('plan-item')">x</button></div>
@@ -1789,6 +1927,9 @@ var assets=load('lm-assets',{banks:[],etfs:[]});
 if(!assets||typeof assets!=='object'||Array.isArray(assets))assets={banks:[],etfs:[]};
 if(!Array.isArray(assets.banks))assets.banks=[];
 if(!Array.isArray(assets.etfs))assets.etfs=[];
+var assetHistory=load('lm-asset-history',[]);if(!Array.isArray(assetHistory))assetHistory=[];
+var lifeMaps=load('lm-lifemap',{maps:[],curId:null});
+if(!lifeMaps||typeof lifeMaps!=='object'||!Array.isArray(lifeMaps.maps))lifeMaps={maps:[],curId:null};
 // 日計畫：{ 'YYYY-MM-DD': [ {id,label,color,start,dur} ] }
 var dayPlans=load('lm-dayplans',{});
 if(!dayPlans||typeof dayPlans!=='object'||Array.isArray(dayPlans))dayPlans={};
@@ -2034,7 +2175,9 @@ function renderGrowth(){
     {sub:'meditate',cls:'ic-amber',name:'冥想',val:mSec>0?Math.round(mSec/60)+' 分':'尚未開始',vcol:'var(--amber)',streak:medStreak,scol:'var(--amber)',
      ico:'<circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/>'},
     {sub:'regulate',cls:'ic-purple',name:'調節',val:(function(){var n=regulations.filter(function(r){return (r.time||'').slice(0,10)===t;}).length;return n>0?'覺察 '+n+' 次':'尚未紀錄';})(),vcol:'var(--purple)',streak:0,scol:'var(--purple)',
-     ico:'<path d="M12 21s-7-4.35-9.5-8.5C.8 9.6 2.2 6 5.5 6c2 0 3.2 1.2 3.9 2.3C10.1 7.2 11.3 6 13.3 6c3.3 0 4.7 3.6 3 6.5C18.9 16.65 12 21 12 21z" opacity="0.25" fill="currentColor" stroke="none"/><path d="M8 12h2l1.5-3 2 6L15 12h1"/>'}
+     ico:'<path d="M12 21s-7-4.35-9.5-8.5C.8 9.6 2.2 6 5.5 6c2 0 3.2 1.2 3.9 2.3C10.1 7.2 11.3 6 13.3 6c3.3 0 4.7 3.6 3 6.5C18.9 16.65 12 21 12 21z" opacity="0.25" fill="currentColor" stroke="none"/><path d="M8 12h2l1.5-3 2 6L15 12h1"/>'},
+    {sub:'lifemap',cls:'ic-teal',name:'人生地圖',val:(function(){var n=lifeMaps.maps.reduce(function(a,m){return a+(m.blocks||[]).length;},0);return n>0?n+' 方塊':'尚未建立';})(),vcol:'var(--teal)',streak:0,scol:'var(--teal)',
+     ico:'<rect x="3" y="3" width="7" height="5" rx="1"/><rect x="14" y="10" width="7" height="5" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/><path d="M10 5.5h2.5a1.5 1.5 0 011.5 1.5v3M14 15v1.5a1.5 1.5 0 01-1.5 1.5H10"/>'}
   ];
   var cards=allCards.filter(function(c){
     if(c.sub==='books')return effGrowthOn('reading');
@@ -2058,7 +2201,7 @@ function renderGrowth(){
 }
 function setGrowthSub(sub){
   growthSub=sub;
-  ['books','exercise','meditate','regulate'].forEach(function(s){
+  ['books','exercise','meditate','regulate','lifemap'].forEach(function(s){
     var el=document.getElementById('growth-'+s);
     if(el)el.classList.toggle('active',s===sub);
   });
@@ -2069,6 +2212,553 @@ function setGrowthSub(sub){
   else if(sub==='exercise'){exWeekOffset=0;renderExercise();}
   else if(sub==='meditate')renderMedHistory();
   else if(sub==='regulate')renderRegulations();
+  else if(sub==='lifemap')renderLifeMap();
+}
+
+// ── 人生地圖 ──────────────────────────────────────────
+// 資料：lifeMaps={maps:[{id,name,layers:[{id,name,h,color}],blocks:[{id,title,note,color,w,x,y,z,link}],edges:[{id,a,b}],view:{x,y,s}}],curId}
+var LM_COLORS=['#B79F8E','#8C9CA8','#9FA886','#B58E8E','#A99BB0','#C0A98C','#849B92','#A8927D'];
+var LM_W={s:104,m:140,l:196};
+var LM_WLABEL={s:'小',m:'中',l:'大'};
+var _lmSel=null,_lmSelEdge=null,_lmConn=null,_lmUndoStack=[],_lmLastTap={id:null,t:0};
+var _lmPtrs={},_lmDrag=null,_lmPinch=null,_lmBound=false,_lmViewTimer=null;
+var _lmbDraft={color:LM_COLORS[0],w:'m'};
+function lmUid(p){return p+Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
+function lmSave(){save('lm-lifemap',lifeMaps);}
+function lmCleanColor(c,fallback){return /^#[0-9a-fA-F]{6}$/.test(c||'')?c:(fallback||LM_COLORS[0]);}
+function lmCur(){
+  var m=lifeMaps.maps.find(function(x){return x.id===lifeMaps.curId;});
+  if(!m&&lifeMaps.maps.length){m=lifeMaps.maps[0];lifeMaps.curId=m.id;}
+  if(m){
+    if(!Array.isArray(m.layers))m.layers=[];
+    if(!Array.isArray(m.blocks))m.blocks=[];
+    if(!Array.isArray(m.edges))m.edges=[];
+    if(!m.view)m.view={x:20,y:20,s:1};
+  }
+  return m||null;
+}
+function lmNewMapObj(name){return {id:lmUid('m'),name:name||'我的人生地圖',layers:[],blocks:[],edges:[],view:{x:20,y:20,s:1}};}
+function lmEnsureMap(){
+  if(!lifeMaps.maps.length){var m=lmNewMapObj();lifeMaps.maps.push(m);lifeMaps.curId=m.id;lmSave();}
+  return lmCur();
+}
+// 復原：每次變更前記下快照（僅存於本次開啟期間）
+function lmSnap(m){return JSON.stringify({layers:m.layers,blocks:m.blocks,edges:m.edges});}
+function lmPush(m,snap){
+  _lmUndoStack.push(snap||lmSnap(m));
+  if(_lmUndoStack.length>40)_lmUndoStack.shift();
+  lmUpdateUndoBtn();
+}
+function lmUpdateUndoBtn(){var b=document.getElementById('lm-undo-btn');if(b){b.disabled=!_lmUndoStack.length;b.style.opacity=_lmUndoStack.length?'1':'.4';}}
+function lmDoUndo(){
+  var m=lmCur();if(!m)return;
+  var s=_lmUndoStack.pop();
+  if(!s){showToast('沒有可復原的動作');return;}
+  var o=JSON.parse(s);m.layers=o.layers;m.blocks=o.blocks;m.edges=o.edges;
+  if(_lmSel&&!m.blocks.some(function(b){return b.id===_lmSel;}))_lmSel=null;
+  _lmConn=null;_lmSelEdge=null;
+  lmSave();renderLifeMap();showToast('已復原');
+}
+function lmTops(m){var y=0;return m.layers.map(function(l){var t={id:l.id,top:y,h:l.h,l:l};y+=l.h;return t;});}
+function lmBlockEl(id){return document.querySelector('#lm-blocks .lm-block[data-bid="'+id+'"]');}
+function lmBlockSize(b){var el=lmBlockEl(b.id);return {w:el?el.offsetWidth:LM_W[b.w||'m'],h:el?el.offsetHeight:56};}
+function lmLayerOf(m,b){
+  var cy=b.y+lmBlockSize(b).h/2,t=lmTops(m);
+  for(var i=0;i<t.length;i++)if(cy>=t[i].top&&cy<t[i].top+t[i].h)return t[i].id;
+  return '';
+}
+// 層異動（改高度／排序／刪除）時，讓方塊跟著所屬的層一起移動
+function lmLayerChange(m,mutate){
+  lmPush(m);
+  var tops=lmTops(m),mem={};
+  m.blocks.forEach(function(b){var lid=lmLayerOf(m,b);if(!lid)return;var t=tops.find(function(x){return x.id===lid;});mem[b.id]={lid:lid,off:b.y-t.top};});
+  mutate();
+  var nt={};lmTops(m).forEach(function(t){nt[t.id]=t;});
+  m.blocks.forEach(function(b){var mm=mem[b.id];if(mm&&nt[mm.lid])b.y=nt[mm.lid].top+Math.min(mm.off,Math.max(0,nt[mm.lid].h-40));});
+  lmSave();renderLifeMap();
+}
+function lmMutate(fn){var m=lmCur();if(!m)return;lmPush(m);fn(m);lmSave();renderLifeMap();}
+
+// ── 版面 ──
+function lmApplyView(){
+  var m=lmCur();if(!m)return;
+  var v=m.view,w=document.getElementById('lm-world'),vp=document.getElementById('lm-viewport');
+  if(w)w.style.transform='translate('+v.x+'px,'+v.y+'px) scale('+v.s+')';
+  if(vp){var g=22*v.s;vp.style.backgroundSize=g+'px '+g+'px';vp.style.backgroundPosition=(v.x%g)+'px '+(v.y%g)+'px';}
+  lmUpdateLabels();
+}
+function lmUpdateLabels(){
+  var m=lmCur();if(!m)return;
+  var tops=lmTops(m),els=document.querySelectorAll('#lm-labels .lm-label');
+  els.forEach(function(el,i){if(tops[i])el.style.top=(m.view.y+tops[i].top*m.view.s+6)+'px';});
+}
+function lmSaveViewSoon(){clearTimeout(_lmViewTimer);_lmViewTimer=setTimeout(lmSave,600);}
+function lmZoomAt(px,py,f){
+  var m=lmCur();if(!m)return;var v=m.view;
+  var ns=Math.min(2.5,Math.max(0.25,v.s*f)),wx=(px-v.x)/v.s,wy=(py-v.y)/v.s;
+  v.s=ns;v.x=px-wx*ns;v.y=py-wy*ns;lmApplyView();lmSaveViewSoon();
+}
+function lmZoomCenter(f){var vp=document.getElementById('lm-viewport');lmZoomAt(vp.clientWidth/2,vp.clientHeight/2,f);}
+function lmFit(){
+  var m=lmCur();if(!m)return;
+  var vp=document.getElementById('lm-viewport'),W=vp.clientWidth,H=vp.clientHeight;
+  if(!m.blocks.length&&!m.layers.length){m.view={x:20,y:20,s:1};}
+  else{
+    var minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
+    m.blocks.forEach(function(b){var s=lmBlockSize(b);minX=Math.min(minX,b.x);minY=Math.min(minY,b.y);maxX=Math.max(maxX,b.x+s.w);maxY=Math.max(maxY,b.y+s.h);});
+    if(m.layers.length){minY=Math.min(minY,0);maxY=Math.max(maxY,lmTops(m).reduce(function(a,t){return a+t.h;},0));}
+    if(minX===Infinity){minX=0;maxX=W;}
+    var bw=Math.max(40,maxX-minX),bh=Math.max(40,maxY-minY);
+    var padL=m.layers.length?64:0;
+    var s=Math.max(0.25,Math.min((W-padL)/(bw+60),H/(bh+60),1.2));
+    m.view={s:s,x:padL+(W-padL-bw*s)/2-minX*s,y:(H-bh*s)/2-minY*s};
+  }
+  lmApplyView();lmSave();
+}
+
+// ── 渲染 ──
+function renderLmTabs(){
+  var el=document.getElementById('lm-maprow');if(!el)return;
+  el.innerHTML=lifeMaps.maps.map(function(m){
+    return '<button class="chip'+(m.id===lifeMaps.curId?' active':'')+'" data-action="lm-tab" data-id="'+esc(m.id)+'">'+esc(m.name||'未命名')+'</button>';
+  }).join('')+'<button class="chip" data-action="lm-new-map">＋ 新地圖</button>';
+}
+function lmBlockHTML(b){
+  var c=lmCleanColor(b.color),w=LM_W[b.w||'m'];
+  return '<div class="lm-block" data-bid="'+esc(b.id)+'" style="left:'+b.x+'px;top:'+b.y+'px;width:'+w+'px;z-index:'+(b.z||1)+';border-color:'+c+';background:'+c+'2E">'
+    +'<div class="lm-bt">'+esc(b.title||'（未命名）')+'</div>'
+    +(b.note?'<div class="lm-bn">'+esc(b.note)+'</div>':'')
+    +lmLinkBadge(b)+'</div>';
+}
+function lmMorningStat(name){
+  var n=0;
+  for(var i=0;i<7;i++){
+    var d=new Date();d.setDate(d.getDate()-i);var l=morningLogs[localYMD(d)];
+    if(l&&(l.items||[]).some(function(it){return !it.wake&&it.name===name&&it.done;}))n++;
+  }
+  return n;
+}
+function lmLinkBadge(b){
+  if(!b.link||!b.link.t)return '';
+  var txt;
+  if(b.link.t==='project'){
+    var p=projects.find(function(x){return String(x.id)===String(b.link.ref);});
+    txt=p?'專案 · '+p.name:'專案已刪除';
+  }else{
+    txt='晨間 · '+b.link.ref+(morningBase.indexOf(b.link.ref)>=0?' · 近7天 '+lmMorningStat(b.link.ref)+'/7':'（已移除）');
+  }
+  return '<div class="lm-bl" data-action="lm-jump" data-bid="'+esc(b.id)+'">'+esc(txt)+'</div>';
+}
+function renderLifeMap(){
+  var m=lmEnsureMap();if(!m)return;
+  renderLmTabs();lmBind();
+  var tops=lmTops(m);
+  document.getElementById('lm-bands').innerHTML=tops.map(function(t,i){
+    var c=lmCleanColor(t.l.color,LM_COLORS[i%LM_COLORS.length]);
+    return '<div class="lm-band" style="top:'+t.top+'px;height:'+t.h+'px;background:'+c+'1F"></div>';
+  }).join('');
+  document.getElementById('lm-labels').innerHTML=tops.map(function(t){return '<div class="lm-label">'+esc(t.l.name||'')+'</div>';}).join('');
+  document.getElementById('lm-blocks').innerHTML=m.blocks.map(lmBlockHTML).join('');
+  if(_lmSel&&!m.blocks.some(function(b){return b.id===_lmSel;}))_lmSel=null;
+  if(_lmConn&&!m.blocks.some(function(b){return b.id===_lmConn;}))_lmConn=null;
+  if(_lmSelEdge&&!m.edges.some(function(e){return e.id===_lmSelEdge;}))_lmSelEdge=null;
+  lmDrawEdges();lmApplyHighlight();lmApplyView();lmRenderBar();lmUpdateUndoBtn();lmUpdateCard();
+}
+function lmUpdateCard(){
+  var v=document.querySelector('#growth-cards .growth-card[data-sub="lifemap"] .growth-card-val');if(!v)return;
+  var n=lifeMaps.maps.reduce(function(a,x){return a+(x.blocks||[]).length;},0);
+  v.textContent=n>0?n+' 方塊':'尚未建立';
+}
+function lmBox(b){var s=lmBlockSize(b);return {x:b.x,y:b.y,w:s.w,h:s.h,cx:b.x+s.w/2,cy:b.y+s.h/2};}
+function lmEdgePath(A,B){
+  var up=A.cy<=B.cy?A:B,lo=up===A?B:A,x1,y1,x2,y2,d;
+  if(up.y+up.h>lo.y){ // 垂直範圍重疊 → 左右相連
+    var l=A.cx<=B.cx?A:B,r=l===A?B:A,dx;
+    x1=l.x+l.w;y1=l.cy;x2=r.x;y2=r.cy;dx=Math.max(30,Math.abs(x2-x1)/2);
+    d='M'+x1+' '+y1+' C'+(x1+dx)+' '+y1+' '+(x2-dx)+' '+y2+' '+x2+' '+y2;
+  }else{
+    x1=up.cx;y1=up.y+up.h;x2=lo.cx;y2=lo.y;var dy=Math.max(30,(y2-y1)/2);
+    d='M'+x1+' '+y1+' C'+x1+' '+(y1+dy)+' '+x2+' '+(y2-dy)+' '+x2+' '+y2;
+  }
+  return d;
+}
+function lmDrawEdges(){
+  var m=lmCur(),svg=document.getElementById('lm-edges');if(!m||!svg)return;
+  var byId={};m.blocks.forEach(function(b){byId[b.id]=b;});
+  svg.innerHTML=m.edges.map(function(e){
+    var a=byId[e.a],b=byId[e.b];if(!a||!b)return '';
+    var d=lmEdgePath(lmBox(a),lmBox(b));
+    return '<g class="lm-edge" data-eid="'+esc(e.id)+'"><path class="lm-edge-line" d="'+d+'"/><path class="lm-edge-hit" d="'+d+'"/></g>';
+  }).join('');
+  lmApplyHighlight();
+}
+// 點選方塊：往上（抽象）與往下（具體）串到的整條路徑
+function lmPathSets(m,sid){
+  var cy={};m.blocks.forEach(function(b){cy[b.id]=lmBox(b).cy;});
+  var bset={},eset={};bset[sid]=true;
+  function walk(dir){
+    var stack=[sid],seen={};seen[sid]=true;
+    while(stack.length){
+      var cur=stack.pop();
+      m.edges.forEach(function(e){
+        var o=e.a===cur?e.b:(e.b===cur?e.a:null);
+        if(!o||cy[o]===undefined)return;
+        var side=cy[o]-cy[cur];
+        if(dir<0?side<-1:side>1){eset[e.id]=true;bset[o]=true;if(!seen[o]){seen[o]=true;stack.push(o);}}
+        else if(Math.abs(side)<=1&&cur===sid){eset[e.id]=true;bset[o]=true;}
+      });
+    }
+  }
+  walk(-1);walk(1);
+  return {b:bset,e:eset};
+}
+function lmApplyHighlight(){
+  var m=lmCur();if(!m)return;
+  var set=_lmSel?lmPathSets(m,_lmSel):null;
+  document.querySelectorAll('#lm-blocks .lm-block').forEach(function(el){
+    var id=el.dataset.bid;
+    el.classList.toggle('sel',id===_lmSel);
+    el.classList.toggle('src',id===_lmConn);
+    el.classList.toggle('dim',!!set&&!set.b[id]);
+  });
+  document.querySelectorAll('#lm-edges .lm-edge').forEach(function(g){
+    var id=g.dataset.eid;
+    g.classList.toggle('on',!!set&&!!set.e[id]);
+    g.classList.toggle('dim',!!set&&!set.e[id]);
+    g.classList.toggle('sel',id===_lmSelEdge);
+  });
+}
+function lmRenderBar(){
+  var m=lmCur(),el=document.getElementById('lm-bar');if(!m||!el)return;
+  var html='';
+  if(_lmConn){
+    html='<span class="lm-bar-t">點選要連線的方塊</span><button class="lm-bb" data-action="lm-bar-cancel">取消</button>';
+  }else if(_lmSel){
+    var b=m.blocks.find(function(x){return x.id===_lmSel;});
+    html='<span class="lm-bar-t">'+esc(b?b.title:'')+'</span>'
+      +'<button class="lm-bb" data-action="lm-bar-edit">編輯</button>'
+      +'<button class="lm-bb pri" data-action="lm-bar-connect">連線</button>'
+      +'<button class="lm-bb dng" data-action="lm-bar-del">刪除</button>';
+  }else if(_lmSelEdge){
+    html='<span class="lm-bar-t">已選取連線</span><button class="lm-bb dng" data-action="lm-bar-del-edge">刪除連線</button><button class="lm-bb" data-action="lm-bar-cancel">取消</button>';
+  }
+  el.innerHTML=html;el.classList.toggle('show',!!html);
+}
+
+// ── 手勢：平移 / 縮放 / 拖曳方塊 / 點選 ──
+function lmBind(){
+  if(_lmBound)return;_lmBound=true;
+  var vp=document.getElementById('lm-viewport');
+  vp.addEventListener('pointerdown',lmPtrDown);
+  vp.addEventListener('pointermove',lmPtrMove);
+  vp.addEventListener('pointerup',lmPtrUp);
+  vp.addEventListener('pointercancel',lmPtrUp);
+  vp.addEventListener('wheel',function(e){
+    e.preventDefault();var r=vp.getBoundingClientRect();
+    lmZoomAt(e.clientX-r.left,e.clientY-r.top,Math.exp(-e.deltaY*0.0015));
+  },{passive:false});
+}
+function lmPtrDown(e){
+  if(e.target.closest('.lm-ui')||e.target.closest('[data-action]'))return;
+  if(e.pointerType==='mouse'&&e.button!==0)return;
+  var m=lmCur();if(!m)return;
+  var vp=document.getElementById('lm-viewport');
+  _lmPtrs[e.pointerId]={x:e.clientX,y:e.clientY};
+  try{vp.setPointerCapture(e.pointerId);}catch(_){}
+  var ids=Object.keys(_lmPtrs);
+  if(ids.length>=2){
+    if(_lmDrag&&_lmDrag.type==='block'&&_lmDrag.moved)lmSave();
+    var a=_lmPtrs[ids[0]],b=_lmPtrs[ids[1]],r=vp.getBoundingClientRect();
+    var cx=(a.x+b.x)/2-r.left,cy=(a.y+b.y)/2-r.top;
+    _lmPinch={d0:Math.hypot(a.x-b.x,a.y-b.y)||1,s0:m.view.s,wx:(cx-m.view.x)/m.view.s,wy:(cy-m.view.y)/m.view.s};
+    _lmDrag=null;return;
+  }
+  var blockEl=e.target.closest('.lm-block');
+  if(blockEl){
+    var blk=m.blocks.find(function(x){return x.id===blockEl.dataset.bid;});
+    if(!blk)return;
+    _lmDrag={type:'block',id:blk.id,sx:e.clientX,sy:e.clientY,bx:blk.x,by:blk.y,moved:false,snap:lmSnap(m)};
+  }else{
+    var edgeG=e.target.closest&&e.target.closest('.lm-edge');
+    _lmDrag={type:'pan',sx:e.clientX,sy:e.clientY,vx:m.view.x,vy:m.view.y,moved:false,edge:edgeG?edgeG.dataset.eid:null};
+  }
+}
+function lmPtrMove(e){
+  if(!_lmPtrs[e.pointerId])return;
+  _lmPtrs[e.pointerId]={x:e.clientX,y:e.clientY};
+  var m=lmCur();if(!m)return;
+  var vp=document.getElementById('lm-viewport');
+  if(_lmPinch){
+    var ids=Object.keys(_lmPtrs);if(ids.length<2)return;
+    var a=_lmPtrs[ids[0]],b=_lmPtrs[ids[1]],r=vp.getBoundingClientRect();
+    var cx=(a.x+b.x)/2-r.left,cy=(a.y+b.y)/2-r.top;
+    var ns=Math.min(2.5,Math.max(0.25,_lmPinch.s0*(Math.hypot(a.x-b.x,a.y-b.y)/_lmPinch.d0)));
+    m.view.s=ns;m.view.x=cx-_lmPinch.wx*ns;m.view.y=cy-_lmPinch.wy*ns;
+    lmApplyView();return;
+  }
+  if(!_lmDrag)return;
+  var dx=e.clientX-_lmDrag.sx,dy=e.clientY-_lmDrag.sy;
+  if(!_lmDrag.moved&&Math.hypot(dx,dy)<5)return;
+  if(_lmDrag.type==='block'){
+    var blk=m.blocks.find(function(x){return x.id===_lmDrag.id;});if(!blk)return;
+    if(!_lmDrag.moved){
+      _lmDrag.moved=true;lmPush(m,_lmDrag.snap);
+      blk.z=m.blocks.reduce(function(a,x){return Math.max(a,x.z||1);},1)+1;
+      var el0=lmBlockEl(blk.id);if(el0)el0.style.zIndex=blk.z;
+    }
+    blk.x=Math.round(_lmDrag.bx+dx/m.view.s);blk.y=Math.round(_lmDrag.by+dy/m.view.s);
+    var el=lmBlockEl(blk.id);if(el){el.style.left=blk.x+'px';el.style.top=blk.y+'px';}
+    lmDrawEdges();
+  }else{
+    _lmDrag.moved=true;m.view.x=_lmDrag.vx+dx;m.view.y=_lmDrag.vy+dy;lmApplyView();
+  }
+}
+function lmPtrUp(e){
+  if(!_lmPtrs[e.pointerId])return;
+  delete _lmPtrs[e.pointerId];
+  var m=lmCur();
+  if(_lmPinch){
+    if(Object.keys(_lmPtrs).length<2){_lmPinch=null;lmSaveViewSoon();}
+    return;
+  }
+  var d=_lmDrag;_lmDrag=null;
+  if(!d||!m)return;
+  if(d.type==='block'){
+    if(d.moved){lmSave();lmApplyHighlight();return;}
+    lmBlockTap(d.id);
+  }else if(d.type==='pan'){
+    if(d.moved){lmSaveViewSoon();return;}
+    if(d.edge){_lmSelEdge=d.edge;_lmSel=null;_lmConn=null;}
+    else{_lmSel=null;_lmSelEdge=null;_lmConn=null;}
+    lmApplyHighlight();lmRenderBar();
+  }
+}
+function lmBlockTap(id){
+  var m=lmCur(),now=Date.now();
+  if(_lmConn){
+    if(_lmConn===id){_lmConn=null;lmRenderBar();lmApplyHighlight();return;}
+    if(m.edges.some(function(e){return (e.a===_lmConn&&e.b===id)||(e.a===id&&e.b===_lmConn);})){showToast('這兩個方塊已經連線了');return;}
+    var from=_lmConn;
+    lmPush(m);m.edges.push({id:lmUid('e'),a:from,b:id});lmSave();
+    _lmConn=null;_lmSel=id;_lmSelEdge=null;
+    lmDrawEdges();lmApplyHighlight();lmRenderBar();showToast('已連線');return;
+  }
+  var dbl=(_lmLastTap.id===id&&now-_lmLastTap.t<350);
+  _lmLastTap={id:id,t:now};
+  _lmSel=id;_lmSelEdge=null;
+  var blk=m.blocks.find(function(x){return x.id===id;});
+  if(blk){blk.z=m.blocks.reduce(function(a,x){return Math.max(a,x.z||1);},1)+1;var el=lmBlockEl(id);if(el)el.style.zIndex=blk.z;}
+  lmApplyHighlight();lmRenderBar();
+  if(dbl)lmOpenBlock(id);
+}
+
+// ── 方塊編輯 ──
+function lmbRenderColors(){
+  var el=document.getElementById('lmb-colors');
+  el.innerHTML=LM_COLORS.map(function(c){
+    return '<button type="button" class="lm-sw'+(_lmbDraft.color===c?' on':'')+'" style="background:'+c+'" onclick="lmbPickColor(\''+c+'\')"></button>';
+  }).join('')+'<input type="color" value="'+lmCleanColor(_lmbDraft.color)+'" onchange="lmbPickColor(this.value)" title="自訂顏色">';
+}
+function lmbPickColor(c){_lmbDraft.color=lmCleanColor(c,_lmbDraft.color);lmbRenderColors();}
+function lmbRenderSizes(){
+  document.getElementById('lmb-sizes').innerHTML=['s','m','l'].map(function(k){
+    return '<button type="button" class="reg-seg-btn'+(_lmbDraft.w===k?' active':'')+'" onclick="lmbPickSize(\''+k+'\')">'+LM_WLABEL[k]+'</button>';
+  }).join('');
+}
+function lmbPickSize(k){_lmbDraft.w=k;lmbRenderSizes();}
+function lmbLinkTypeChanged(sel){
+  var t=document.getElementById('lmb-link-type').value,ref=document.getElementById('lmb-link-ref');
+  if(!t){ref.style.display='none';ref.innerHTML='';return;}
+  var opts=[];
+  if(t==='project')opts=projects.map(function(p){return {v:String(p.id),l:p.name+((p.status||'active')!=='active'?'（'+(p.status==='paused'?'暫停':'已完成')+'）':'')};});
+  else opts=morningBase.map(function(n){return {v:n,l:n};});
+  if(sel&&!opts.some(function(o){return o.v===String(sel);}))opts.push({v:String(sel),l:String(sel)+'（已不存在）'});
+  ref.innerHTML=opts.length?opts.map(function(o){return '<option value="'+esc(o.v)+'">'+esc(o.l)+'</option>';}).join(''):'<option value="">（尚無可選項目）</option>';
+  if(sel)ref.value=String(sel);
+  ref.style.display='';
+}
+function lmOpenBlock(id){
+  var m=lmEnsureMap(),b=id?m.blocks.find(function(x){return x.id===id;}):null;
+  document.getElementById('lmb-id').value=b?b.id:'';
+  document.getElementById('lmb-head').textContent=b?'編輯方塊':'新增方塊';
+  document.getElementById('lmb-title').value=b?b.title:'';
+  document.getElementById('lmb-note').value=b?(b.note||''):'';
+  _lmbDraft={color:b?lmCleanColor(b.color):LM_COLORS[m.blocks.length%LM_COLORS.length],w:b?(b.w||'m'):'m'};
+  lmbRenderColors();lmbRenderSizes();
+  var cur=b?lmLayerOf(m,b):'';
+  var lsel=document.getElementById('lmb-layer');
+  lsel.innerHTML='<option value="">'+(b?'（保持目前位置）':'（畫面中央）')+'</option>'+m.layers.map(function(l){return '<option value="'+esc(l.id)+'">'+esc(l.name||'未命名')+(cur===l.id?'（目前）':'')+'</option>';}).join('');
+  lsel.value='';
+  document.getElementById('lmb-link-type').value=b&&b.link?b.link.t:'';
+  lmbLinkTypeChanged(b&&b.link?b.link.ref:null);
+  document.getElementById('lmb-conn-wrap').style.display=b?'':'none';
+  document.getElementById('lmb-del-btn').style.display=b?'':'none';
+  if(b)lmbRenderConn();
+  openModal('lm-block');
+  if(!b)setTimeout(function(){document.getElementById('lmb-title').focus();},120);
+}
+function lmbRenderConn(){
+  var m=lmCur(),id=document.getElementById('lmb-id').value;
+  var me=m.blocks.find(function(x){return x.id===id;});if(!me)return;
+  var mycy=lmBox(me).cy;
+  var rows=m.edges.filter(function(e){return e.a===id||e.b===id;}).map(function(e){
+    var oid=e.a===id?e.b:e.a,o=m.blocks.find(function(x){return x.id===oid;});if(!o)return '';
+    var side=lmBox(o).cy-mycy,rel=side<-1?'上層':side>1?'下層':'同層';
+    return '<div class="lm-crow"><span style="font-size:11px;color:var(--text-3);width:34px;flex-shrink:0">'+rel+'</span><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(o.title||'（未命名）')+'</span><button class="lm-ib" onclick="lmbDelConn(\''+esc(e.id)+'\')">×</button></div>';
+  }).join('');
+  document.getElementById('lmb-conn-list').innerHTML=rows||'<div style="font-size:12px;color:var(--text-3);padding:4px 0">尚無連線</div>';
+  var others=m.blocks.filter(function(x){return x.id!==id&&!m.edges.some(function(e){return (e.a===id&&e.b===x.id)||(e.b===id&&e.a===x.id);});});
+  document.getElementById('lmb-conn-add').innerHTML=others.length?others.map(function(x){return '<option value="'+esc(x.id)+'">'+esc(x.title||'（未命名）')+'</option>';}).join(''):'<option value="">（沒有可連線的方塊）</option>';
+}
+function lmbAddConn(){
+  var id=document.getElementById('lmb-id').value,o=document.getElementById('lmb-conn-add').value;
+  if(!id||!o)return;
+  var m=lmCur();lmPush(m);m.edges.push({id:lmUid('e'),a:id,b:o});lmSave();
+  lmbRenderConn();renderLifeMap();
+}
+function lmbDelConn(eid){
+  var m=lmCur();lmPush(m);m.edges=m.edges.filter(function(e){return e.id!==eid;});lmSave();
+  lmbRenderConn();renderLifeMap();
+}
+function lmbSave(){
+  var title=document.getElementById('lmb-title').value.trim();
+  if(!title){showToast('請輸入標題');return;}
+  var m=lmEnsureMap(),id=document.getElementById('lmb-id').value;
+  var b=id?m.blocks.find(function(x){return x.id===id;}):null;
+  lmPush(m);
+  var isNew=!b;
+  if(isNew){
+    var vp=document.getElementById('lm-viewport'),w=LM_W[_lmbDraft.w];
+    b={id:lmUid('b'),
+      x:Math.round((vp.clientWidth/2-m.view.x)/m.view.s-w/2+(Math.random()*40-20)),
+      y:Math.round((vp.clientHeight/2-m.view.y)/m.view.s-30+(Math.random()*40-20)),z:1};
+    m.blocks.push(b);
+  }
+  b.title=title;b.note=document.getElementById('lmb-note').value.trim();
+  b.color=_lmbDraft.color;b.w=_lmbDraft.w;
+  var lt=document.getElementById('lmb-link-type').value,lr=document.getElementById('lmb-link-ref').value;
+  b.link=(lt&&lr)?{t:lt,ref:lr}:null;
+  var lid=document.getElementById('lmb-layer').value;
+  if(lid){var t=lmTops(m).find(function(x){return x.id===lid;});if(t){b.y=t.top+14;if(isNew){var vp2=document.getElementById('lm-viewport');b.x=Math.round((vp2.clientWidth/2-m.view.x)/m.view.s-LM_W[b.w]/2+(Math.random()*40-20));}}}
+  b.z=m.blocks.reduce(function(a,x){return Math.max(a,x.z||1);},1)+1;
+  _lmSel=b.id;_lmSelEdge=null;_lmConn=null;
+  lmSave();closeModal('lm-block');renderLifeMap();
+}
+function lmDeleteBlock(id){
+  var m=lmCur();if(!m||!id)return;
+  var b=m.blocks.find(function(x){return x.id===id;});if(!b)return;
+  var n=m.edges.filter(function(e){return e.a===id||e.b===id;}).length;
+  if(!confirm('確定刪除「'+(b.title||'此方塊')+'」？'+(n?'\n它的 '+n+' 條連線也會一併刪除。':'')))return;
+  lmPush(m);
+  m.blocks=m.blocks.filter(function(x){return x.id!==id;});
+  m.edges=m.edges.filter(function(e){return e.a!==id&&e.b!==id;});
+  if(_lmSel===id)_lmSel=null;
+  lmSave();closeModal('lm-block');renderLifeMap();showToast('已刪除，可按「復原」找回');
+}
+function lmJump(bid){
+  var m=lmCur(),b=m&&m.blocks.find(function(x){return x.id===bid;});
+  if(!b||!b.link)return;
+  if(b.link.t==='project'){
+    var p=projects.find(function(x){return String(x.id)===String(b.link.ref);});
+    if(!p){showToast('這個專案已不存在');return;}
+    switchPage('projects',document.getElementById('nav-projects'));openProjectModal(p.id);
+  }else{
+    switchPage('home',document.getElementById('nav-home'));
+    openModal('morning-edit');renderMorningBaseList();
+  }
+}
+
+// ── 層管理 ──
+function lmOpenLayers(){lmEnsureMap();renderLmLayersList();openModal('lm-layers');}
+function renderLmLayersList(){
+  var m=lmCur(),el=document.getElementById('lml-list');if(!m||!el)return;
+  if(!m.layers.length){el.innerHTML='<div class="empty" style="padding:10px 0">還沒有層。新增後畫布會出現橫向色帶。</div>';return;}
+  el.innerHTML=m.layers.map(function(l,i){
+    var c=lmCleanColor(l.color,LM_COLORS[i%LM_COLORS.length]);
+    return '<div class="lm-lrow">'
+      +'<input type="color" value="'+c+'" onchange="lmLayerColor(\''+esc(l.id)+'\',this.value)" title="顏色">'
+      +'<input type="text" value="'+esc(l.name||'')+'" onchange="lmLayerRename(\''+esc(l.id)+'\',this.value)" style="flex:1;min-width:0">'
+      +'<input type="number" value="'+l.h+'" min="80" step="10" onchange="lmLayerHeight(\''+esc(l.id)+'\',this.value)" style="width:68px;flex-shrink:0" title="高度">'
+      +'<button class="lm-ib" onclick="lmLayerMove(\''+esc(l.id)+'\',-1)"'+(i===0?' disabled style="opacity:.3"':'')+'>↑</button>'
+      +'<button class="lm-ib" onclick="lmLayerMove(\''+esc(l.id)+'\',1)"'+(i===m.layers.length-1?' disabled style="opacity:.3"':'')+'>↓</button>'
+      +'<button class="lm-ib" onclick="lmLayerDel(\''+esc(l.id)+'\')" style="color:var(--red)">×</button></div>';
+  }).join('');
+}
+function lmLayerById(m,id){return m.layers.find(function(l){return l.id===id;});}
+function lmAddLayer(){
+  var inp=document.getElementById('lml-new'),name=inp.value.trim();
+  if(!name){showToast('請輸入層的名稱');return;}
+  var m=lmCur();
+  lmLayerChange(m,function(){m.layers.push({id:lmUid('l'),name:name,h:170,color:LM_COLORS[m.layers.length%LM_COLORS.length]});});
+  inp.value='';renderLmLayersList();
+}
+function lmLayerRename(id,v){var m=lmCur(),l=lmLayerById(m,id);if(!l)return;lmLayerChange(m,function(){l.name=v.trim();});renderLmLayersList();}
+function lmLayerColor(id,v){var m=lmCur(),l=lmLayerById(m,id);if(!l)return;lmLayerChange(m,function(){l.color=lmCleanColor(v);});}
+function lmLayerHeight(id,v){var m=lmCur(),l=lmLayerById(m,id);if(!l)return;var h=Math.max(80,parseInt(v,10)||l.h);lmLayerChange(m,function(){l.h=h;});renderLmLayersList();}
+function lmLayerMove(id,dir){
+  var m=lmCur(),i=m.layers.findIndex(function(l){return l.id===id;}),j=i+dir;
+  if(i<0||j<0||j>=m.layers.length)return;
+  lmLayerChange(m,function(){var t=m.layers[i];m.layers[i]=m.layers[j];m.layers[j]=t;});
+  renderLmLayersList();
+}
+function lmLayerDel(id){
+  var m=lmCur(),l=lmLayerById(m,id);if(!l)return;
+  if(!confirm('刪除層「'+(l.name||'未命名')+'」？層裡的方塊不會被刪除。'))return;
+  lmLayerChange(m,function(){m.layers=m.layers.filter(function(x){return x.id!==id;});});
+  renderLmLayersList();
+}
+
+// ── 地圖管理 ──
+function lmOpenMapModal(id){
+  var m=id?lifeMaps.maps.find(function(x){return x.id===id;}):null;
+  document.getElementById('lmm-id').value=m?m.id:'';
+  document.getElementById('lmm-head').textContent=m?'地圖設定':'新地圖';
+  document.getElementById('lmm-name').value=m?m.name:'';
+  document.getElementById('lmm-extra').style.display=m?'':'none';
+  openModal('lm-map');
+  if(!m)setTimeout(function(){document.getElementById('lmm-name').focus();},120);
+}
+function lmSaveMap(){
+  var name=document.getElementById('lmm-name').value.trim(),id=document.getElementById('lmm-id').value;
+  if(!name){showToast('請輸入地圖名稱');return;}
+  if(id){var m=lifeMaps.maps.find(function(x){return x.id===id;});if(m)m.name=name;}
+  else{var nm=lmNewMapObj(name);lifeMaps.maps.push(nm);lifeMaps.curId=nm.id;_lmUndoStack=[];_lmSel=_lmSelEdge=_lmConn=null;}
+  lmSave();closeModal('lm-map');renderLifeMap();if(currentPage==='growth')renderGrowth();
+}
+function lmDupMap(){
+  var id=document.getElementById('lmm-id').value,m=lifeMaps.maps.find(function(x){return x.id===id;});if(!m)return;
+  var c=JSON.parse(JSON.stringify(m));c.id=lmUid('m');c.name=m.name+' 副本';
+  lifeMaps.maps.push(c);lifeMaps.curId=c.id;_lmUndoStack=[];_lmSel=_lmSelEdge=_lmConn=null;
+  lmSave();closeModal('lm-map');renderLifeMap();showToast('已複製地圖');
+}
+function lmDeleteMap(){
+  var id=document.getElementById('lmm-id').value,m=lifeMaps.maps.find(function(x){return x.id===id;});if(!m)return;
+  if(!confirm('確定刪除地圖「'+m.name+'」？裡面的 '+(m.blocks||[]).length+' 個方塊與連線都會一併刪除。'))return;
+  lifeMaps.maps=lifeMaps.maps.filter(function(x){return x.id!==id;});
+  lifeMaps.curId=lifeMaps.maps.length?lifeMaps.maps[0].id:null;
+  _lmUndoStack=[];_lmSel=_lmSelEdge=_lmConn=null;
+  lmSave();closeModal('lm-map');renderLifeMap();if(currentPage==='growth')renderGrowth();showToast('已刪除地圖');
+}
+// ── 事件委派（由全域 click 轉入）──
+function lmAction(action,el){
+  if(action==='lm-tab'){lifeMaps.curId=el.dataset.id;_lmUndoStack=[];_lmSel=_lmSelEdge=_lmConn=null;lmSave();renderLifeMap();}
+  else if(action==='lm-new-map')lmOpenMapModal(null);
+  else if(action==='lm-map-edit'){var c=lmEnsureMap();lmOpenMapModal(c.id);}
+  else if(action==='lm-add-block')lmOpenBlock(null);
+  else if(action==='lm-layers')lmOpenLayers();
+  else if(action==='lm-undo')lmDoUndo();
+  else if(action==='lm-zoom-in')lmZoomCenter(1.25);
+  else if(action==='lm-zoom-out')lmZoomCenter(0.8);
+  else if(action==='lm-zoom-fit')lmFit();
+  else if(action==='lm-bar-edit')lmOpenBlock(_lmSel);
+  else if(action==='lm-bar-connect'){_lmConn=_lmSel;lmApplyHighlight();lmRenderBar();}
+  else if(action==='lm-bar-del')lmDeleteBlock(_lmSel);
+  else if(action==='lm-bar-cancel'){_lmConn=null;_lmSel=null;_lmSelEdge=null;lmApplyHighlight();lmRenderBar();}
+  else if(action==='lm-bar-del-edge'){
+    var eid=_lmSelEdge;_lmSelEdge=null;
+    lmMutate(function(m){m.edges=m.edges.filter(function(e){return e.id!==eid;});});showToast('已刪除連線');
+  }
+  else if(action==='lm-jump')lmJump(el.dataset.bid);
 }
 
 // ── 調節紀錄 ──────────────────────────────────────────
@@ -2436,6 +3126,17 @@ function assetPieSVG(segs,total,label){
     +'<text x="64" y="78" text-anchor="middle" font-size="14" font-weight="600" fill="var(--text)">$'+fmtMoney(total)+'</text></svg>';
 }
 function saveAssets(){save('lm-assets',assets);}
+// 資產歷史：每次異動後，將當下的完整資產狀態記錄成當天的一筆快照（同一天再次異動則覆蓋，不重複累積）
+function recordAssetSnapshot(){
+  var t=today();
+  var snap={date:t,
+    banks:assets.banks.map(function(b){return {id:b.id,name:b.name,balance:b.balance};}),
+    etfs:assets.etfs.map(function(e){return {id:e.id,name:e.name,invested:e.invested,market:e.market};})};
+  var idx=assetHistory.findIndex(function(s){return s.date===t;});
+  if(idx>=0)assetHistory[idx]=snap;else assetHistory.push(snap);
+  assetHistory.sort(function(a,b){return a.date<b.date?-1:a.date>b.date?1:0;});
+  save('lm-asset-history',assetHistory);
+}
 // 銀行帳戶
 var _bankEditId=null;
 function openBankModal(){
@@ -2467,12 +3168,12 @@ function saveBank(){
   }else{
     assets.banks.push({id:'b'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),name:name,balance:bal});
   }
-  saveAssets();closeModal('bank');renderAssets();showToast('已儲存');
+  saveAssets();recordAssetSnapshot();closeModal('bank');renderAssets();showToast('已儲存');
 }
 function deleteBank(){
   if(!_bankEditId)return;
   assets.banks=assets.banks.filter(function(x){return x.id!==_bankEditId;});
-  saveAssets();closeModal('bank');renderAssets();showToast('已刪除');
+  saveAssets();recordAssetSnapshot();closeModal('bank');renderAssets();showToast('已刪除');
 }
 // 定期定額 ETF
 var _etfEditId=null;
@@ -2520,12 +3221,55 @@ function saveEtf(){
   }else{
     assets.etfs.push({id:'e'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),name:name,invested:inv,market:mkt});
   }
-  saveAssets();closeModal('etf');renderAssets();showToast('已儲存');
+  saveAssets();recordAssetSnapshot();closeModal('etf');renderAssets();showToast('已儲存');
 }
 function deleteEtf(){
   if(!_etfEditId)return;
   assets.etfs=assets.etfs.filter(function(x){return x.id!==_etfEditId;});
-  saveAssets();closeModal('etf');renderAssets();showToast('已刪除');
+  saveAssets();recordAssetSnapshot();closeModal('etf');renderAssets();showToast('已刪除');
+}
+// 更新資產配置：一次列出所有已登記帳戶，帶入最近一次的數字，更新後記錄一筆新的歷史快照
+function openAssetUpdateModal(){
+  renderAssetUpdateForm();
+  openModal('asset-update');
+}
+function renderAssetUpdateForm(){
+  var el=document.getElementById('asset-update-body');if(!el)return;
+  if(!assets.banks.length&&!assets.etfs.length){
+    el.innerHTML='<div class="empty">請先在下方新增銀行帳戶或 ETF，才能記錄更新</div>';
+    return;
+  }
+  var html='';
+  if(assets.banks.length){
+    html+='<div class="sec" style="margin-top:0">銀行帳戶</div>'
+      +assets.banks.map(function(b){
+        return '<div class="field"><label>'+esc(b.name)+'</label><input type="number" inputmode="decimal" id="au-bank-'+esc(b.id)+'" value="'+b.balance+'"></div>';
+      }).join('');
+  }
+  if(assets.etfs.length){
+    html+='<div class="sec">ETF</div>'
+      +assets.etfs.map(function(e){
+        return '<div style="display:flex;gap:8px">'
+          +'<div class="field" style="flex:1"><label>'+esc(e.name)+' · 投入</label><input type="number" inputmode="decimal" id="au-etf-inv-'+esc(e.id)+'" value="'+e.invested+'"></div>'
+          +'<div class="field" style="flex:1"><label>'+esc(e.name)+' · 市值</label><input type="number" inputmode="decimal" id="au-etf-mkt-'+esc(e.id)+'" value="'+e.market+'"></div>'
+          +'</div>';
+      }).join('');
+  }
+  el.innerHTML=html;
+}
+function saveAssetUpdate(){
+  if(!assets.banks.length&&!assets.etfs.length){closeModal('asset-update');return;}
+  assets.banks.forEach(function(b){
+    var el=document.getElementById('au-bank-'+b.id);if(!el)return;
+    var v=parseFloat(el.value);if(!isNaN(v))b.balance=v;
+  });
+  assets.etfs.forEach(function(e){
+    var elI=document.getElementById('au-etf-inv-'+e.id),elM=document.getElementById('au-etf-mkt-'+e.id);
+    var vi=elI?parseFloat(elI.value):NaN,vm=elM?parseFloat(elM.value):NaN;
+    if(!isNaN(vi))e.invested=vi;
+    if(!isNaN(vm))e.market=vm;
+  });
+  saveAssets();recordAssetSnapshot();closeModal('asset-update');renderAssets();showToast('已記錄本次更新');
 }
 function renderAssets(){
   var banks=assets.banks,etfs=assets.etfs;
@@ -2591,6 +3335,90 @@ function renderAssets(){
     +'<div style="font-size:12px;color:'+etfCol+'">'+(etfInv>0?((etfPl>=0?'+':'')+etfRate.toFixed(1)+'%'):'')+'</div></div>'
     +'</div>';
   }
+  renderAssetHistoryChart();renderAssetHistoryList();
+}
+// ── 資產歷史圖表 ──────────────────────────────────────
+function _assetSnapTotal(snap){
+  var bt=(snap.banks||[]).reduce(function(a,b){return a+(b.balance||0);},0);
+  var et=(snap.etfs||[]).reduce(function(a,e){return a+(e.market||0);},0);
+  return bt+et;
+}
+function _fmtCompactMoney(n){
+  if(n>=1000000)return (n/1000000).toFixed(1)+'M';
+  if(n>=1000)return Math.round(n/1000)+'k';
+  return Math.round(n);
+}
+// 通用多線折線圖：snaps 依日期由舊到新排序，seriesDefs=[{color,getValue(snap)->number|null}]
+function _assetLineChartSVG(snaps,seriesDefs,opts){
+  var W=300,H=130,padL=34,padR=10,padT=12,padB=22;
+  var n=snaps.length,plotW=W-padL-padR,plotH=H-padT-padB;
+  function X(i){return n<=1?padL+plotW/2:padL+i/(n-1)*plotW;}
+  var yMin=opts.yMin,yMax=opts.yMax;if(yMax<=yMin)yMax=yMin+1;
+  function Y(v){return padT+(1-(v-yMin)/(yMax-yMin))*plotH;}
+  var gridN=4,grid='';
+  for(var g=0;g<=gridN;g++){
+    var v=yMin+(yMax-yMin)*g/gridN,yy=Y(v);
+    grid+='<line x1="'+padL+'" y1="'+yy.toFixed(1)+'" x2="'+(W-padR)+'" y2="'+yy.toFixed(1)+'" stroke="var(--border)" stroke-width="0.5"/>';
+    grid+='<text x="'+(padL-4)+'" y="'+(yy+3).toFixed(1)+'" text-anchor="end" font-size="8" fill="var(--text-3)">'+(opts.yFmt?opts.yFmt(v):Math.round(v))+'</text>';
+  }
+  var seriesSVG=seriesDefs.map(function(s){
+    var pts=[];
+    snaps.forEach(function(snap,i){var v=s.getValue(snap);if(v!=null)pts.push([X(i),Y(v)]);});
+    if(!pts.length)return '';
+    var pl=pts.length>1?'<polyline points="'+pts.map(function(p){return p[0].toFixed(1)+','+p[1].toFixed(1);}).join(' ')+'" fill="none" stroke="'+s.color+'" stroke-width="1.5" stroke-linejoin="round"/>':'';
+    var dots=pts.map(function(p){return '<circle cx="'+p[0].toFixed(1)+'" cy="'+p[1].toFixed(1)+'" r="2.5" fill="'+s.color+'"/>';}).join('');
+    return pl+dots;
+  }).join('');
+  var xlab='';
+  if(n>0){
+    var maxLabels=Math.min(5,n),step=n<=maxLabels?1:Math.ceil(n/maxLabels);
+    snaps.forEach(function(snap,i){
+      if(i%step===0||i===n-1){
+        var d=new Date(snap.date+'T00:00:00'),lbl=(d.getMonth()+1)+'/'+d.getDate();
+        xlab+='<text x="'+X(i).toFixed(1)+'" y="'+(H-6)+'" text-anchor="middle" font-size="8" fill="var(--text-3)">'+lbl+'</text>';
+      }
+    });
+  }
+  return '<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;height:auto;display:block">'+grid+seriesSVG+xlab+'</svg>';
+}
+function assetTotalChartHTML(){
+  if(!assetHistory.length)return '<div class="empty" style="padding:12px 0">尚無歷史紀錄，點上方「更新資產配置」記錄第一筆後即可看到趨勢</div>';
+  var totals=assetHistory.map(_assetSnapTotal),maxV=Math.max.apply(null,totals);
+  var yMax=maxV>0?maxV*1.15:1000;
+  return _assetLineChartSVG(assetHistory,[{color:'var(--teal)',getValue:_assetSnapTotal}],{yMin:0,yMax:yMax,yFmt:_fmtCompactMoney});
+}
+function assetRatioChartHTML(){
+  if(!assetHistory.length)return '<div class="empty" style="padding:12px 0">尚無歷史紀錄，點上方「更新資產配置」記錄第一筆後即可看到趨勢</div>';
+  function bankPct(snap){var tot=_assetSnapTotal(snap);if(tot<=0)return null;var bt=(snap.banks||[]).reduce(function(a,b){return a+(b.balance||0);},0);return bt/tot*100;}
+  function etfPct(snap){var tot=_assetSnapTotal(snap);if(tot<=0)return null;var et=(snap.etfs||[]).reduce(function(a,e){return a+(e.market||0);},0);return et/tot*100;}
+  return _assetLineChartSVG(assetHistory,[
+      {color:'var(--teal)',getValue:bankPct},
+      {color:'var(--purple)',getValue:etfPct}
+    ],{yMin:0,yMax:100,yFmt:function(v){return Math.round(v)+'%';}})
+    +'<div style="display:flex;gap:14px;justify-content:center;margin-top:6px;font-size:12px;color:var(--text-2)">'
+    +'<span style="display:inline-flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:50%;background:var(--teal)"></span>存款佔比</span>'
+    +'<span style="display:inline-flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:50%;background:var(--purple)"></span>ETF佔比</span>'
+    +'</div>';
+}
+function renderAssetHistoryChart(){
+  var totalEl=document.getElementById('asset-total-chart');if(totalEl)totalEl.innerHTML=assetTotalChartHTML();
+  var ratioEl=document.getElementById('asset-ratio-chart');if(ratioEl)ratioEl.innerHTML=assetRatioChartHTML();
+}
+function renderAssetHistoryList(){
+  var el=document.getElementById('asset-history-list');if(!el)return;
+  if(!assetHistory.length){el.innerHTML='<div class="empty">尚無歷史紀錄</div>';return;}
+  var sorted=assetHistory.slice().reverse();
+  el.innerHTML='<div class="card">'+sorted.map(function(s){
+    return '<div class="row-item"><div class="row-main"><div class="row-title">'+esc(s.date)+'</div></div>'
+      +'<div style="font-size:14px;font-weight:600;color:var(--text)">$'+fmtMoney(_assetSnapTotal(s))+'</div>'
+      +'<button class="icon-btn" style="color:var(--text-3);font-size:16px;padding:0 4px;margin-left:6px" data-action="del-asset-hist" data-date="'+esc(s.date)+'">×</button>'
+      +'</div>';
+  }).join('')+'</div>';
+}
+function deleteAssetHistory(date){
+  assetHistory=assetHistory.filter(function(s){return s.date!==date;});
+  save('lm-asset-history',assetHistory);
+  renderAssetHistoryChart();renderAssetHistoryList();showToast('已刪除該筆紀錄');
 }
 
 // ── 日計畫（拖拉排程）──────────────────────────────────
@@ -6580,6 +7408,7 @@ document.body.addEventListener('click',function(e){
   var el=e.target.closest('[data-action]');
   if(!el)return;
   var action=el.dataset.action;
+  if(action.indexOf('lm-')===0){lmAction(action,el);return;}
   if(action==='open-book-edit'){openBookEdit(parseInt(el.dataset.idx));}
   else if(action==='del-read-session'){deleteReadSession(parseInt(el.dataset.gi));}
   else if(action==='start-timer'){startTimer(parseInt(el.dataset.idx));}
@@ -6588,6 +7417,7 @@ document.body.addEventListener('click',function(e){
   else if(action==='edit-read'){openReadEdit(el.dataset.rid);}
   else if(action==='edit-bank'){openBankEdit(el.dataset.bid);}
   else if(action==='edit-etf'){openEtfEdit(el.dataset.eid);}
+  else if(action==='del-asset-hist'){deleteAssetHistory(el.dataset.date);}
   else if(action==='toggle-case'){toggleCaseWritten(el.dataset.id);}
   else if(action==='open-case-edit'){openCaseEdit(el.dataset.id);}
   else if(action==='del-quick-case'){deleteQuickCaseSession(el.dataset.id,el.dataset.date);}
@@ -7291,7 +8121,7 @@ document.body.addEventListener('focusin',function(e){
 
 // ── 雲端同步（Supabase）──────────────────────────────
 var sbClient=null,sbUser=null,syncTimer=null,_syncPending=false;
-var DATA_KEYS=['lm-books','lm-exercises','lm-reviews','lm-sessions','lm-med','lm-cases','lm-wmenus','lm-ex-goal','lm-journal','lm-timer-logs','lm-quotes','lm-checkins','lm-morning-base','lm-morning-logs','lm-morning-fs','lm-night-plans','lm-notes','lm-note-tags','lm-expenses','lm-assets','lm-dayplans','lm-plan-palette','lm-courses','lm-coursework','lm-grad-events','lm-grad-semester','lm-projects','lm-cal-events','lm-regulations'];
+var DATA_KEYS=['lm-books','lm-exercises','lm-reviews','lm-sessions','lm-med','lm-cases','lm-wmenus','lm-ex-goal','lm-journal','lm-timer-logs','lm-quotes','lm-checkins','lm-morning-base','lm-morning-logs','lm-morning-fs','lm-night-plans','lm-notes','lm-note-tags','lm-expenses','lm-assets','lm-asset-history','lm-lifemap','lm-dayplans','lm-plan-palette','lm-courses','lm-coursework','lm-grad-events','lm-grad-semester','lm-projects','lm-cal-events','lm-regulations'];
 
 var SB_URL='https://gsjljwupeyvqdsrzbadf.supabase.co';
 var SB_KEY='sb_publishable_2jglYptRkedrlZe-ZPHpbQ_U-A_R6ES';
@@ -7605,6 +8435,9 @@ function reloadAllFromStorage(){
   if(!assets||typeof assets!=='object'||Array.isArray(assets))assets={banks:[],etfs:[]};
   if(!Array.isArray(assets.banks))assets.banks=[];
   if(!Array.isArray(assets.etfs))assets.etfs=[];
+  assetHistory=load('lm-asset-history',[]);if(!Array.isArray(assetHistory))assetHistory=[];
+  lifeMaps=load('lm-lifemap',{maps:[],curId:null});
+  if(!lifeMaps||typeof lifeMaps!=='object'||!Array.isArray(lifeMaps.maps))lifeMaps={maps:[],curId:null};
   dayPlans=load('lm-dayplans',{});
   if(!dayPlans||typeof dayPlans!=='object'||Array.isArray(dayPlans))dayPlans={};
   var _pp=load('lm-plan-palette',null);if(Array.isArray(_pp)&&_pp.length)planPalette=_pp;
