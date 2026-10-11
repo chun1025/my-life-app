@@ -1296,6 +1296,7 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
   <div class="lm-tools">
     <button class="btn btn-primary btn-sm" data-action="lm-add-block">＋ 方塊</button>
     <button class="btn btn-ghost btn-sm" data-action="lm-layers">管理層</button>
+    <button class="btn btn-ghost btn-sm" data-action="lm-arrange">一鍵整理</button>
     <button class="btn btn-ghost btn-sm" data-action="lm-undo" id="lm-undo-btn">復原</button>
   </div>
   <div class="lm-viewport" id="lm-viewport">
@@ -2740,6 +2741,260 @@ function lmDeleteMap(){
   _lmUndoStack=[];_lmSel=_lmSelEdge=_lmConn=null;
   lmSave();closeModal('lm-map');renderLifeMap();if(currentPage==='growth')renderGrowth();showToast('已刪除地圖');
 }
+// ── 一鍵整理：分排 → 減少連線交叉 → 對齊 → 依畫面比例折行、收緊空間 ──
+function lmArrange(){
+  var m=lmCur();
+  if(!m||!m.blocks.length){showToast('還沒有方塊可以整理');return;}
+  var GAP=22,RGAP=48,DW=10,LGAP=18,hasL=m.layers.length>0;
+  var vpEl=document.getElementById('lm-viewport'),aspect=vpEl.clientWidth/Math.max(1,vpEl.clientHeight);
+  var sz={},byId={};
+  m.blocks.forEach(function(b){sz[b.id]=lmBlockSize(b);byId[b.id]=b;});
+  function cyOf(b){return b.y+sz[b.id].h/2;}
+  var edges=m.edges.filter(function(e){return byId[e.a]&&byId[e.b]&&e.a!==e.b;});
+  var deg={};m.blocks.forEach(function(b){deg[b.id]=0;});
+  edges.forEach(function(e){deg[e.a]++;deg[e.b]++;});
+  // 1. 分排（有層：依所在層；無層：依連線方向，上方的在上）
+  var rank={},isolates=[],connected;
+  if(hasL){
+    var tops0=lmTops(m);
+    connected=m.blocks.slice();
+    connected.forEach(function(b){
+      var cy=cyOf(b),idx=tops0.length-1;
+      for(var i=0;i<tops0.length;i++){if(cy<tops0[i].top+tops0[i].h){idx=i;break;}}
+      rank[b.id]=idx;
+    });
+  }else{
+    connected=m.blocks.filter(function(b){return deg[b.id]>0;});
+    isolates=m.blocks.filter(function(b){return deg[b.id]===0;}).sort(function(a,b){return cyOf(a)-cyOf(b)||a.x-b.x;});
+    var order=connected.slice().sort(function(a,b){return cyOf(a)-cyOf(b)||a.x-b.x||(a.id<b.id?-1:1);});
+    var oi={},par={},kids={};
+    order.forEach(function(b,i){oi[b.id]=i;par[b.id]=[];kids[b.id]=[];});
+    edges.forEach(function(e){var u=oi[e.a]<oi[e.b]?e.a:e.b,v=u===e.a?e.b:e.a;par[v].push(u);kids[u].push(v);});
+    order.forEach(function(b){var r=0;par[b.id].forEach(function(u){r=Math.max(r,rank[u]+1);});rank[b.id]=r;});
+    order.slice().reverse().forEach(function(b){ // 沒有上層的方塊貼近它的下層，縮短連線
+      if(!par[b.id].length&&kids[b.id].length)rank[b.id]=Math.min.apply(null,kids[b.id].map(function(k){return rank[k];}))-1;
+    });
+    var used=[];connected.forEach(function(b){if(used.indexOf(rank[b.id])<0)used.push(rank[b.id]);});
+    used.sort(function(x,y){return x-y;});
+    connected.forEach(function(b){rank[b.id]=used.indexOf(rank[b.id]);}); // 去掉空排
+  }
+  var R0=0;connected.forEach(function(b){R0=Math.max(R0,rank[b.id]);});
+  if(hasL)R0=m.layers.length-1;
+  var maxBW=0;connected.forEach(function(b){maxBW=Math.max(maxBW,sz[b.id].w);});
+
+  // 2~4. 排版核心：rowOf=每個方塊所在排，hintX=初始水平位置
+  function runLayout(rowOf,R,hintX){
+    var nodes={},up={},down={},segs=[],ranks=[],i;
+    for(i=0;i<=R;i++){segs.push([]);ranks.push([]);}
+    connected.forEach(function(b){nodes[b.id]={id:b.id,w:sz[b.id].w,h:sz[b.id].h,r:rowOf[b.id],x:hintX[b.id]};});
+    function link(a,b){(down[a]=down[a]||[]).push(b);(up[b]=up[b]||[]).push(a);segs[nodes[a].r].push([a,b]);}
+    edges.forEach(function(e){ // 跨排的連線補上虛擬節點，保留走線空間
+      var u=e.a,v=e.b;
+      if(nodes[u]===undefined||nodes[v]===undefined)return;
+      if(nodes[u].r>nodes[v].r){var t=u;u=v;v=t;}
+      if(nodes[u].r===nodes[v].r)return;
+      var d=nodes[v].r-nodes[u].r,prev=u;
+      for(var k=1;k<d;k++){
+        var did='~'+e.id+'_'+k;
+        nodes[did]={id:did,w:DW,h:0,dummy:true,r:nodes[u].r+k,x:nodes[u].x+(nodes[v].x-nodes[u].x)*k/d};
+        link(prev,did);prev=did;
+      }
+      link(prev,v);
+    });
+    Object.keys(nodes).forEach(function(id){ranks[nodes[id].r].push(id);});
+    ranks.forEach(function(l){l.sort(function(a,b){return nodes[a].x-nodes[b].x||(a<b?-1:1);});});
+    function crossBetween(r){
+      if(r<0||r>=R)return 0;
+      var pos={};ranks[r].forEach(function(id,i2){pos[id]=i2;});ranks[r+1].forEach(function(id,i2){pos[id]=i2;});
+      var es=segs[r].map(function(sg){return [pos[sg[0]],pos[sg[1]]];}),c=0;
+      for(var i2=0;i2<es.length;i2++)for(var j2=i2+1;j2<es.length;j2++)
+        if((es[i2][0]<es[j2][0]&&es[i2][1]>es[j2][1])||(es[i2][0]>es[j2][0]&&es[i2][1]<es[j2][1]))c++;
+      return c;
+    }
+    function totalCross(){var c=0;for(var r=0;r<R;r++)c+=crossBetween(r);return c;}
+    function sweep(downward){
+      var stepv=downward?1:-1;
+      for(var r=downward?1:R-1;downward?r<=R:r>=0;r+=stepv){
+        var pos={},cur={},bc={};
+        ranks[r-stepv].forEach(function(id,i2){pos[id]=i2;});
+        ranks[r].forEach(function(id,i2){cur[id]=i2;});
+        ranks[r].forEach(function(id){
+          var nb=(downward?up[id]:down[id])||[];
+          bc[id]=nb.length?nb.reduce(function(a,n){return a+pos[n];},0)/nb.length:cur[id];
+        });
+        ranks[r].sort(function(a,b){return bc[a]-bc[b]||cur[a]-cur[b];});
+      }
+    }
+    var best=ranks.map(function(l){return l.slice();}),bestC=totalCross();
+    for(var it=0;it<24&&bestC>0&&R>0;it++){
+      sweep(it%2===0);
+      var c=totalCross();
+      if(c<bestC){bestC=c;best=ranks.map(function(l){return l.slice();});}
+    }
+    ranks=best;
+    var improved=true,pass=0;
+    while(improved&&pass++<8){
+      improved=false;
+      for(var r=0;r<=R;r++){
+        for(var q=0;q<ranks[r].length-1;q++){
+          var before=crossBetween(r-1)+crossBetween(r);
+          var tmp=ranks[r][q];ranks[r][q]=ranks[r][q+1];ranks[r][q+1]=tmp;
+          if(crossBetween(r-1)+crossBetween(r)<before)improved=true;
+          else{tmp=ranks[r][q];ranks[r][q]=ranks[r][q+1];ranks[r][q+1]=tmp;}
+        }
+      }
+    }
+    var finalCross=totalCross();
+    function place(list,desired){ // 最小位移的等距排列（保序迴歸）
+      var n=list.length,S=[0],k;
+      for(k=1;k<n;k++){
+        var a=nodes[list[k-1]],b=nodes[list[k]];
+        S[k]=S[k-1]+(a.w+b.w)/2+((a.dummy||b.dummy)?8:GAP);
+      }
+      var bl=[];
+      for(k=0;k<n;k++){
+        bl.push({sum:desired[k]-S[k],cnt:1});
+        while(bl.length>1){
+          var p=bl[bl.length-2],q2=bl[bl.length-1];
+          if(p.sum/p.cnt>q2.sum/q2.cnt){p.sum+=q2.sum;p.cnt+=q2.cnt;bl.pop();}else break;
+        }
+      }
+      var out=[],kk=0;
+      bl.forEach(function(blk){var y=blk.sum/blk.cnt;for(var j=0;j<blk.cnt;j++,kk++)out[kk]=y+S[kk];});
+      return out;
+    }
+    function applyRank(r,mode){
+      var list=ranks[r];if(!list.length)return;
+      var des=list.map(function(id){
+        var nb=[];
+        if(mode!=='down')nb=nb.concat(up[id]||[]);
+        if(mode!=='up')nb=nb.concat(down[id]||[]);
+        return nb.length?nb.reduce(function(a,n){return a+nodes[n].x;},0)/nb.length:nodes[id].x;
+      });
+      var out=place(list,des);list.forEach(function(id,i2){nodes[id].x=out[i2];});
+    }
+    ranks.forEach(function(list){var out=place(list,list.map(function(){return 0;}));list.forEach(function(id,i2){nodes[id].x=out[i2];});});
+    for(var xi=0;xi<14;xi++){
+      if(xi%2===0)for(var r1=1;r1<=R;r1++)applyRank(r1,'up');
+      else for(var r2=R-1;r2>=0;r2--)applyRank(r2,'down');
+    }
+    for(var fp=0;fp<2;fp++)for(var r3=0;r3<=R;r3++)applyRank(r3,'both');
+    return {nodes:nodes,ranks:ranks,cross:finalCross};
+  }
+  var hint0={};connected.forEach(function(b){hint0[b.id]=b.x+sz[b.id].w/2;});
+  var res=runLayout(rank,R0,hint0),layerOfRow=[],r0;
+  for(r0=0;r0<=R0;r0++)layerOfRow.push(r0);
+  // 5. 過寬就依畫面比例折成多排，再重新對齊
+  var baseRows=res.ranks.map(function(l){return l.filter(function(id){return !res.nodes[id].dummy;});});
+  function rowW(list){return list.reduce(function(a,id,i){return a+sz[id].w+(i?GAP:0);},0);}
+  var maxRankW=Math.max.apply(null,baseRows.map(rowW).concat([0]));
+  function chunkPlan(W){
+    var rowOf={},lor=[],row=0,estH=0;
+    baseRows.forEach(function(list,r){
+      if(!list.length){lor[row]=r;row++;return;}
+      var cur=[],cw=0;
+      function flush(){var hh=0;cur.forEach(function(id){rowOf[id]=row;hh=Math.max(hh,sz[id].h);});lor[row]=r;estH+=hh+RGAP;row++;cur=[];cw=0;}
+      list.forEach(function(id){var w=sz[id].w;if(cur.length&&cw+GAP+w>W)flush();cw+=(cur.length?GAP:0)+w;cur.push(id);});
+      flush();
+    });
+    return {rowOf:rowOf,lor:lor,R:row-1,estH:estH};
+  }
+  // 量測某個排版結果實際會佔用的大小 → 換算成在畫面中能放大到多少
+  function sizeOf(r,lor){
+    var nd=r.nodes,mnL=Infinity,mxR=-Infinity,h=0,rh=[];
+    connected.forEach(function(b){mnL=Math.min(mnL,nd[b.id].x-nd[b.id].w/2);mxR=Math.max(mxR,nd[b.id].x+nd[b.id].w/2);});
+    r.ranks.forEach(function(l){var mh=0;l.forEach(function(id){if(!nd[id].dummy)mh=Math.max(mh,nd[id].h);});rh.push(mh);});
+    if(hasL){
+      m.layers.forEach(function(l,li){
+        var cnt=0,content=0;
+        rh.forEach(function(v,rw){if(lor[rw]===li&&v>0){cnt++;content+=v;}});
+        h+=cnt?Math.max(96,content+(cnt-1)*LGAP+48):l.h;
+      });
+    }else{rh.forEach(function(v){h+=v+(v>0?RGAP:RGAP/2);});h-=RGAP;}
+    var w=mxR-mnL;
+    return {w:w,h:h,fit:Math.min(vpEl.clientWidth/(w+60),vpEl.clientHeight/(Math.max(h,1)+60),1.2)};
+  }
+  var bestScore=sizeOf(res,layerOfRow).fit;
+  if(connected.length>3){
+    var hint1={};connected.forEach(function(b){hint1[b.id]=res.nodes[b.id].x;});
+    var W=maxRankW;
+    for(var guard=0;guard<12&&W>maxBW;guard++){
+      W=Math.max(maxBW,W*0.82);
+      var pick=chunkPlan(W);
+      var cand=runLayout(pick.rowOf,pick.R,hint1),sc=sizeOf(cand,pick.lor).fit;
+      // 先看連線交叉（愈少愈好），交叉相近時才選畫面放得更大的
+      // 折行會讓排列變成階梯狀、不夠整齊，所以只有畫面明顯（12% 以上）放得更大，或交叉更少時才折
+      if(cand.cross<res.cross||(cand.cross<=res.cross+1&&sc>bestScore*1.12)){
+        res=cand;layerOfRow=pick.lor;bestScore=Math.max(sc,bestScore);
+      }
+    }
+  }
+  var nodes=res.nodes,ranks=res.ranks,rows=ranks.length;
+  var minLeft=Infinity;
+  connected.forEach(function(b){minLeft=Math.min(minLeft,nodes[b.id].x-nodes[b.id].w/2);});
+  if(minLeft===Infinity)minLeft=0;
+  // 6. 垂直排列
+  var rowH=[],row2;
+  for(row2=0;row2<rows;row2++){
+    var mh=0;ranks[row2].forEach(function(id){if(!nodes[id].dummy)mh=Math.max(mh,nodes[id].h);});
+    rowH.push(mh);
+  }
+  var maxRight=0;
+  lmPush(m);
+  if(hasL){
+    var layerRows=[];
+    m.layers.forEach(function(l,li){
+      var rws=[];
+      for(var rw=0;rw<rows;rw++)if(layerOfRow[rw]===li&&rowH[rw]>0)rws.push(rw);
+      layerRows.push(rws);
+      if(rws.length){
+        var content=rws.reduce(function(a,rw){return a+rowH[rw];},0)+(rws.length-1)*LGAP;
+        l.h=Math.max(96,Math.round(content+48));
+      }
+    });
+    var tp=lmTops(m);
+    layerRows.forEach(function(rws,li){
+      if(!rws.length)return;
+      var content=rws.reduce(function(a,rw){return a+rowH[rw];},0)+(rws.length-1)*LGAP;
+      var y0=tp[li].top+(m.layers[li].h-content)/2;
+      rws.forEach(function(rw){
+        ranks[rw].forEach(function(id){
+          if(nodes[id].dummy)return;
+          var b=byId[id],n=nodes[id];
+          b.x=Math.round(n.x-n.w/2-minLeft+16);
+          b.y=Math.round(y0+(rowH[rw]-n.h)/2);
+        });
+        y0+=rowH[rw]+LGAP;
+      });
+    });
+  }else{
+    var rowTop=[],yy=0;
+    for(var q=0;q<rows;q++){
+      rowTop.push(yy);
+      yy+=rowH[q]+(rowH[q]>0?RGAP:RGAP/2);
+    }
+    connected.forEach(function(b){
+      var n=nodes[b.id],rw=n.r;
+      b.x=Math.round(n.x-n.w/2-minLeft+16);
+      b.y=Math.round(rowTop[rw]+(rowH[rw]-n.h)/2);
+      maxRight=Math.max(maxRight,b.x+n.w);
+    });
+    // 沒有連線的方塊：集中在最下方，依畫面比例排成緊湊的列
+    if(isolates.length){
+      var area=0,iw=0;
+      isolates.forEach(function(b){area+=(sz[b.id].w+GAP)*(sz[b.id].h+GAP);iw=Math.max(iw,sz[b.id].w);});
+      var limit=Math.max(maxRight,iw,Math.sqrt(area*aspect)),cx=16,cy2=yy>0?yy-RGAP+48:0,rowMax=0;
+      isolates.forEach(function(b){
+        var w=sz[b.id].w,h=sz[b.id].h;
+        if(cx>16&&cx+w>limit+16){cx=16;cy2+=rowMax+GAP;rowMax=0;}
+        b.x=cx;b.y=Math.round(cy2);cx+=w+GAP;rowMax=Math.max(rowMax,h);
+      });
+    }
+  }
+  _lmSelEdge=null;_lmSel=null;_lmConn=null;
+  lmSave();renderLifeMap();lmFit();
+  showToast(res.cross===0?'已整理，沒有連線交叉（可按「復原」還原）':'已整理，剩 '+res.cross+' 處無法避免的交叉');
+}
 // ── 事件委派（由全域 click 轉入）──
 function openLifeMap(){
   lmEnsureMap();
@@ -2760,6 +3015,7 @@ function lmAction(action,el){
   else if(action==='lm-add-block')lmOpenBlock(null);
   else if(action==='lm-layers')lmOpenLayers();
   else if(action==='lm-undo')lmDoUndo();
+  else if(action==='lm-arrange')lmArrange();
   else if(action==='lm-zoom-in')lmZoomCenter(1.25);
   else if(action==='lm-zoom-out')lmZoomCenter(0.8);
   else if(action==='lm-zoom-fit')lmFit();
