@@ -110,7 +110,7 @@ select{width:100%;border:0.5px solid var(--border-med);border-radius:var(--radiu
 select:focus{outline:none;border-color:var(--purple)}
 .add-row{display:flex;align-items:center;gap:8px;padding:12px 0 0;color:var(--purple);font-size:14px;font-weight:500;cursor:pointer;border:none;background:transparent}
 .add-row svg{width:18px;height:18px;stroke-width:2.5}
-.toast{position:fixed;top:60px;left:50%;transform:translateX(-50%);background:var(--text);color:var(--surface);padding:10px 20px;border-radius:99px;font-size:13px;z-index:200;opacity:0;transition:opacity .2s;pointer-events:none;white-space:nowrap}
+.toast{position:fixed;top:60px;left:50%;transform:translateX(-50%);background:var(--text);color:var(--surface);padding:10px 20px;border-radius:99px;font-size:13px;z-index:600;opacity:0;transition:opacity .2s;pointer-events:none;white-space:nowrap}
 .toast.show{opacity:1}
 .chip-row{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
 .chip{padding:5px 14px;border-radius:99px;font-size:13px;border:0.5px solid var(--border-med);background:transparent;color:var(--text-2);cursor:pointer}
@@ -193,10 +193,15 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
 .growth-sub{display:none}
 .growth-sub.active{display:block}
 /* ── 人生地圖 ── */
-.lm-maprow{display:flex;gap:6px;overflow-x:auto;margin-bottom:10px;padding-bottom:2px}
+.lm-full{position:fixed;inset:0;z-index:300;background:var(--bg);display:none;flex-direction:column;padding:calc(env(safe-area-inset-top,0px) + 10px) 12px calc(env(safe-area-inset-bottom,0px) + 12px)}
+.lm-full.open{display:flex}
+.lm-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.lm-head-title{font-size:15px;font-weight:600;color:var(--text)}
+.lm-head-btn{background:none;border:none;color:var(--text-2);font-size:14px;font-family:inherit;cursor:pointer;padding:6px 4px}
+.lm-maprow{display:flex;gap:6px;overflow-x:auto;margin-bottom:8px;padding-bottom:2px;flex-shrink:0}
 .lm-maprow .chip{flex-shrink:0;white-space:nowrap}
-.lm-tools{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
-.lm-viewport{position:relative;height:62vh;min-height:380px;max-height:640px;background-color:var(--bg);background-image:radial-gradient(var(--border-med) 1px,transparent 1px);background-size:22px 22px;border:0.5px solid var(--border-med);border-radius:var(--radius);overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab}
+.lm-tools{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;flex-shrink:0}
+.lm-viewport{position:relative;flex:1;min-height:0;background-color:var(--bg);background-image:radial-gradient(var(--border-med) 1px,transparent 1px);background-size:22px 22px;border:0.5px solid var(--border-med);border-radius:var(--radius);overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab}
 .lm-world{position:absolute;left:0;top:0;transform-origin:0 0;will-change:transform}
 .lm-band{position:absolute;left:-8000px;width:16000px;border-top:1px dashed var(--border-med);border-bottom:1px dashed var(--border-med);pointer-events:none}
 .lm-edges{position:absolute;left:0;top:0;width:1px;height:1px;overflow:visible;pointer-events:none}
@@ -205,13 +210,13 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
 .lm-edge.on .lm-edge-line{stroke:var(--purple);stroke-width:2.8}
 .lm-edge.sel .lm-edge-line{stroke:var(--red);stroke-width:3}
 .lm-edge.dim .lm-edge-line{opacity:.15}
-.lm-block{position:absolute;box-sizing:border-box;padding:8px 10px;border-radius:10px;border:1.5px solid;font-size:13px;line-height:1.4;color:var(--text);cursor:grab;word-break:break-word;box-shadow:0 1px 3px rgba(0,0,0,.08);touch-action:none;transition:opacity .15s}
+.lm-block{position:absolute;box-sizing:border-box;width:max-content;min-width:64px;max-width:200px;padding:10px 14px;border-radius:10px;border:1.5px solid;font-size:16px;font-weight:600;line-height:1.35;text-align:center;text-wrap:balance;color:var(--text);cursor:grab;word-break:break-word;box-shadow:0 1px 3px rgba(0,0,0,.08);touch-action:none;transition:opacity .15s}
 .lm-block.sel{box-shadow:0 0 0 2.5px var(--purple)}
 .lm-block.src{box-shadow:0 0 0 2.5px var(--amber)}
 .lm-block.dim{opacity:.28}
-.lm-bt{font-weight:600}
-.lm-bn{font-size:11.5px;color:var(--text-2);margin-top:3px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;white-space:pre-wrap}
-.lm-bl{display:inline-block;margin-top:5px;padding:1px 8px;border-radius:99px;background:var(--surface);border:0.5px solid var(--border-med);font-size:10.5px;color:var(--text-2);cursor:pointer}
+.lm-bt{font-size:16px;font-weight:600}
+.lm-block.has-note::after{content:'';position:absolute;top:5px;right:6px;width:6px;height:6px;border-radius:50%;background:var(--text-3)}
+.lm-bl{display:block;width:fit-content;max-width:100%;margin:6px auto 0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:400;padding:1px 8px;border-radius:99px;background:var(--surface);border:0.5px solid var(--border-med);font-size:10.5px;color:var(--text-2);cursor:pointer}
 .lm-labels{position:absolute;inset:0;pointer-events:none;overflow:hidden}
 .lm-label{position:absolute;left:6px;max-width:30%;padding:1px 7px;border-radius:99px;background:var(--surface);opacity:.82;border:0.5px solid var(--border-med);font-size:10.5px;font-weight:600;color:var(--text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .lm-bar{position:absolute;left:8px;top:8px;max-width:calc(100% - 56px);display:none;align-items:center;gap:6px;padding:5px 6px;border-radius:99px;background:var(--surface);border:0.5px solid var(--border-med);box-shadow:0 2px 10px rgba(0,0,0,.15);white-space:nowrap}
@@ -698,32 +703,6 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>記錄一次
     </button>
   </div>
-
-  <!-- 子視圖：人生地圖 -->
-  <div class="growth-sub" id="growth-lifemap">
-    <div class="lm-maprow" id="lm-maprow"></div>
-    <div class="lm-tools">
-      <button class="btn btn-primary btn-sm" data-action="lm-add-block">＋ 方塊</button>
-      <button class="btn btn-ghost btn-sm" data-action="lm-layers">管理層</button>
-      <button class="btn btn-ghost btn-sm" data-action="lm-undo" id="lm-undo-btn">復原</button>
-      <button class="btn btn-ghost btn-sm" data-action="lm-map-edit">地圖設定</button>
-    </div>
-    <div class="lm-viewport" id="lm-viewport">
-      <div class="lm-world" id="lm-world">
-        <div id="lm-bands"></div>
-        <svg class="lm-edges" id="lm-edges"></svg>
-        <div id="lm-blocks"></div>
-      </div>
-      <div class="lm-labels" id="lm-labels"></div>
-      <div class="lm-zoom lm-ui">
-        <button data-action="lm-zoom-in" aria-label="放大">＋</button>
-        <button data-action="lm-zoom-out" aria-label="縮小">－</button>
-        <button data-action="lm-zoom-fit" aria-label="顯示全部" style="font-size:12px">全</button>
-      </div>
-      <div class="lm-bar lm-ui" id="lm-bar"></div>
-    </div>
-    <div style="font-size:11.5px;color:var(--text-3);margin-top:8px;line-height:1.6">拖空白處平移、雙指縮放；拖方塊移動；點方塊後可編輯、連線或刪除，點兩下直接編輯。</div>
-  </div>
 </div>
 
 <!-- 日誌 -->
@@ -1064,14 +1043,13 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
 </div>
 
 <!-- 人生地圖：方塊 modal -->
-<div class="modal-overlay" id="modal-lm-block">
+<div class="modal-overlay" id="modal-lm-block" style="z-index:400">
   <div class="modal">
     <div class="modal-title"><span id="lmb-head">新增方塊</span> <button class="modal-close" onclick="closeModal('lm-block')">x</button></div>
     <input type="hidden" id="lmb-id">
     <div class="field"><label>標題</label><input type="text" id="lmb-title" autocomplete="off"></div>
     <div class="field"><label>備註／說明</label><textarea id="lmb-note" rows="3" placeholder="例如：為什麼這對我重要"></textarea></div>
     <div class="field"><label>顏色</label><div class="lm-colors" id="lmb-colors"></div></div>
-    <div class="field"><label>大小</label><div class="reg-seg" id="lmb-sizes"></div></div>
     <div class="field"><label>所在層</label><select id="lmb-layer"></select></div>
     <div class="field"><label>關聯</label>
       <div style="display:flex;gap:8px">
@@ -1095,7 +1073,7 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
 </div>
 
 <!-- 人生地圖：層管理 modal -->
-<div class="modal-overlay" id="modal-lm-layers">
+<div class="modal-overlay" id="modal-lm-layers" style="z-index:400">
   <div class="modal">
     <div class="modal-title">管理層 <button class="modal-close" onclick="closeModal('lm-layers')">x</button></div>
     <div style="font-size:12px;color:var(--text-3);margin:-6px 0 10px;line-height:1.6">層是畫布上的橫向色帶，由上到下排列。方塊拖進哪一條就屬於那一層。刪除層不會刪掉方塊。</div>
@@ -1108,7 +1086,7 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
 </div>
 
 <!-- 人生地圖：地圖設定 modal -->
-<div class="modal-overlay" id="modal-lm-map">
+<div class="modal-overlay" id="modal-lm-map" style="z-index:400">
   <div class="modal">
     <div class="modal-title"><span id="lmm-head">新地圖</span> <button class="modal-close" onclick="closeModal('lm-map')">x</button></div>
     <input type="hidden" id="lmm-id">
@@ -1305,6 +1283,35 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
     </div>
   </div>
   <div id="morning-fs-body" style="flex:1;display:flex;flex-direction:column"></div>
+</div>
+
+<!-- 人生地圖（全螢幕）-->
+<div class="lm-full" id="fullscreen-lifemap">
+  <div class="lm-head">
+    <button class="lm-head-btn" data-action="lm-close">‹ 返回</button>
+    <div class="lm-head-title">人生地圖</div>
+    <button class="lm-head-btn" data-action="lm-map-edit">地圖設定</button>
+  </div>
+  <div class="lm-maprow" id="lm-maprow"></div>
+  <div class="lm-tools">
+    <button class="btn btn-primary btn-sm" data-action="lm-add-block">＋ 方塊</button>
+    <button class="btn btn-ghost btn-sm" data-action="lm-layers">管理層</button>
+    <button class="btn btn-ghost btn-sm" data-action="lm-undo" id="lm-undo-btn">復原</button>
+  </div>
+  <div class="lm-viewport" id="lm-viewport">
+    <div class="lm-world" id="lm-world">
+      <div id="lm-bands"></div>
+      <svg class="lm-edges" id="lm-edges"></svg>
+      <div id="lm-blocks"></div>
+    </div>
+    <div class="lm-labels" id="lm-labels"></div>
+    <div class="lm-zoom lm-ui">
+      <button data-action="lm-zoom-in" aria-label="放大">＋</button>
+      <button data-action="lm-zoom-out" aria-label="縮小">－</button>
+      <button data-action="lm-zoom-fit" aria-label="顯示全部" style="font-size:12px">全</button>
+    </div>
+    <div class="lm-bar lm-ui" id="lm-bar"></div>
+  </div>
 </div>
 
 <!-- 萬用計時器 全螢幕 -->
@@ -2188,7 +2195,7 @@ function renderGrowth(){
   var gcEl=document.getElementById('growth-cards');
   gcEl.style.gridTemplateColumns='repeat('+Math.max(1,cards.length)+',1fr)';
   gcEl.innerHTML=cards.map(function(c){
-    return '<div class="growth-card'+(growthSub===c.sub?' active':'')+'" data-action="growth-sub" data-sub="'+c.sub+'">'
+    return '<div class="growth-card'+(growthSub===c.sub?' active':'')+'" data-action="'+(c.sub==='lifemap'?'lm-open':'growth-sub')+'" data-sub="'+c.sub+'">'
       +'<div class="growth-card-ico '+c.cls+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor">'+c.ico+'</svg></div>'
       +'<div class="growth-card-name">'+c.name+'</div>'
       +'<div class="growth-card-val" style="color:'+c.vcol+'">'+c.val+'</div>'
@@ -2201,7 +2208,7 @@ function renderGrowth(){
 }
 function setGrowthSub(sub){
   growthSub=sub;
-  ['books','exercise','meditate','regulate','lifemap'].forEach(function(s){
+  ['books','exercise','meditate','regulate'].forEach(function(s){
     var el=document.getElementById('growth-'+s);
     if(el)el.classList.toggle('active',s===sub);
   });
@@ -2212,17 +2219,14 @@ function setGrowthSub(sub){
   else if(sub==='exercise'){exWeekOffset=0;renderExercise();}
   else if(sub==='meditate')renderMedHistory();
   else if(sub==='regulate')renderRegulations();
-  else if(sub==='lifemap')renderLifeMap();
 }
 
 // ── 人生地圖 ──────────────────────────────────────────
 // 資料：lifeMaps={maps:[{id,name,layers:[{id,name,h,color}],blocks:[{id,title,note,color,w,x,y,z,link}],edges:[{id,a,b}],view:{x,y,s}}],curId}
 var LM_COLORS=['#B79F8E','#8C9CA8','#9FA886','#B58E8E','#A99BB0','#C0A98C','#849B92','#A8927D'];
-var LM_W={s:104,m:140,l:196};
-var LM_WLABEL={s:'小',m:'中',l:'大'};
 var _lmSel=null,_lmSelEdge=null,_lmConn=null,_lmUndoStack=[],_lmLastTap={id:null,t:0};
 var _lmPtrs={},_lmDrag=null,_lmPinch=null,_lmBound=false,_lmViewTimer=null;
-var _lmbDraft={color:LM_COLORS[0],w:'m'};
+var _lmbDraft={color:LM_COLORS[0]};
 function lmUid(p){return p+Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
 function lmSave(){save('lm-lifemap',lifeMaps);}
 function lmCleanColor(c,fallback){return /^#[0-9a-fA-F]{6}$/.test(c||'')?c:(fallback||LM_COLORS[0]);}
@@ -2261,7 +2265,7 @@ function lmDoUndo(){
 }
 function lmTops(m){var y=0;return m.layers.map(function(l){var t={id:l.id,top:y,h:l.h,l:l};y+=l.h;return t;});}
 function lmBlockEl(id){return document.querySelector('#lm-blocks .lm-block[data-bid="'+id+'"]');}
-function lmBlockSize(b){var el=lmBlockEl(b.id);return {w:el?el.offsetWidth:LM_W[b.w||'m'],h:el?el.offsetHeight:56};}
+function lmBlockSize(b){var el=lmBlockEl(b.id);return {w:el?el.offsetWidth:120,h:el?el.offsetHeight:44};}
 function lmLayerOf(m,b){
   var cy=b.y+lmBlockSize(b).h/2,t=lmTops(m);
   for(var i=0;i<t.length;i++)if(cy>=t[i].top&&cy<t[i].top+t[i].h)return t[i].id;
@@ -2324,10 +2328,9 @@ function renderLmTabs(){
   }).join('')+'<button class="chip" data-action="lm-new-map">＋ 新地圖</button>';
 }
 function lmBlockHTML(b){
-  var c=lmCleanColor(b.color),w=LM_W[b.w||'m'];
-  return '<div class="lm-block" data-bid="'+esc(b.id)+'" style="left:'+b.x+'px;top:'+b.y+'px;width:'+w+'px;z-index:'+(b.z||1)+';border-color:'+c+';background:'+c+'2E">'
+  var c=lmCleanColor(b.color);
+  return '<div class="lm-block'+(b.note?' has-note':'')+'" data-bid="'+esc(b.id)+'" style="left:'+b.x+'px;top:'+b.y+'px;z-index:'+(b.z||1)+';border-color:'+c+';background:'+c+'2E">'
     +'<div class="lm-bt">'+esc(b.title||'（未命名）')+'</div>'
-    +(b.note?'<div class="lm-bn">'+esc(b.note)+'</div>':'')
     +lmLinkBadge(b)+'</div>';
 }
 function lmMorningStat(name){
@@ -2560,12 +2563,6 @@ function lmbRenderColors(){
   }).join('')+'<input type="color" value="'+lmCleanColor(_lmbDraft.color)+'" onchange="lmbPickColor(this.value)" title="自訂顏色">';
 }
 function lmbPickColor(c){_lmbDraft.color=lmCleanColor(c,_lmbDraft.color);lmbRenderColors();}
-function lmbRenderSizes(){
-  document.getElementById('lmb-sizes').innerHTML=['s','m','l'].map(function(k){
-    return '<button type="button" class="reg-seg-btn'+(_lmbDraft.w===k?' active':'')+'" onclick="lmbPickSize(\''+k+'\')">'+LM_WLABEL[k]+'</button>';
-  }).join('');
-}
-function lmbPickSize(k){_lmbDraft.w=k;lmbRenderSizes();}
 function lmbLinkTypeChanged(sel){
   var t=document.getElementById('lmb-link-type').value,ref=document.getElementById('lmb-link-ref');
   if(!t){ref.style.display='none';ref.innerHTML='';return;}
@@ -2583,8 +2580,8 @@ function lmOpenBlock(id){
   document.getElementById('lmb-head').textContent=b?'編輯方塊':'新增方塊';
   document.getElementById('lmb-title').value=b?b.title:'';
   document.getElementById('lmb-note').value=b?(b.note||''):'';
-  _lmbDraft={color:b?lmCleanColor(b.color):LM_COLORS[m.blocks.length%LM_COLORS.length],w:b?(b.w||'m'):'m'};
-  lmbRenderColors();lmbRenderSizes();
+  _lmbDraft={color:b?lmCleanColor(b.color):LM_COLORS[m.blocks.length%LM_COLORS.length]};
+  lmbRenderColors();
   var cur=b?lmLayerOf(m,b):'';
   var lsel=document.getElementById('lmb-layer');
   lsel.innerHTML='<option value="">'+(b?'（保持目前位置）':'（畫面中央）')+'</option>'+m.layers.map(function(l){return '<option value="'+esc(l.id)+'">'+esc(l.name||'未命名')+(cur===l.id?'（目前）':'')+'</option>';}).join('');
@@ -2628,21 +2625,25 @@ function lmbSave(){
   lmPush(m);
   var isNew=!b;
   if(isNew){
-    var vp=document.getElementById('lm-viewport'),w=LM_W[_lmbDraft.w];
+    var vp=document.getElementById('lm-viewport');
     b={id:lmUid('b'),
-      x:Math.round((vp.clientWidth/2-m.view.x)/m.view.s-w/2+(Math.random()*40-20)),
-      y:Math.round((vp.clientHeight/2-m.view.y)/m.view.s-30+(Math.random()*40-20)),z:1};
+      x:Math.round((vp.clientWidth/2-m.view.x)/m.view.s-60+(Math.random()*40-20)),
+      y:Math.round((vp.clientHeight/2-m.view.y)/m.view.s-20+(Math.random()*40-20)),z:1};
     m.blocks.push(b);
   }
   b.title=title;b.note=document.getElementById('lmb-note').value.trim();
-  b.color=_lmbDraft.color;b.w=_lmbDraft.w;
+  b.color=_lmbDraft.color;
   var lt=document.getElementById('lmb-link-type').value,lr=document.getElementById('lmb-link-ref').value;
   b.link=(lt&&lr)?{t:lt,ref:lr}:null;
-  var lid=document.getElementById('lmb-layer').value;
-  if(lid){var t=lmTops(m).find(function(x){return x.id===lid;});if(t){b.y=t.top+14;if(isNew){var vp2=document.getElementById('lm-viewport');b.x=Math.round((vp2.clientWidth/2-m.view.x)/m.view.s-LM_W[b.w]/2+(Math.random()*40-20));}}}
+  var lid=document.getElementById('lmb-layer').value,inLayer=false;
+  if(lid){var t=lmTops(m).find(function(x){return x.id===lid;});if(t){b.y=t.top+14;inLayer=true;}}
   b.z=m.blocks.reduce(function(a,x){return Math.max(a,x.z||1);},1)+1;
   _lmSel=b.id;_lmSelEdge=null;_lmConn=null;
   lmSave();closeModal('lm-block');renderLifeMap();
+  if(isNew){ // 依實際量到的大小，把新方塊對齊到原本預定的中心點
+    var el=lmBlockEl(b.id);
+    if(el){b.x=Math.round(b.x+60-el.offsetWidth/2);if(!inLayer)b.y=Math.round(b.y+20-el.offsetHeight/2);el.style.left=b.x+'px';el.style.top=b.y+'px';lmDrawEdges();lmSave();}
+  }
 }
 function lmDeleteBlock(id){
   var m=lmCur();if(!m||!id)return;
@@ -2661,9 +2662,9 @@ function lmJump(bid){
   if(b.link.t==='project'){
     var p=projects.find(function(x){return String(x.id)===String(b.link.ref);});
     if(!p){showToast('這個專案已不存在');return;}
-    switchPage('projects',document.getElementById('nav-projects'));openProjectModal(p.id);
+    closeLifeMap();switchPage('projects',document.getElementById('nav-projects'));openProjectModal(p.id);
   }else{
-    switchPage('home',document.getElementById('nav-home'));
+    closeLifeMap();switchPage('home',document.getElementById('nav-home'));
     openModal('morning-edit');renderMorningBaseList();
   }
 }
@@ -2740,8 +2741,20 @@ function lmDeleteMap(){
   lmSave();closeModal('lm-map');renderLifeMap();if(currentPage==='growth')renderGrowth();showToast('已刪除地圖');
 }
 // ── 事件委派（由全域 click 轉入）──
+function openLifeMap(){
+  lmEnsureMap();
+  document.getElementById('fullscreen-lifemap').classList.add('open');
+  renderLifeMap();
+}
+function closeLifeMap(){
+  _lmConn=null;_lmSel=null;_lmSelEdge=null;_lmPtrs={};_lmDrag=null;_lmPinch=null;
+  document.getElementById('fullscreen-lifemap').classList.remove('open');
+  lmSave();lmUpdateCard();
+}
 function lmAction(action,el){
-  if(action==='lm-tab'){lifeMaps.curId=el.dataset.id;_lmUndoStack=[];_lmSel=_lmSelEdge=_lmConn=null;lmSave();renderLifeMap();}
+  if(action==='lm-open')openLifeMap();
+  else if(action==='lm-close')closeLifeMap();
+  else if(action==='lm-tab'){lifeMaps.curId=el.dataset.id;_lmUndoStack=[];_lmSel=_lmSelEdge=_lmConn=null;lmSave();renderLifeMap();}
   else if(action==='lm-new-map')lmOpenMapModal(null);
   else if(action==='lm-map-edit'){var c=lmEnsureMap();lmOpenMapModal(c.id);}
   else if(action==='lm-add-block')lmOpenBlock(null);
@@ -8438,6 +8451,7 @@ function reloadAllFromStorage(){
   assetHistory=load('lm-asset-history',[]);if(!Array.isArray(assetHistory))assetHistory=[];
   lifeMaps=load('lm-lifemap',{maps:[],curId:null});
   if(!lifeMaps||typeof lifeMaps!=='object'||!Array.isArray(lifeMaps.maps))lifeMaps={maps:[],curId:null};
+  if(document.getElementById('fullscreen-lifemap').classList.contains('open'))renderLifeMap();
   dayPlans=load('lm-dayplans',{});
   if(!dayPlans||typeof dayPlans!=='object'||Array.isArray(dayPlans))dayPlans={};
   var _pp=load('lm-plan-palette',null);if(Array.isArray(_pp)&&_pp.length)planPalette=_pp;
