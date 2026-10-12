@@ -2304,20 +2304,50 @@ function lmZoomAt(px,py,f){
   v.s=ns;v.x=px-wx*ns;v.y=py-wy*ns;lmApplyView();lmSaveViewSoon();
 }
 function lmZoomCenter(f){var vp=document.getElementById('lm-viewport');lmZoomAt(vp.clientWidth/2,vp.clientHeight/2,f);}
-function lmFit(){
+// 有彩帶時：彩帶直接填滿整個畫布（上下不留白），多出來的高度平均分給每一條彩帶
+function lmFillBands(m,extra){
+  var n=m.layers.length;if(!n||extra<=0.5)return;
+  var tops=lmTops(m),mem={};
+  m.blocks.forEach(function(b){
+    var lid=lmLayerOf(m,b);if(!lid)return;
+    var t=tops.find(function(x){return x.id===lid;}),h=lmBlockSize(b).h;
+    mem[b.id]={lid:lid,rel:(b.y+h/2-t.top)/t.h,h:h};
+  });
+  var add=Math.floor(extra/n),left=Math.round(extra)-add*n;
+  m.layers.forEach(function(l,i){l.h=Math.round(l.h)+add+(i===n-1?left:0);});
+  var nt={};lmTops(m).forEach(function(t){nt[t.id]=t;});
+  m.blocks.forEach(function(b){ // 方塊在彩帶內的相對位置不變
+    var mm=mem[b.id];if(mm&&nt[mm.lid])b.y=Math.round(nt[mm.lid].top+mm.rel*nt[mm.lid].h-mm.h/2);
+  });
+}
+function lmFit(fromArrange){
   var m=lmCur();if(!m)return;
   var vp=document.getElementById('lm-viewport'),W=vp.clientWidth,H=vp.clientHeight;
-  if(!m.blocks.length&&!m.layers.length){m.view={x:20,y:20,s:1};}
-  else{
-    var minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
-    m.blocks.forEach(function(b){var s=lmBlockSize(b);minX=Math.min(minX,b.x);minY=Math.min(minY,b.y);maxX=Math.max(maxX,b.x+s.w);maxY=Math.max(maxY,b.y+s.h);});
-    if(m.layers.length){minY=Math.min(minY,0);maxY=Math.max(maxY,lmTops(m).reduce(function(a,t){return a+t.h;},0));}
-    if(minX===Infinity){minX=0;maxX=W;}
-    var bw=Math.max(40,maxX-minX),bh=Math.max(40,maxY-minY);
-    var padL=m.layers.length?64:0;
-    var s=Math.max(0.25,Math.min((W-padL)/(bw+60),H/(bh+60),1.2));
-    m.view={s:s,x:padL+(W-padL-bw*s)/2-minX*s,y:(H-bh*s)/2-minY*s};
+  if(!m.blocks.length&&!m.layers.length){m.view={x:20,y:20,s:1};lmApplyView();lmSave();return;}
+  var minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
+  m.blocks.forEach(function(b){var sz=lmBlockSize(b);minX=Math.min(minX,b.x);minY=Math.min(minY,b.y);maxX=Math.max(maxX,b.x+sz.w);maxY=Math.max(maxY,b.y+sz.h);});
+  if(minX===Infinity){minX=0;maxX=W;}
+  var bw=Math.max(40,maxX-minX);
+  var totalH=m.layers.reduce(function(a,l){return a+l.h;},0);
+  var inside=m.layers.length>0&&m.blocks.every(function(b){var cy=b.y+lmBlockSize(b).h/2;return cy>=0&&cy<=totalH;});
+  if(inside){
+    var padL=64;
+    var s=Math.max(0.25,Math.min((W-padL)/(bw+40),H/Math.max(1,totalH),1.2));
+    var extra=H/s-totalH;
+    if(extra>0.5){
+      if(fromArrange!==true)lmPush(m);
+      lmFillBands(m,extra);
+      // 重新量一次實際高度，讓彩帶剛好貼齊畫布上下緣
+      totalH=m.layers.reduce(function(a,l){return a+l.h;},0);
+    }
+    m.view={s:s,x:padL+(W-padL-bw*s)/2-minX*s,y:0};
+    lmSave();renderLifeMap();return;
   }
+  // 沒有彩帶（或有方塊在彩帶之外）：完整顯示所有內容
+  if(m.layers.length){minY=Math.min(minY,0);maxY=Math.max(maxY,totalH);}
+  var bh=Math.max(40,maxY-minY),pl=m.layers.length?64:0;
+  var sc=Math.max(0.25,Math.min((W-pl)/(bw+60),H/(bh+60),1.2));
+  m.view={s:sc,x:pl+(W-pl-bw*sc)/2-minX*sc,y:(H-bh*sc)/2-minY*sc};
   lmApplyView();lmSave();
 }
 
@@ -2992,7 +3022,7 @@ function lmArrange(){
     }
   }
   _lmSelEdge=null;_lmSel=null;_lmConn=null;
-  lmSave();renderLifeMap();lmFit();
+  lmSave();renderLifeMap();lmFit(true);
   showToast(res.cross===0?'已整理，沒有連線交叉（可按「復原」還原）':'已整理，剩 '+res.cross+' 處無法避免的交叉');
 }
 // ── 事件委派（由全域 click 轉入）──
@@ -3018,7 +3048,7 @@ function lmAction(action,el){
   else if(action==='lm-arrange')lmArrange();
   else if(action==='lm-zoom-in')lmZoomCenter(1.25);
   else if(action==='lm-zoom-out')lmZoomCenter(0.8);
-  else if(action==='lm-zoom-fit')lmFit();
+  else if(action==='lm-zoom-fit')lmFit(false);
   else if(action==='lm-bar-edit')lmOpenBlock(_lmSel);
   else if(action==='lm-bar-connect'){_lmConn=_lmSel;lmApplyHighlight();lmRenderBar();}
   else if(action==='lm-bar-del')lmDeleteBlock(_lmSel);
